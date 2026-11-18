@@ -20,7 +20,7 @@
   PiSwimmingPool,
   PiBuildings,
 } from "react-icons/pi";
-export const categoryIcons = [
+const legacyIcons = [
   PiHouseLine,
   PiWrench,
   PiWind,
@@ -54,3 +54,39 @@ export const categoryIcons = [
   PiBuildings,
   PiDrop,
 ];
+const ids = [
+  "roofing",
+  "plumbing",
+  "hvac",
+  "electrical",
+  "painting",
+  "landscaping",
+  "drywall",
+  "concrete",
+  "masonry",
+  "carpentry",
+  "flooring",
+  "tile",
+  "windows",
+  "doors",
+  "fencing",
+  "decks",
+  "siding",
+  "gutters",
+  "trees",
+  "pressure-washing",
+  "garage-doors",
+  "handyman",
+  "pest-control",
+  "locksmith",
+  "appliances",
+  "insulation",
+  "solar",
+  "pools",
+  "septic",
+  "remodeling",
+  "foundations",
+  "waterproofing",
+];
+const byId = Object.fromEntries(ids.map((id, i) => [id, legacyIcons[i]]));
+export const categoryIcon = (id: string) => byId[id] || PiBuildings;

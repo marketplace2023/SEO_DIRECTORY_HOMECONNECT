@@ -1,3 +1,5 @@
+import { AttachmentsPanel } from "./attachments-panel";
+import { ProjectFeedback } from "./pilot-panels";
 import { useRef, useState, type FormEvent } from "react";
 import {
   PiArrowRight,
@@ -205,6 +207,11 @@ export function RequestDetail({
   return (
     <div className="detail-columns">
       <div>
+        <AttachmentsPanel
+          targetId={request.id}
+          purpose="request"
+          canUpload={!contractor}
+        />
         <Panel title={request.title}>
           <span className={`eco-badge ${request.status}`}>
             {request.status === "open"
@@ -484,34 +491,39 @@ export function Projects({
                 )}
           </p>
         </Panel>
-        <Panel title={t("Resumen del acuerdo", "Agreement summary")}>
-          <dl className="eco-definition">
-            <div>
-              <dt>{t("Profesional", "Professional")}</dt>
-              <dd>{professional?.name}</dd>
-            </div>
-            <div>
-              <dt>{t("Importe · USD", "Amount · USD")}</dt>
-              <dd>{money(project.amount, language)}</dd>
-            </div>
-            <div>
-              <dt>{t("Pago", "Payment")}</dt>
-              <dd>
-                {t("Sin cobro · demostración", "No charge · demonstration")}
-              </dd>
-            </div>
-          </dl>
-          <Button
-            variant="outline"
-            onClick={() =>
-              navigate(
-                `/workspace/${contractor ? "contractor" : "owner"}/requests/${project.requestId}`,
-              )
-            }
-          >
-            {t("Ver solicitud y propuesta", "View request and proposal")}
-          </Button>
-        </Panel>
+        <div>
+          {!contractor && project.status === "completed" && (
+            <ProjectFeedback projectId={project.id} />
+          )}
+          <Panel title={t("Resumen del acuerdo", "Agreement summary")}>
+            <dl className="eco-definition">
+              <div>
+                <dt>{t("Profesional", "Professional")}</dt>
+                <dd>{professional?.name}</dd>
+              </div>
+              <div>
+                <dt>{t("Importe · USD", "Amount · USD")}</dt>
+                <dd>{money(project.amount, language)}</dd>
+              </div>
+              <div>
+                <dt>{t("Pago", "Payment")}</dt>
+                <dd>
+                  {t("Sin cobro · demostración", "No charge · demonstration")}
+                </dd>
+              </div>
+            </dl>
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate(
+                  `/workspace/${contractor ? "contractor" : "owner"}/requests/${project.requestId}`,
+                )
+              }
+            >
+              {t("Ver solicitud y propuesta", "View request and proposal")}
+            </Button>
+          </Panel>
+        </div>
       </div>
     );
   }

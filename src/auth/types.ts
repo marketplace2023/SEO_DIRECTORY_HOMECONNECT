@@ -6,6 +6,7 @@ export type AuthUser = {
   role: AccountRole;
   professionalId?: string;
   demo: boolean;
+  emailVerified?: boolean;
 };
 export type AuthSession = { token: string; user: AuthUser };
 export type RegisterInput = {

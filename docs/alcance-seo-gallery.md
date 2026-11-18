@@ -2,6 +2,8 @@
 
 Revisión de las 49 imágenes de `public/SEO_GALLERY`, contrastadas con el prototipo React actual. Este documento organiza el material de referencia; no convierte automáticamente los diagramas en un esquema de base de datos, contratos API o una integración ejecutada.
 
+**Nota de actualización:** este documento conserva el análisis de la iteración inicial y contiene descripciones históricas. Para el estado vigente y la propuesta de lanzamiento en Georgia, consultar [alcance-realista-georgia.md](alcance-realista-georgia.md); para la persistencia SQL actual, consultar [nombres-tablas.md](nombres-tablas.md).
+
 ## Criterio de interpretación
 
 - El HTML inicial aporta los flujos de partida; la galería amplía y detalla el producto.

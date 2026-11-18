@@ -28,9 +28,11 @@ import { AuthProvider } from "@/auth/auth-provider";
 import { RequireAccount } from "@/auth/require-account";
 import { LoginPage } from "@/modules/auth/login-page";
 import { RegisterPage } from "@/modules/auth/register-page";
+import { EmailPage, VerificationNotice } from "@/auth/email-pages";
 import "@/styles/ecosystem.css";
 import "@/styles/yelp-theme.css";
 import "@/styles/portals.css";
+import "@/styles/discovery.css";
 const HomePage = lazy(() =>
   import("@/components/home-page").then((module) => ({
     default: module.HomePage,
@@ -95,6 +97,25 @@ function Ecosystem() {
   }, [workspaceRole, route.path, role, setRole]);
   useEffect(() => {
     document.documentElement.lang = language;
+    let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      robots.content = "noindex,follow";
+      document.head.append(robots);
+    }
+    robots.dataset.publicRobots ||= robots.content;
+    robots.content =
+      [
+        "/login",
+        "/register",
+        "/quote",
+        "/verify-email",
+        "/forgot-password",
+        "/reset-password",
+      ].includes(route.path) || route.path.startsWith("/workspace/")
+        ? "noindex,nofollow"
+        : robots.dataset.publicRobots;
     document.title =
       route.path === "/"
         ? "HOME CONNECT — Grandes ideas. Las manos correctas."
@@ -168,6 +189,17 @@ function Ecosystem() {
   };
   if (route.path === "/login") return <LoginPage />;
   if (route.path === "/register") return <RegisterPage />;
+  if (
+    ["/verify-email", "/forgot-password", "/reset-password"].includes(
+      route.path,
+    )
+  )
+    return (
+      <EmailPage
+        mode={route.path.slice(1) as "verify-email"}
+        application="web"
+      />
+    );
   return (
     <>
       <a
@@ -222,6 +254,9 @@ function Ecosystem() {
         </p>
       )}
       <main id="main-content" tabIndex={-1} data-application="marketplace">
+        <div className="site-container">
+          <VerificationNotice />
+        </div>
         <LoadBoundary key={route.path} language={language} scope="page">
           <Suspense fallback={<Loading />}>
             {route.path === "/" ? (

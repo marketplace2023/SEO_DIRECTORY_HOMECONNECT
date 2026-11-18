@@ -1,3 +1,6 @@
+import { ReviewsPage } from "../modules/reviews/reviews-page";
+import { SupportPanel } from "@/components/ecosystem/pilot-panels";
+import { GooglePage } from "../modules/google/google-page";
 import { lazy, Suspense } from "react";
 import {
   PiSquaresFour,
@@ -52,6 +55,19 @@ const Account = lazy(() =>
   })),
 );
 export const contractorModules = [
+  { key: "reviews", es: "Reseñas", en: "Reviews", icon: PiChatCircleDots },
+  {
+    key: "support",
+    es: "Ayuda y soporte",
+    en: "Help and support",
+    icon: PiGear,
+  },
+  {
+    key: "google",
+    es: "Google Business Profile",
+    en: "Google Business Profile",
+    icon: PiGlobeHemisphereWest,
+  },
   { key: "overview", es: "Resumen", en: "Overview", icon: PiSquaresFour },
   { key: "requests", es: "Solicitudes", en: "Requests", icon: PiClipboardText },
   {
@@ -96,7 +112,13 @@ export function ContractorRoutes({
     return <Missing language={language} />;
   return (
     <Suspense fallback={<p role="status">Cargando módulo…</p>}>
-      {tab === "overview" ? (
+      {tab === "reviews" ? (
+        <ReviewsPage />
+      ) : tab === "support" ? (
+        <SupportPanel />
+      ) : tab === "google" ? (
+        <GooglePage />
+      ) : tab === "overview" ? (
         <Overview language={language} />
       ) : tab === "requests" ? (
         <Opportunities id={id} language={language} />

@@ -238,6 +238,11 @@ export function AuthForm({
               <PiArrowRight />
             </Button>
           </form>
+          {!signingUp && (
+            <p className="account-switch">
+              <a href="#/forgot-password">Olvidé mi contraseña</a>
+            </p>
+          )}
           {application !== "admin" ? (
             <p className="account-switch">
               {signingUp ? "¿Ya tienes cuenta?" : "¿Primera vez aquí?"}{" "}

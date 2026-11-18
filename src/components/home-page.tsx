@@ -22,7 +22,7 @@ import { NumberTicker } from "@/components/ui/number-ticker";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { ProfessionalCard } from "@/components/professional-card";
 import { SearchBar, type SearchBarProps } from "@/components/search-bar";
-import { categoryIcons } from "@/components/category-icons";
+import { categoryIcon } from "@/components/category-icons";
 import translations from "@/data/translations.json";
 import { categories, categoryName } from "@/data/catalog";
 import type { Professional } from "@/domain/types";
@@ -260,14 +260,22 @@ export function HomePage({
           className="category-swiper"
         >
           {categories.map((_, index) => {
-            const Icon = categoryIcons[index];
+            const Icon = categoryIcon(categories[index].id);
             return (
               <SwiperSlide key={index}>
                 <button
                   className="category-tile"
                   onClick={() => onCategory(categories[index].id)}
                 >
-                  <Icon className="category-icon" />
+                  <img
+                    className="category-art-thumb"
+                    src={categories[index].illustration}
+                    alt=""
+                    loading="lazy"
+                    width={160}
+                    height={107}
+                  />
+                  <Icon className="category-icon compact-category-icon" />
                   <span>{categories[index].name[search.language]}</span>
                   <PiArrowUpRight className="category-arrow" />
                 </button>

@@ -1,0 +1,288 @@
+import { useEffect, useState, type FormEvent } from "react";
+import { Panel, Field } from "./primitives";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/http";
+import { useAuth } from "@/auth/auth-provider";
+export function ProjectFeedback({ projectId }: { projectId: string }) {
+  const [message, setMessage] = useState(""),
+    [error, setError] = useState("");
+  async function act(path: string, body: any) {
+    setError("");
+    try {
+      await apiRequest(path, body);
+      setMessage(
+        path.includes("confirm")
+          ? "Entrega confirmada por el cliente. Ya puedes reseñar."
+          : "Reseña enviada a moderación.",
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  return (
+    <Panel title="Entrega y reseña">
+      <p>
+        Confirma que recibiste el trabajo antes de publicar una reseña. No se
+        efectúa ningún cobro.
+      </p>
+      <Button
+        variant="outline"
+        onClick={() => void act("/api/projects/confirm", { projectId })}
+      >
+        Confirmar entrega del proyecto
+      </Button>
+      <form
+        className="eco-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const data = new FormData(event.currentTarget);
+          void act("/api/reviews", {
+            projectId,
+            rating: Number(data.get("rating")),
+            text: data.get("text"),
+          });
+        }}
+      >
+        <Field label="Calificación">
+          <select name="rating">
+            {[5, 4, 3, 2, 1].map((n) => (
+              <option key={n} value={n}>
+                {n} / 5
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Tu experiencia">
+          <Textarea name="text" required minLength={20} maxLength={2000} />
+        </Field>
+        <Button>Enviar reseña a moderación</Button>
+      </form>
+      {message && <p role="status">{message}</p>}
+      {error && (
+        <p role="alert" className="eco-error">
+          {error}
+        </p>
+      )}
+    </Panel>
+  );
+}
+export function PublicReviews({ professionalId }: { professionalId: string }) {
+  const { user } = useAuth();
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    apiRequest(
+      "/api/reviews?professional=" + encodeURIComponent(professionalId),
+    )
+      .then((result) => {
+        if (active) setReviews(result.reviews);
+      })
+      .catch(() => {
+        if (active) setError("No se pudieron consultar las reseñas.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [professionalId]);
+  return (
+    <Panel title="Reseñas de clientes">
+      {reviews.length ? (
+        reviews.map((review) => (
+          <article className="eco-record" key={review.id}>
+            <div>
+              <strong>{review.rating}/5 · Interacción documentada</strong>
+              <p>{review.text}</p>
+              {review.reply && (
+                <p>
+                  <strong>Respuesta del negocio: </strong>
+                  {review.reply}
+                </p>
+              )}
+              {user?.role === "contractor" &&
+                user.professionalId === professionalId && (
+                  <form
+                    className="eco-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const reply = String(
+                        new FormData(event.currentTarget).get("reply"),
+                      );
+                      void apiRequest("/api/reviews/reply", {
+                        id: review.id,
+                        reply,
+                      })
+                        .then(() =>
+                          setReviews((current) =>
+                            current.map((row) =>
+                              row.id === review.id ? { ...row, reply } : row,
+                            ),
+                          ),
+                        )
+                        .catch((e) => setError(e.message));
+                    }}
+                  >
+                    <Field label="Respuesta del negocio">
+                      <Textarea
+                        name="reply"
+                        defaultValue={review.reply}
+                        required
+                        minLength={5}
+                        maxLength={1500}
+                      />
+                    </Field>
+                    <Button>Guardar respuesta</Button>
+                  </form>
+                )}
+            </div>
+          </article>
+        ))
+      ) : !error ? (
+        <p>
+          Todavía no hay reseñas reales publicadas en HOME CONNECT para este
+          profesional.
+        </p>
+      ) : null}
+      {error && <p role="alert">{error}</p>}
+    </Panel>
+  );
+}
+export function SupportPanel({ admin = false }: { admin?: boolean }) {
+  const [tickets, setTickets] = useState<any[]>([]),
+    [error, setError] = useState(""),
+    [message, setMessage] = useState("");
+  async function load() {
+    try {
+      setTickets((await apiRequest("/api/support")).tickets);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  useEffect(() => {
+    void load();
+  }, []);
+  async function submit(event: FormEvent<HTMLFormElement>, id?: string) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    try {
+      await apiRequest(
+        id ? "/api/support/update" : "/api/support",
+        id
+          ? { id, status: data.get("status"), response: data.get("response") }
+          : { subject: data.get("subject"), message: data.get("message") },
+      );
+      setMessage("Incidencia guardada.");
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  return (
+    <Panel title={admin ? "Soporte e incidencias" : "Ayuda y soporte"}>
+      {!admin && (
+        <form className="eco-form" onSubmit={(event) => void submit(event)}>
+          <Field label="Asunto">
+            <Input name="subject" minLength={5} maxLength={150} required />
+          </Field>
+          <Field label="Describe la incidencia">
+            <Textarea name="message" minLength={20} maxLength={3000} required />
+          </Field>
+          <Button>Crear incidencia</Button>
+        </form>
+      )}
+      {tickets.map((ticket) => (
+        <article className="eco-panel" key={ticket.id}>
+          <h3>{ticket.subject}</h3>
+          <p>{ticket.message}</p>
+          <span className="eco-badge">{ticket.status}</span>
+          {ticket.response && <p>Respuesta: {ticket.response}</p>}
+          {admin && (
+            <form
+              className="eco-form"
+              onSubmit={(event) => void submit(event, ticket.id)}
+            >
+              <Field label="Estado">
+                <select name="status" defaultValue={ticket.status}>
+                  <option value="open">Abierta</option>
+                  <option value="reviewing">En revisión</option>
+                  <option value="resolved">Resuelta</option>
+                </select>
+              </Field>
+              <Field label="Respuesta de soporte">
+                <Textarea
+                  name="response"
+                  minLength={5}
+                  maxLength={2000}
+                  required
+                />
+              </Field>
+              <Button>Actualizar incidencia</Button>
+            </form>
+          )}
+        </article>
+      ))}
+      {message && <p role="status">{message}</p>}
+      {error && <p role="alert">{error}</p>}
+    </Panel>
+  );
+}
+export function ReviewModeration() {
+  const [reviews, setReviews] = useState<any[]>([]),
+    [error, setError] = useState("");
+  async function load() {
+    try {
+      setReviews((await apiRequest("/api/reviews?moderation=1")).reviews);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  useEffect(() => {
+    void load();
+  }, []);
+  return (
+    <Panel title="Moderación de reseñas">
+      {reviews.map((review) => (
+        <article key={review.id} className="eco-panel">
+          <strong>
+            {review.rating}/5 · {review.professionalId} · {review.status}
+          </strong>
+          <p>{review.text}</p>
+          <form
+            className="eco-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const data = new FormData(event.currentTarget);
+              void apiRequest("/api/reviews/moderate", {
+                id: review.id,
+                status: data.get("status"),
+                note: data.get("note"),
+              })
+                .then(load)
+                .catch((e) => setError(e.message));
+            }}
+          >
+            <Field label="Decisión">
+              <select
+                name="status"
+                defaultValue={
+                  review.status === "rejected" ? "rejected" : "published"
+                }
+              >
+                <option value="published">Publicar</option>
+                <option value="rejected">Rechazar</option>
+              </select>
+            </Field>
+            <Field label="Motivo de moderación">
+              <Input name="note" required minLength={5} maxLength={1000} />
+            </Field>
+            <Button>Guardar decisión</Button>
+          </form>
+        </article>
+      ))}
+      {!reviews.length && <p>No hay reseñas para moderar.</p>}
+      {error && <p role="alert">{error}</p>}
+    </Panel>
+  );
+}

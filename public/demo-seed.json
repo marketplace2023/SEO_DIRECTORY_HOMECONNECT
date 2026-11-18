@@ -11,6 +11,11 @@
       "region": "Florida",
       "country": "Estados Unidos",
       "years": 15,
+      "location": {
+        "latitude": 25.774,
+        "longitude": -80.194,
+        "precision": "city"
+      },
       "rating": 4.8,
       "coverage": [
         "Miami",
@@ -20,7 +25,9 @@
       "serviceIds": [
         "remodeling-1",
         "remodeling-2",
-        "remodeling-3"
+        "remodeling-3",
+        "remodeling-4",
+        "remodeling-5"
       ],
       "img": "/images/professional-0.jpg",
       "publication": "published",
@@ -70,6 +77,11 @@
       "region": "Ontario",
       "country": "Canadá",
       "years": 9,
+      "location": {
+        "latitude": 43.653,
+        "longitude": -79.383,
+        "precision": "city"
+      },
       "rating": 4.7,
       "coverage": [
         "Toronto",
@@ -79,7 +91,9 @@
       "serviceIds": [
         "electrical-1",
         "electrical-2",
-        "electrical-3"
+        "electrical-3",
+        "electrical-4",
+        "electrical-5"
       ],
       "img": "/images/professional-1.jpg",
       "publication": "published",
@@ -129,6 +143,11 @@
       "region": "Bogotá D.C.",
       "country": "Colombia",
       "years": 7,
+      "location": {
+        "latitude": 4.711,
+        "longitude": -74.072,
+        "precision": "city"
+      },
       "rating": 4.6,
       "coverage": [
         "Bogotá",
@@ -138,7 +157,9 @@
       "serviceIds": [
         "plumbing-1",
         "plumbing-2",
-        "plumbing-3"
+        "plumbing-3",
+        "plumbing-4",
+        "plumbing-5"
       ],
       "img": "/images/professional-2.jpg",
       "publication": "published",
@@ -188,6 +209,11 @@
       "region": "Madrid",
       "country": "España",
       "years": 11,
+      "location": {
+        "latitude": 40.416,
+        "longitude": -3.704,
+        "precision": "city"
+      },
       "rating": 4.9,
       "coverage": [
         "Madrid",
@@ -197,7 +223,9 @@
       "serviceIds": [
         "painting-1",
         "painting-2",
-        "painting-3"
+        "painting-3",
+        "painting-4",
+        "painting-5"
       ],
       "img": "/images/professional-3.jpg",
       "publication": "published",
@@ -247,6 +275,11 @@
       "region": "Lima",
       "country": "Perú",
       "years": 6,
+      "location": {
+        "latitude": -12.046,
+        "longitude": -77.043,
+        "precision": "city"
+      },
       "rating": 4.5,
       "coverage": [
         "Lima",
@@ -256,7 +289,9 @@
       "serviceIds": [
         "landscaping-1",
         "landscaping-2",
-        "landscaping-3"
+        "landscaping-3",
+        "landscaping-4",
+        "landscaping-5"
       ],
       "img": "/images/professional-4.jpg",
       "publication": "published",
@@ -306,6 +341,11 @@
       "region": "Distrito Capital",
       "country": "Venezuela",
       "years": 10,
+      "location": {
+        "latitude": 10.48,
+        "longitude": -66.904,
+        "precision": "city"
+      },
       "rating": 4.8,
       "coverage": [
         "Caracas",
@@ -315,7 +355,9 @@
       "serviceIds": [
         "hvac-1",
         "hvac-2",
-        "hvac-3"
+        "hvac-3",
+        "hvac-4",
+        "hvac-5"
       ],
       "img": "/images/process.jpg",
       "publication": "published",
@@ -365,6 +407,11 @@
       "region": "Florida",
       "country": "Estados Unidos",
       "years": 8,
+      "location": {
+        "latitude": 25.8,
+        "longitude": -80.28,
+        "precision": "city"
+      },
       "rating": 4.6,
       "coverage": [
         "Miami",
@@ -374,7 +421,9 @@
       "serviceIds": [
         "remodeling-1",
         "remodeling-2",
-        "remodeling-3"
+        "remodeling-3",
+        "remodeling-4",
+        "remodeling-5"
       ],
       "img": "/images/professional-0.jpg",
       "publication": "published",
@@ -424,6 +473,11 @@
       "region": "Madrid",
       "country": "España",
       "years": 5,
+      "location": {
+        "latitude": 40.443,
+        "longitude": -3.69,
+        "precision": "city"
+      },
       "rating": 4.7,
       "coverage": [
         "Madrid",
@@ -432,7 +486,9 @@
       "serviceIds": [
         "painting-1",
         "painting-2",
-        "painting-3"
+        "painting-3",
+        "painting-4",
+        "painting-5"
       ],
       "img": "/images/professional-3.jpg",
       "publication": "published",
@@ -482,6 +538,11 @@
       "region": "Georgia",
       "country": "Estados Unidos",
       "years": 12,
+      "location": {
+        "latitude": 33.956,
+        "longitude": -83.988,
+        "precision": "city"
+      },
       "rating": 4.8,
       "coverage": [
         "Lawrenceville",
@@ -491,7 +552,9 @@
       "serviceIds": [
         "roofing-1",
         "roofing-2",
-        "roofing-3"
+        "roofing-3",
+        "roofing-4",
+        "roofing-5"
       ],
       "img": "/images/professional-0.jpg",
       "publication": "published",
@@ -541,6 +604,11 @@
       "region": "Georgia",
       "country": "Estados Unidos",
       "years": 8,
+      "location": {
+        "latitude": 33.972,
+        "longitude": -84.015,
+        "precision": "city"
+      },
       "rating": 4.7,
       "coverage": [
         "Lawrenceville",
@@ -550,7 +618,9 @@
       "serviceIds": [
         "plumbing-1",
         "plumbing-2",
-        "plumbing-3"
+        "plumbing-3",
+        "plumbing-4",
+        "plumbing-5"
       ],
       "img": "/images/professional-2.jpg",
       "publication": "published",
@@ -600,6 +670,11 @@
       "region": "Georgia",
       "country": "Estados Unidos",
       "years": 10,
+      "location": {
+        "latitude": 33.749,
+        "longitude": -84.388,
+        "precision": "city"
+      },
       "rating": 4.9,
       "coverage": [
         "Atlanta",
@@ -609,7 +684,9 @@
       "serviceIds": [
         "hvac-1",
         "hvac-2",
-        "hvac-3"
+        "hvac-3",
+        "hvac-4",
+        "hvac-5"
       ],
       "img": "/images/process.jpg",
       "publication": "published",
@@ -659,6 +736,11 @@
       "region": "Georgia",
       "country": "Estados Unidos",
       "years": 9,
+      "location": {
+        "latitude": 34.023,
+        "longitude": -84.361,
+        "precision": "city"
+      },
       "rating": 4.8,
       "coverage": [
         "Roswell",
@@ -668,7 +750,9 @@
       "serviceIds": [
         "electrical-1",
         "electrical-2",
-        "electrical-3"
+        "electrical-3",
+        "electrical-4",
+        "electrical-5"
       ],
       "img": "/images/professional-1.jpg",
       "publication": "published",

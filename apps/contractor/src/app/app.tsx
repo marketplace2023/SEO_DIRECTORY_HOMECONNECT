@@ -1,3 +1,4 @@
+import { EmailPage } from "@/auth/email-pages";
 import { useEffect, useState } from "react";
 import { AuthProvider } from "@/auth/auth-provider";
 import { RequireAccount } from "@/auth/require-account";
@@ -24,6 +25,17 @@ function Application() {
     document.title = "HOME CONNECT · Contratistas";
     document.documentElement.lang = language;
   }, [language]);
+  if (
+    ["/verify-email", "/forgot-password", "/reset-password"].includes(
+      route.path,
+    )
+  )
+    return (
+      <EmailPage
+        mode={route.path.slice(1) as "verify-email"}
+        application="contractor"
+      />
+    );
   return (
     <LoadBoundary key={route.path} language={language}>
       {route.path === "/register" ? (

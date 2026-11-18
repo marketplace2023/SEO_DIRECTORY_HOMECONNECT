@@ -37,6 +37,18 @@ async function register(
   }
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Crear cuenta", exact: true }).click();
+  await expect(page).toHaveURL(/workspace/);
+  const dashboard = page.url();
+  await page
+    .getByRole("button", { name: "Ver buzón de pruebas local" })
+    .click();
+  await page
+    .getByRole("link", { name: "Abrir enlace de prueba" })
+    .first()
+    .click();
+  await page.getByRole("button", { name: "Confirmar mi correo" }).click();
+  await expect(page.getByRole("status")).toContainText("Correo confirmado");
+  await page.goto(dashboard);
 }
 
 test("los tres accesos privados requieren sesión y conservan la ruta solicitada", async ({

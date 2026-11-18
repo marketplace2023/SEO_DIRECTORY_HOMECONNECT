@@ -1,4 +1,5 @@
 /* Product surfaces extend the editorial HOME CONNECT identity. */
+.eco-panel p { overflow-wrap:anywhere; }
 .ecosystem-strip {
   display: flex;
   align-items: center;

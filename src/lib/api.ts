@@ -7,5 +7,7 @@ export function apiEndpoint(path: string): string {
   }
   const origin =
     import.meta.env?.VITE_DEMO_API_ORIGIN || "http://127.0.0.1:5190";
-  return `${origin}${path}?session=${encodeURIComponent(session)}`;
+  const endpoint = new URL(path, origin);
+  endpoint.searchParams.set("session", session);
+  return endpoint.toString();
 }

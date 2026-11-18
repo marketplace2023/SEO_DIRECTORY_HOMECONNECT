@@ -21,6 +21,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "test:e2e": "playwright test",
     "seed:export": "tsx scripts/seed-demo.ts",
+    "art:categories": "node scripts/build-category-art.mjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"apps/*/src/**/*.{ts,tsx}\" \"server/**/*.ts\" \"scripts/*.{ts,mjs}\" \"config/*.ts\" \"tests/*.ts\" \"*.{ts,json}\"",
     "db:migrate": "tsx scripts/database.ts migrate",
     "db:inspect": "tsx scripts/database.ts inspect"
@@ -33,6 +34,7 @@
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",
     "motion": "^14.14.0",
+    "nodemailer": "^10.6.0",
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
@@ -47,6 +49,7 @@
     "@tailwindcss/vite": "^4.3.5",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^26.6.6",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",

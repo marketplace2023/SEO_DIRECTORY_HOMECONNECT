@@ -1,5 +1,13 @@
 /** SQL names only. Native names refer to Odoo 18; column compatibility is not implied. */
 export const tables = {
+  attachments: "ir_attachment",
+  settings: "ir_config_parameter",
+  authTokens: "auth_token",
+  mail: "mail_mail",
+  googleConnections: "google_business_connection",
+  googleState: "google_oauth_state",
+  reviews: "rating_rating",
+  support: "support_ticket",
   accounts: "res_users",
   professionals: "res_partner",
   categories: "product_category",
@@ -31,6 +39,10 @@ export const stateTables = [
   tables.audit,
 ] as const;
 export const nativeTables = [
+  "ir_config_parameter",
+  "mail_mail",
+  "rating_rating",
+  "ir_attachment",
   "res_users",
   "res_partner",
   "product_category",

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { IconType } from "react-icons";
 import { PiArrowUpRight, PiList, PiX, PiSignOut } from "react-icons/pi";
 import { Brand } from "@/components/brand";
+import { VerificationNotice } from "@/auth/email-pages";
 import { useAuth } from "@/auth/auth-provider";
 import { useStore } from "@/domain/store";
 import { portalHref } from "@/lib/portals";
@@ -145,6 +146,7 @@ export function DashboardFrame({
           </p>
         )}
         <div className={`workspace-content workspace-${application}`}>
+          <VerificationNotice />
           {children}
         </div>
       </main>

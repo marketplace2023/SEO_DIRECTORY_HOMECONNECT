@@ -21,6 +21,7 @@ export function SiteFooter({
           </p>
         </div>
         <nav aria-label="Footer">
+          <a href="/georgia">Georgia · Local services ↗</a>
           {[
             ["/catalog", es ? "Explorar servicios" : "Explore services"],
             ["/resources", es ? "Guías y recursos" : "Guides and resources"],

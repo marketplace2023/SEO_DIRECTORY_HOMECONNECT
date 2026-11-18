@@ -1,3 +1,4 @@
+import { SupportPanel } from "./pilot-panels";
 import {
   PiSquaresFour,
   PiClipboardText,
@@ -17,6 +18,12 @@ import { RequestList, RequestDetail, Projects } from "./workflows";
 import { Messages, CoveragePanel } from "./operations";
 import { Button } from "@/components/ui/button";
 const sections = [
+  {
+    key: "support",
+    es: "Ayuda y soporte",
+    en: "Help and support",
+    icon: PiChatCircleDots,
+  },
   { key: "overview", es: "Resumen", en: "Overview", icon: PiSquaresFour },
   { key: "requests", es: "Solicitudes", en: "Requests", icon: PiClipboardText },
   { key: "projects", es: "Proyectos", en: "Projects", icon: PiFolderOpen },
@@ -81,6 +88,7 @@ export function Workspace({
           ))}
         </nav>
         <div className="workspace-content">
+          {tab === "support" && <SupportPanel />}
           {tab === "overview" && (
             <>
               <div className="eco-stats-grid">

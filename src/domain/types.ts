@@ -10,14 +10,28 @@ export type Role =
   | "admin";
 export type EvidenceState = "declared" | "pending" | "verified" | "rejected";
 export type PublicationState = "published" | "draft";
-export type Category = { id: string; name: Localized; reference: number };
+export type Category = {
+  id: string;
+  name: Localized;
+  reference: number;
+  description: Localized;
+  excluded: Localized;
+  illustration: string;
+  included: Localized[];
+};
 export type Subcategory = { id: string; categoryId: string; name: Localized };
 export type Service = {
   id: string;
   categoryId: string;
   subcategoryId: string;
   name: Localized;
-  mode: "installation" | "repair" | "maintenance";
+  mode:
+    | "installation"
+    | "repair"
+    | "maintenance"
+    | "assessment"
+    | "design"
+    | "cleaning";
 };
 export type Professional = {
   id: string;
@@ -29,6 +43,11 @@ export type Professional = {
   region: string;
   country: string;
   coverage: string[];
+  location?: {
+    latitude: number;
+    longitude: number;
+    precision: "city" | "public";
+  } | null;
   years: number;
   rating: number;
   img: string;

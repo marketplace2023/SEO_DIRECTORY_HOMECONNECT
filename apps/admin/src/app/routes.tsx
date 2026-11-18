@@ -1,3 +1,9 @@
+import { IntegrationsPage } from "../modules/integrations/integrations-page";
+import {
+  SupportPanel,
+  ReviewModeration,
+} from "@/components/ecosystem/pilot-panels";
+import { SeoPage } from "../modules/seo/seo-page";
 import { lazy, Suspense } from "react";
 import {
   PiSquaresFour,
@@ -60,6 +66,15 @@ const Team = lazy(() =>
   })),
 );
 export const adminModules = [
+  {
+    key: "integrations",
+    es: "Integraciones",
+    en: "Integrations",
+    icon: PiGear,
+  },
+  { key: "support", es: "Soporte", en: "Support", icon: PiGear },
+  { key: "reviews", es: "Rese?as", en: "Reviews", icon: PiSealCheck },
+  { key: "seo", es: "SEO local", en: "Local SEO", icon: PiGlobeHemisphereWest },
   { key: "overview", es: "Resumen", en: "Overview", icon: PiSquaresFour },
   {
     key: "verifications",
@@ -83,6 +98,10 @@ export const adminModules = [
 ];
 export const managementSections: Partial<Record<Role, string[]>> = {
   admin: [
+    "integrations",
+    "support",
+    "reviews",
+    "seo",
     "overview",
     "verifications",
     "profiles",
@@ -112,7 +131,15 @@ export function AdminRoutes({
     return <Missing language={language} />;
   return (
     <Suspense fallback={<p role="status">Cargando módulo…</p>}>
-      {tab === "overview" ? (
+      {tab === "integrations" ? (
+        <IntegrationsPage />
+      ) : tab === "support" ? (
+        <SupportPanel admin />
+      ) : tab === "reviews" ? (
+        <ReviewModeration />
+      ) : tab === "seo" ? (
+        <SeoPage />
+      ) : tab === "overview" ? (
         <Overview language={language} />
       ) : tab === "verifications" ? (
         <Verifications language={language} />

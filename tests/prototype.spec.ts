@@ -21,7 +21,7 @@ test("portada y carruseles navegan sin errores", async ({ page }) => {
   ).toBeEnabled();
   await page.locator(".category-footnote").scrollIntoViewIfNeeded();
   await expect(page.locator(".category-footnote")).toContainText(
-    "32 especialidades",
+    "48 especialidades",
   );
   await page.locator("#how-it-works").scrollIntoViewIfNeeded();
   await expect(page.locator(".how-step").first().locator("..")).toHaveCSS(
@@ -29,7 +29,7 @@ test("portada y carruseles navegan sin errores", async ({ page }) => {
     "1",
   );
   await expect(page.locator(".category-footnote")).toContainText(
-    "32 especialidades",
+    "48 especialidades",
   );
   await expect
     .poll(() =>
@@ -72,7 +72,7 @@ test("buscador, filtros y perfil conservan su comportamiento", async ({
     .selectOption("Venezuela");
   await page.getByRole("button", { name: "Encontrar", exact: true }).click();
   await expect(
-    page.getByText("No hay perfiles de ejemplo con estos filtros."),
+    page.getByText("No hay perfiles publicados con estos filtros."),
   ).toBeVisible();
   await page.getByRole("button", { name: "Limpiar filtros" }).click();
   await expect(page.getByRole("status")).toContainText("12 perfiles");
@@ -106,5 +106,5 @@ test("móvil sin desbordamiento y cambio de idioma", async ({ page }) => {
     "Big ideas.",
   );
   await page.getByRole("button", { name: "Find a pro", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("12 sample profiles");
+  await expect(page.getByRole("status")).toContainText("12 published profiles");
 });

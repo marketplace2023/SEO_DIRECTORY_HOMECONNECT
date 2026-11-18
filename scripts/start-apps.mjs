@@ -1,8 +1,11 @@
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
+import { existsSync } from "node:fs";
 import { acquireInstance, releaseInstance, portInUse } from "./dev-runtime.mjs";
 
 const root = process.cwd();
+if (existsSync(resolve(root, ".env")))
+  process.loadEnvFile(resolve(root, ".env"));
 const vite = resolve(root, "node_modules/vite/bin/vite.js");
 const force = process.argv.includes("--force") ? ["--force"] : [];
 const children = [];

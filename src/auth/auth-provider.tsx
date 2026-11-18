@@ -21,6 +21,7 @@ type Auth = {
   login: (email: string, password: string) => Promise<void>;
   register: (input: Omit<RegisterInput, "role">) => Promise<void>;
   logout: () => Promise<void>;
+  refresh: () => Promise<void>;
 };
 const Context = createContext<Auth | null>(null);
 export function AuthProvider({
@@ -66,6 +67,10 @@ export function AuthProvider({
       value={{
         user,
         checking,
+        refresh: async () => {
+          const { user } = await loadAccount();
+          setUser(user);
+        },
         login: async (email, password) => {
           const session = await loginAccount(email, password, application);
           saveToken(session.token);
