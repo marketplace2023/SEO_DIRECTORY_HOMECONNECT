@@ -17,9 +17,15 @@ export type Category = {
   description: Localized;
   excluded: Localized;
   illustration: string;
+  image: string;
   included: Localized[];
 };
-export type Subcategory = { id: string; categoryId: string; name: Localized };
+export type Subcategory = {
+  id: string;
+  categoryId: string;
+  name: Localized;
+  image: string;
+};
 export type Service = {
   id: string;
   categoryId: string;

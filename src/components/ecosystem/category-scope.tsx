@@ -15,12 +15,12 @@ export function CategoryScope({
       aria-label={t("Significado y alcance", "Meaning and scope")}
     >
       <img
-        src={category.illustration}
+        src={category.image}
         width={480}
         height={320}
         alt={t(
-          `Ilustración de ${category.name.es.toLowerCase()}`,
-          `${category.name.en} illustration`,
+          `Imagen de ${category.name.es.toLowerCase()}`,
+          `${category.name.en} image`,
         )}
       />
       <div>

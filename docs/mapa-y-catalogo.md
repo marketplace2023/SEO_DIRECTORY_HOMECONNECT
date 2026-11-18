@@ -13,15 +13,19 @@ Cada categoría presenta:
 - Definición bilingüe del oficio.
 - Trabajos concretos incluidos y agrupaciones propias.
 - Límites y relación con trabajos que deben acordarse aparte.
-- Una ilustración SVG original y un texto alternativo.
+- Una fotografía de `CATEGORY_PICS` y un texto alternativo.
 - Disponibilidad de perfiles publicados en Georgia, separada de la existencia de la categoría.
 - Acceso al mapa filtrado y a sus servicios.
 
-La portada utiliza las mismas ilustraciones. Las fichas de servicios muestran la explicación de su área. Las páginas locales HTML por ciudad y especialidad reutilizan el contenido aprobado del catálogo, sin depender de ejecutar React. Las páginas SEO siguen requiriendo publicación, oferta y las condiciones de indexación ya documentadas.
+La portada utiliza las fotografías de categorías y ofrece un selector de categoría para explorar sus subcategorías con imagen y servicios. Administración → Catálogo permite buscar categorías o subcategorías, ver las miniaturas, seleccionar una categoría y consultar su fotografía, sus dos subcategorías con imagen y los servicios asociados. Las fichas de servicios muestran la explicación de su área. Las páginas locales HTML por ciudad y especialidad reutilizan el contenido aprobado del catálogo y sus fotografías, sin depender de ejecutar React. Las páginas SEO siguen requiriendo publicación, oferta y las condiciones de indexación ya documentadas.
 
 El catálogo canónico continúa siendo código versionado: `src/data/catalog.ts` y `src/data/category-content.ts`. El arranque guarda esa versión en `product_category` y `product_template`. No se incorpora un editor administrativo que compita con esa fuente. Revisar, versionar y volver a desplegar los cambios editoriales es el flujo vigente.
 
-Las 48 ilustraciones están en `public/category-art`. Su fuente reproducible es `scripts/build-category-art.mjs`; ejecutar `npm run art:categories` para regenerarlas. Son dibujos propios en SVG, sin fotografías, fuentes ni marcas externas. Los iconos pequeños de navegación siguen utilizando React Icons y se resuelven por identificador de categoría.
+Las 144 fotografías originales están en `public/CATEGORY_PICS`: `{id-categoria}.webp` y `{id-subcategoria}.webp`. Esos archivos se conservan intactos. Se reprodujeron franjas blancas al decodificarlos en Chrome incluso en una página vacía, con bytes idénticos al original y sin estilos; por eso la interfaz utiliza versiones JPEG sRGB en `public/CATEGORY_PICS/compatible/{id}.jpg`.
+
+`npm run images:prepare` genera las versiones compatibles con Sharp, sin redimensionar ni recortar las fotografías. También se ejecuta antes de `npm run dev` y `npm run build`. Un manifiesto guarda hashes de entrada/salida y dimensiones; solo se regeneran archivos nuevos o modificados. Los campos `image` del catálogo apuntan a estos JPEG y se persisten en `product_category`. Los tres frontends incluyen la carpeta completa. Las 48 ilustraciones anteriores se conservan en `public/category-art` como referencia histórica; los iconos pequeños siguen utilizando React Icons.
+
+La prueba de imágenes compara los píxeles dibujados por el navegador con la foto original decodificada mediante libvips, admitiendo la diferencia menor de compresión JPEG. Así detecta franjas o alteraciones que una respuesta HTTP 200 y `naturalWidth` no detectaban.
 
 El contenido describe alcances orientativos, no habilita licencias ni garantiza que un profesional ofrezca todos los trabajos. Las cuentas existentes mantienen sus servicios declarados; ampliar el catálogo no les asigna automáticamente nuevas capacidades.
 
@@ -38,7 +42,7 @@ http://127.0.0.1:5175/#/coverage?category=plumbing&city=Lawrenceville&region=Geo
 
 El mapa abre en Georgia cuando se accede sin filtros. La búsqueda usa la misma función que el directorio para texto, localidad atendida, categoría, subcategoría, servicio, región, país, calificación y credenciales. Se conservan los filtros al cambiar entre mapa y directorio o recargar una URL. El orden por nombre también se conserva. Los cambios de filtros dentro de la misma página no fuerzan el desplazamiento al inicio.
 
-La lista y los marcadores comparten identificador y numeración. Seleccionar una tarjeta centra su marcador; seleccionar un marcador resalta y desplaza el listado a su tarjeta. Un perfil sin ubicación conserva su ficha y puede aparecer en búsquedas por ciudad, aunque no tenga marcador.
+La lista y los marcadores comparten identificador. Cada marcador muestra la imagen del perfil en lugar de un número; si no se puede cargar, muestra las iniciales del negocio. El perfil seleccionado se distingue con un borde rojo. Seleccionar una tarjeta centra su marcador; seleccionar un marcador resalta y desplaza el listado a su tarjeta. Un perfil sin ubicación conserva su ficha y puede aparecer en búsquedas por ciudad, aunque no tenga marcador.
 
 En escritorio, resultados a la izquierda y mapa a la derecha. En móvil, botones Lista/Mapa conservan la búsqueda. “Buscar en esta área” aplica explícitamente los límites visibles; mover el mapa no cambia resultados por sí solo. “Quitar límite del mapa” elimina ese filtro. La ubicación del navegador solo se solicita al pulsar “Mi ubicación”; si no se obtiene, se mantiene la búsqueda por ciudad y mapa.
 

@@ -36,6 +36,41 @@ import { Input } from "@/components/ui/input";
 import { Field, Empty, PageTitle, copy } from "./primitives";
 import "leaflet/dist/leaflet.css";
 
+function profileMarker(imageUrl: string, name: string, selected: boolean) {
+  const avatar = document.createElement("span");
+  avatar.className = "map-profile-avatar";
+  const initials = document.createElement("span");
+  initials.className = "map-profile-initials";
+  initials.textContent = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => Array.from(word)[0] || "")
+    .join("")
+    .toUpperCase();
+  avatar.append(initials);
+  const image = document.createElement("img");
+  image.alt = ""; // The Leaflet marker itself carries the business name.
+  image.draggable = false;
+  image.addEventListener("error", () => image.remove(), { once: true });
+  try {
+    const url = new URL(imageUrl, window.location.href);
+    if (imageUrl && ["http:", "https:"].includes(url.protocol)) {
+      image.src = url.href;
+      avatar.append(image);
+    }
+  } catch {
+    /* Keep the initials when the profile has no usable image. */
+  }
+  return L.divIcon({
+    className: `contractor-marker profile-marker ${selected ? "selected" : ""}`,
+    html: avatar,
+    iconSize: [48, 56],
+    iconAnchor: [24, 54],
+    popupAnchor: [0, -48],
+  });
+}
+
 function MapBehavior({
   positions,
   selected,
@@ -519,17 +554,12 @@ export function CoverageMap({
                 title={p.name}
                 alt={p.name}
                 zIndexOffset={selected === p.id ? 1000 : 0}
-                icon={L.divIcon({
-                  className: `contractor-marker ${selected === p.id ? "selected" : ""}`,
-                  html: `<span>${visible.findIndex((row) => row.id === p.id) + 1}</span>`,
-                  iconSize: [34, 42],
-                  iconAnchor: [17, 42],
-                })}
+                icon={profileMarker(p.img, p.name, selected === p.id)}
                 eventHandlers={{ click: () => update("selected", p.id) }}
               >
                 <Tooltip
                   direction="top"
-                  offset={[0, -35]}
+                  offset={[0, -48]}
                   permanent={tileError || !streets}
                 >
                   {point!.label}

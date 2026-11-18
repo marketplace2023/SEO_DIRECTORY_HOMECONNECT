@@ -395,6 +395,7 @@ export const categories: Category[] = rows.map(([id, es, en], i) => ({
   description: categoryContent[id].description,
   excluded: categoryContent[id].excluded,
   illustration: categoryContent[id].illustration,
+  image: `/CATEGORY_PICS/compatible/${id}.jpg`,
   included: rows
     .find((row) => row[0] === id)!
     .slice(3)
@@ -403,11 +404,13 @@ export const categories: Category[] = rows.map(([id, es, en], i) => ({
 export const subcategories: Subcategory[] = rows.flatMap(([id]) => [
   {
     id: `${id}-installation`,
+    image: `/CATEGORY_PICS/compatible/${id}-installation.jpg`,
     categoryId: id,
     name: categoryContent[id].groups[0],
   },
   {
     id: `${id}-care`,
+    image: `/CATEGORY_PICS/compatible/${id}-care.jpg`,
     categoryId: id,
     name: categoryContent[id].groups[1],
   },

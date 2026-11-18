@@ -1,5 +1,6 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DiscoveryHero } from "./home-discovery-hero";
+import { HomeSubcategories } from "./home-subcategories";
 import { MagicCard } from "@/components/ui/magic-card";
 import { useRef, useState } from "react";
 import { MapSurface } from "@/components/ecosystem/map-surface";
@@ -206,8 +207,8 @@ export function HomePage({
                     onClick={() => onCategory(category.id)}
                   >
                     <img
-                      className="mb-4 aspect-[3/2] h-auto w-full rounded-lg object-contain transition-transform duration-300 group-hover/category:scale-105"
-                      src={category.illustration}
+                      className="mb-4 aspect-[3/2] h-auto w-full rounded-lg object-cover transition-transform duration-300 group-hover/category:scale-105"
+                      src={category.image}
                       alt=""
                       loading="lazy"
                       width={160}
@@ -239,6 +240,7 @@ export function HomePage({
           </span>
         </div>
       </section>
+      <HomeSubcategories language={search.language} />
       <section
         className="professionals-section"
         aria-labelledby="professionals-title"

@@ -59,7 +59,7 @@ test("SEO publicado: solo oferta real, escape HTML, canonical y esquema sin repu
   expect(page.html).toContain(
     "Excludes structural engineering and solar electrical connections.",
   );
-  expect(page.html).toContain("/category-art/roofing.svg");
+  expect(page.html).toContain("/CATEGORY_PICS/compatible/roofing.jpg");
   const profile = renderLocal(
     profilePath(person),
     state,

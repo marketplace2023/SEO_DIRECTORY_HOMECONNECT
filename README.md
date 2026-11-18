@@ -6,7 +6,7 @@ El mercado inicial confirmado es **Georgia, Estados Unidos**. El [alcance realis
 
 La implementación de **SEO local, confirmación de email y Google Business Profile** se describe en [seo-email-google.md](docs/seo-email-google.md). Incluye páginas HTML `/georgia`, gestión SEO en administración, buzón local de pruebas sin SMTP y conexión OAuth pendiente de credenciales/aprobación externas. No hay dominio ni proveedor de correo real configurados.
 
-El [mapa y catálogo ampliado](docs/mapa-y-catalogo.md) incorpora 48 categorías con ilustraciones propias, definiciones y límites, 240 servicios y búsqueda compartida entre lista y mapa. Los contratistas pueden configurar una ubicación pública desde su ficha.
+El [mapa y catálogo ampliado](docs/mapa-y-catalogo.md) incorpora 48 categorías, 96 subcategorías con sus fotografías de `public/CATEGORY_PICS`, definiciones y límites, 240 servicios y búsqueda compartida entre lista y mapa. El administrador consulta la jerarquía con sus imágenes desde Catálogo. Los contratistas pueden configurar una ubicación pública desde su ficha.
 
 La [composición visual y procedencia de componentes](docs/componentes-visuales.md) identifica dónde se usan shadcn/ui, Magic UI, Aceternity UI y Swiper. La portada incorpora una galería interactiva y filtros por familias de oficios; los paneles comparten controles, tarjetas, navegación y estados shadcn.
 

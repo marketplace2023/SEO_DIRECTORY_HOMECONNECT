@@ -7,6 +7,9 @@
     "apps/*"
   ],
   "scripts": {
+    "images:prepare": "node scripts/prepare-category-images.mjs",
+    "predev": "npm run images:prepare",
+    "prebuild": "npm run images:prepare",
     "dev": "node scripts/start-apps.mjs",
     "dev:web": "vite --host 127.0.0.1",
     "dev:contractor": "npm run dev --workspace @servinexo/contractor",
@@ -54,6 +57,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
     "prettier": "^3.10.1",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4.3.5",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

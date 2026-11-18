@@ -31,6 +31,11 @@ export function RequestPage({
         (!recipient || recipient.serviceIds.includes(s.id)),
     ) ||
     services.find((s) => s.id === recipient?.serviceIds[0]) ||
+    services.find(
+      (s) =>
+        s.categoryId === route.params.get("category") &&
+        (!recipient || recipient.serviceIds.includes(s.id)),
+    ) ||
     services[0];
   const [categoryId, setCategory] = useState(initial.categoryId);
   const [serviceId, setService] = useState(initial.id);

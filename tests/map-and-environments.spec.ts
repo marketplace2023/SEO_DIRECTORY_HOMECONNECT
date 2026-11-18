@@ -111,6 +111,27 @@ test("mapa real: filtros, marcadores, fichas y respaldo geográfico sin calles e
     "4 contratistas en el mapa",
   );
   await expect(page.locator(".contractor-marker")).toHaveCount(4);
+  const profileMarker = page.locator(
+    '.contractor-marker[title="Peachtree Roof Studio"]',
+  );
+  const cardImage = page
+    .locator(".map-results article")
+    .filter({ hasText: "Peachtree Roof Studio" })
+    .locator(".map-result-top img");
+  const imagePath = await cardImage.getAttribute("src");
+  await expect(profileMarker.locator("img")).toHaveAttribute(
+    "src",
+    new RegExp(imagePath!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$"),
+  );
+  await expect
+    .poll(() =>
+      profileMarker
+        .locator("img")
+        .evaluate((image: HTMLImageElement) => image.naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  const avatarBounds = await profileMarker.locator("img").boundingBox();
+  expect(Math.abs(avatarBounds!.width - avatarBounds!.height)).toBeLessThan(1);
   await expect
     .poll(() => page.locator(".leaflet-local-geography-pane path").count())
     .toBeGreaterThan(0);

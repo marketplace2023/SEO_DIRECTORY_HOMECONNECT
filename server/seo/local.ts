@@ -37,7 +37,7 @@ export const profilePath = (person: Professional) =>
 function categoryScope(id: string) {
   const category = categories.find((c) => c.id === id);
   if (!category) return "";
-  return `<section><img src="${escapeHtml(category.illustration)}" width="480" height="320" alt="${escapeHtml(category.name.en)} illustration" style="max-width:100%;height:auto"/><h2>What this trade covers</h2><p>${escapeHtml(category.description.en)}</p><ul>${services
+  return `<section><img src="${escapeHtml(category.image)}" width="480" height="320" alt="${escapeHtml(category.name.en)} image" style="max-width:100%;height:auto"/><h2>What this trade covers</h2><p>${escapeHtml(category.description.en)}</p><ul>${services
     .filter((s) => s.categoryId === id)
     .map((s) => `<li>${escapeHtml(s.name.en)}</li>`)
     .join(

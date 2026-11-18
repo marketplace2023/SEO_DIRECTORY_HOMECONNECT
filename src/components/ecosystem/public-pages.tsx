@@ -21,15 +21,15 @@ import {
 import { useStore } from "@/domain/store";
 import { useAuth } from "@/auth/auth-provider";
 import { findProfessionals, filtersFromParams } from "@/domain/queries";
-import { normalize, type Language, type Professional } from "@/domain/types";
+import { type Language, type Professional } from "@/domain/types";
 import { navigate, type Route } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { SearchBar } from "@/components/search-bar";
 import { ProfessionalCard } from "@/components/professional-card";
-import { categoryIcon } from "@/components/category-icons";
+
 import { CategoryScope } from "./category-scope";
-import { MagicCard } from "@/components/ui/magic-card";
+
 import { parseBounds } from "@/domain/geography";
 import {
   PageTitle,
@@ -40,210 +40,8 @@ import {
   copy,
 } from "./primitives";
 
-export function CatalogPage({
-  route,
-  language,
-}: {
-  route: Route;
-  language: Language;
-}) {
-  const t = copy(language);
-  const [query, setQuery] = useState("");
-  const { state } = useStore();
-  const selected = categories.find(
-    (c) => c.id === route.params.get("category"),
-  );
-  const visible = categories.filter((c) =>
-    normalize(
-      [
-        c.name.es,
-        c.name.en,
-        c.description[language],
-        ...c.included.map((item) => item[language]),
-      ].join(" "),
-    ).includes(normalize(query)),
-  );
-  return (
-    <>
-      <PageTitle
-        eyebrow={t("ELIGE TU SIGUIENTE PASO", "CHOOSE YOUR NEXT STEP")}
-        title={
-          selected?.name[language] ||
-          t("Una especialidad para cada idea.", "A specialty for every idea.")
-        }
-        description={t(
-          `${categories.length} categorías y ${services.length} servicios. Conoce cada oficio, su alcance y los profesionales disponibles.`,
-          `${categories.length} categories and ${services.length} services. Understand each trade, its scope and available professionals.`,
-        )}
-        action={
-          <Button onClick={() => navigate("/professionals")}>
-            {t("Ver profesionales", "See professionals")}
-            <PiArrowUpRight />
-          </Button>
-        }
-      />
-      <div className="catalog-layout">
-        <aside className="catalog-sidebar">
-          <Field label={t("Buscar categoría", "Find a category")}>
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("Ej. pintura", "E.g. painting")}
-            />
-          </Field>
-          <button
-            className={!selected ? "selected" : ""}
-            onClick={() => navigate("/catalog")}
-          >
-            {t("Todas las categorías", "All categories")}
-            <span>{categories.length}</span>
-          </button>
-          {visible.map((c) => {
-            const Icon = categoryIcon(c.id);
-            return (
-              <button
-                key={c.id}
-                className={selected?.id === c.id ? "selected" : ""}
-                onClick={() =>
-                  navigate("/catalog", new URLSearchParams({ category: c.id }))
-                }
-              >
-                <Icon />
-                {c.name[language]}
-              </button>
-            );
-          })}
-          {!visible.length && <p>{t("Sin coincidencias", "No matches")}</p>}
-        </aside>
-        <div className="catalog-content">
-          {selected ? (
-            <>
-              <CategoryScope category={selected} language={language} />
-              <div className="category-discovery-actions">
-                <Button
-                  onClick={() =>
-                    navigate(
-                      "/coverage",
-                      new URLSearchParams({
-                        category: selected.id,
-                        region: "Georgia",
-                      }),
-                    )
-                  }
-                >
-                  {t("Explorar en el mapa", "Explore on the map")}
-                </Button>
-                <p>
-                  {
-                    state.professionals.filter(
-                      (p) =>
-                        p.publication === "published" &&
-                        p.region === "Georgia" &&
-                        p.categoryId === selected.id,
-                    ).length
-                  }{" "}
-                  {t(
-                    "perfiles publicados en Georgia",
-                    "published profiles in Georgia",
-                  )}
-                </p>
-              </div>
-              {subcategories
-                .filter((s) => s.categoryId === selected.id)
-                .map((group) => (
-                  <Panel key={group.id} title={group.name[language]}>
-                    <div className="service-grid">
-                      {services
-                        .filter((s) => s.subcategoryId === group.id)
-                        .map((service) => (
-                          <ServiceTile
-                            key={service.id}
-                            serviceId={service.id}
-                            language={language}
-                          />
-                        ))}
-                    </div>
-                  </Panel>
-                ))}
-              <p className="eco-note">
-                {t(
-                  "El catálogo describe trabajos posibles; la disponibilidad depende de los profesionales publicados en tu localidad. La categoría no acredita una licencia.",
-                  "The catalog describes possible work; availability depends on published local professionals. Category membership does not certify a license.",
-                )}
-              </p>
-            </>
-          ) : (
-            <div className="catalog-category-grid">
-              {visible.map((c) => {
-                const Icon = categoryIcon(c.id);
-                return (
-                  <MagicCard
-                    key={c.id}
-                    className="rounded-xl"
-                    gradientFrom="#e00707"
-                    gradientTo="#f5b5a7"
-                    gradientColor="#fff1ed"
-                    gradientOpacity={0.35}
-                  >
-                    <button
-                      className="catalog-category"
-                      onClick={() =>
-                        navigate(
-                          "/catalog",
-                          new URLSearchParams({ category: c.id }),
-                        )
-                      }
-                    >
-                      <span className="catalog-index">
-                        {String(c.reference).padStart(2, "0")}
-                      </span>
-                      <img
-                        src={c.illustration}
-                        alt=""
-                        loading="lazy"
-                        width={480}
-                        height={320}
-                      />
-                      <Icon className="category-small-icon" />
-                      <h2>{c.name[language]}</h2>
-                      <p>{c.description[language]}</p>
-                      <span>
-                        {services.filter((s) => s.categoryId === c.id).length}{" "}
-                        {t("servicios", "services")}
-                        <PiArrowUpRight />
-                      </span>
-                      <small>
-                        {state.professionals.some(
-                          (p) =>
-                            p.publication === "published" &&
-                            p.region === "Georgia" &&
-                            p.categoryId === c.id,
-                        )
-                          ? t("Con perfiles en Georgia", "Profiles in Georgia")
-                          : t(
-                              "Sin oferta publicada en Georgia",
-                              "No published supply in Georgia",
-                            )}
-                      </small>
-                    </button>
-                  </MagicCard>
-                );
-              })}
-              {!visible.length && (
-                <Empty
-                  title={t(
-                    "No encontramos esa categoría",
-                    "Category not found",
-                  )}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
+export { CatalogPage } from "./catalog-page";
+
 export function ServiceTile({
   serviceId,
   language,
