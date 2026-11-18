@@ -1,6 +1,8 @@
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DiscoveryHero } from "./home-discovery-hero";
+import { MagicCard } from "@/components/ui/magic-card";
 import { useRef, useState } from "react";
 import { MapSurface } from "@/components/ecosystem/map-surface";
-import { EnvironmentCards } from "@/components/ecosystem/environment-access";
 import { navigate } from "@/lib/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { A11y, Keyboard, FreeMode } from "swiper/modules";
@@ -9,9 +11,6 @@ import {
   PiArrowUpRight,
   PiArrowRight,
   PiArrowLeft,
-  PiCheck,
-  PiSparkle,
-  PiSealCheckFill,
   PiChatCircleDots,
   PiCompass,
   PiHandshake,
@@ -21,7 +20,7 @@ import { BlurFade } from "@/components/ui/blur-fade";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { ProfessionalCard } from "@/components/professional-card";
-import { SearchBar, type SearchBarProps } from "@/components/search-bar";
+import { type SearchBarProps } from "@/components/search-bar";
 import { categoryIcon } from "@/components/category-icons";
 import translations from "@/data/translations.json";
 import { categories, categoryName } from "@/data/catalog";
@@ -44,6 +43,38 @@ export function HomePage({
 }) {
   const es = search.language === "es";
   const t = translations[search.language];
+  const [family, setFamily] = useState("all");
+  const exterior = [
+    "roofing",
+    "landscaping",
+    "trees",
+    "fencing",
+    "decks",
+    "gutters",
+    "siding",
+    "pools",
+    "pressure-washing",
+  ];
+  const systems = [
+    "plumbing",
+    "electrical",
+    "hvac",
+    "solar",
+    "appliances",
+    "septic",
+    "home-automation",
+    "home-networks",
+    "irrigation",
+  ];
+  const catalog = categories.filter(
+    (c) =>
+      family === "all" ||
+      (family === "outside"
+        ? exterior.includes(c.id)
+        : family === "systems"
+          ? systems.includes(c.id)
+          : !exterior.includes(c.id) && !systems.includes(c.id)),
+  );
   const categorySlider = useRef<SwiperInstance | null>(null);
   const professionalSlider = useRef<SwiperInstance | null>(null);
   const [categoryEdges, setCategoryEdges] = useState({
@@ -81,126 +112,11 @@ export function HomePage({
   ];
   return (
     <>
-      <section
-        className="hero-section site-container"
-        aria-labelledby="hero-title"
-      >
-        <div className="hero-copy">
-          <BlurFade delay={0.05}>
-            <p className="eyebrow">
-              <span className="short-line" />
-              {es ? "EL PUNTO DE ENCUENTRO" : "THE MEETING POINT"}
-            </p>
-          </BlurFade>
-          <BlurFade delay={0.13}>
-            <h1 id="hero-title">
-              {es ? (
-                <>
-                  Grandes ideas.
-                  <br />
-                  Las{" "}
-                  <em>
-                    manos
-                    <br className="desktop-break" /> correctas.
-                  </em>
-                </>
-              ) : (
-                <>
-                  Big ideas.
-                  <br />
-                  The{" "}
-                  <em>
-                    right
-                    <br className="desktop-break" /> hands.
-                  </em>
-                </>
-              )}
-            </h1>
-          </BlurFade>
-          <BlurFade delay={0.21}>
-            <p className="hero-description">
-              {es
-                ? "Para ese cambio que llevas tiempo imaginando, hay alguien que sabe hacerlo realidad. Encuéntralo aquí."
-                : "For that change you’ve been imagining, there’s someone who knows how to make it happen. Find them here."}
-            </p>
-          </BlurFade>
-          <BlurFade delay={0.28}>
-            <div className="hero-highlights">
-              <span>
-                <PiCheck />
-                {es ? "Talento por descubrir" : "Talent to discover"}
-              </span>
-              <span>
-                <PiCheck />
-                {es ? "Cerca de ti" : "Close to you"}
-              </span>
-            </div>
-          </BlurFade>
-        </div>
-        <div className="hero-visual">
-          <div className="hero-photo">
-            <img
-              src="/images/hero.jpg"
-              alt={
-                es
-                  ? "Sala luminosa con materiales naturales y mobiliario de madera"
-                  : "Bright living room with natural materials and wooden furniture"
-              }
-              fetchPriority="high"
-            />
-            <div className="photo-caption">
-              <span>
-                {es ? "ESPACIOS QUE INSPIRAN" : "SPACES THAT INSPIRE"}
-              </span>
-              <p>
-                {es
-                  ? "Tu próxima idea empieza aquí."
-                  : "Your next idea starts here."}
-              </p>
-              <PiArrowUpRight />
-            </div>
-          </div>
-          <div className="hero-stamp">
-            <PiSparkle />
-            <span>
-              {es ? "De la idea" : "From idea"}
-              <br />
-              <b>{es ? "a lo increíble." : "to incredible."}</b>
-            </span>
-          </div>
-          <div className="floating-profile">
-            <span className="floating-avatar">CR</span>
-            <div>
-              <strong>
-                Construcciones Ruiz <PiSealCheckFill />
-              </strong>
-              <span>
-                {es ? "Construcción · Miami" : "Construction · Miami"}
-              </span>
-            </div>
-            <span className="sample-label">DEMO</span>
-          </div>
-          <span className="visual-coordinate">
-            01 / {es ? "HAZLO POSIBLE" : "MAKE IT HAPPEN"}
-          </span>
-        </div>
-        <div className="hero-search">
-          <SearchBar {...search} />
-          <div className="popular-search">
-            <span>{es ? "¿Por dónde empezar?" : "Where to start?"}</span>
-            {[29, 4, 3].map((index) => (
-              <button
-                key={index}
-                onClick={() => onCategory(categories[index].id)}
-              >
-                {categories[index].name[search.language]}
-                <PiArrowUpRight />
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-      <EnvironmentCards language={search.language} />
+      <DiscoveryHero
+        search={search}
+        onCategory={onCategory}
+        onQuote={onQuote}
+      />
       <section
         className="categories-section site-container"
         aria-labelledby="category-title"
@@ -239,7 +155,22 @@ export function HomePage({
             </button>
           </div>
         </div>
+        <Tabs value={family} onValueChange={setFamily} className="mb-6">
+          <TabsList variant="line" className="max-w-full overflow-x-auto">
+            <TabsTrigger value="all">{es ? "Todos" : "All"}</TabsTrigger>
+            <TabsTrigger value="outside">
+              {es ? "Exterior" : "Outside"}
+            </TabsTrigger>
+            <TabsTrigger value="inside">
+              {es ? "Interior" : "Inside"}
+            </TabsTrigger>
+            <TabsTrigger value="systems">
+              {es ? "Instalaciones" : "Systems"}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         <Swiper
+          key={family}
           modules={[A11y, Keyboard, FreeMode]}
           keyboard={{ enabled: true, onlyInViewport: true }}
           freeMode
@@ -259,26 +190,39 @@ export function HomePage({
           }
           className="category-swiper"
         >
-          {categories.map((_, index) => {
-            const Icon = categoryIcon(categories[index].id);
+          {catalog.map((category) => {
+            const Icon = categoryIcon(category.id);
             return (
-              <SwiperSlide key={index}>
-                <button
-                  className="category-tile"
-                  onClick={() => onCategory(categories[index].id)}
+              <SwiperSlide key={category.id}>
+                <MagicCard
+                  gradientFrom="#e00707"
+                  gradientTo="#f5b5a7"
+                  gradientColor="#fff1ed"
+                  gradientOpacity={0.45}
+                  className="rounded-xl"
                 >
-                  <img
-                    className="category-art-thumb"
-                    src={categories[index].illustration}
-                    alt=""
-                    loading="lazy"
-                    width={160}
-                    height={107}
-                  />
-                  <Icon className="category-icon compact-category-icon" />
-                  <span>{categories[index].name[search.language]}</span>
-                  <PiArrowUpRight className="category-arrow" />
-                </button>
+                  <button
+                    className="group/category block w-full p-4 text-left"
+                    onClick={() => onCategory(category.id)}
+                  >
+                    <img
+                      className="mb-4 aspect-[3/2] h-auto w-full rounded-lg object-contain transition-transform duration-300 group-hover/category:scale-105"
+                      src={category.illustration}
+                      alt=""
+                      loading="lazy"
+                      width={160}
+                      height={107}
+                    />
+                    <Icon className="mb-3 size-5 text-primary" />
+                    <span className="block text-sm font-bold">
+                      {category.name[search.language]}
+                    </span>
+                    <span className="mt-2 flex justify-between text-xs text-neutral-500">
+                      {es ? "Conoce su alcance" : "Understand the scope"}
+                      <PiArrowUpRight />
+                    </span>
+                  </button>
+                </MagicCard>
               </SwiperSlide>
             );
           })}

@@ -29,6 +29,7 @@ import { SearchBar } from "@/components/search-bar";
 import { ProfessionalCard } from "@/components/professional-card";
 import { categoryIcon } from "@/components/category-icons";
 import { CategoryScope } from "./category-scope";
+import { MagicCard } from "@/components/ui/magic-card";
 import { parseBounds } from "@/domain/geography";
 import {
   PageTitle,
@@ -176,48 +177,56 @@ export function CatalogPage({
               {visible.map((c) => {
                 const Icon = categoryIcon(c.id);
                 return (
-                  <button
+                  <MagicCard
                     key={c.id}
-                    className="catalog-category"
-                    onClick={() =>
-                      navigate(
-                        "/catalog",
-                        new URLSearchParams({ category: c.id }),
-                      )
-                    }
+                    className="rounded-xl"
+                    gradientFrom="#e00707"
+                    gradientTo="#f5b5a7"
+                    gradientColor="#fff1ed"
+                    gradientOpacity={0.35}
                   >
-                    <span className="catalog-index">
-                      {String(c.reference).padStart(2, "0")}
-                    </span>
-                    <img
-                      src={c.illustration}
-                      alt=""
-                      loading="lazy"
-                      width={480}
-                      height={320}
-                    />
-                    <Icon className="category-small-icon" />
-                    <h2>{c.name[language]}</h2>
-                    <p>{c.description[language]}</p>
-                    <span>
-                      {services.filter((s) => s.categoryId === c.id).length}{" "}
-                      {t("servicios", "services")}
-                      <PiArrowUpRight />
-                    </span>
-                    <small>
-                      {state.professionals.some(
-                        (p) =>
-                          p.publication === "published" &&
-                          p.region === "Georgia" &&
-                          p.categoryId === c.id,
-                      )
-                        ? t("Con perfiles en Georgia", "Profiles in Georgia")
-                        : t(
-                            "Sin oferta publicada en Georgia",
-                            "No published supply in Georgia",
-                          )}
-                    </small>
-                  </button>
+                    <button
+                      className="catalog-category"
+                      onClick={() =>
+                        navigate(
+                          "/catalog",
+                          new URLSearchParams({ category: c.id }),
+                        )
+                      }
+                    >
+                      <span className="catalog-index">
+                        {String(c.reference).padStart(2, "0")}
+                      </span>
+                      <img
+                        src={c.illustration}
+                        alt=""
+                        loading="lazy"
+                        width={480}
+                        height={320}
+                      />
+                      <Icon className="category-small-icon" />
+                      <h2>{c.name[language]}</h2>
+                      <p>{c.description[language]}</p>
+                      <span>
+                        {services.filter((s) => s.categoryId === c.id).length}{" "}
+                        {t("servicios", "services")}
+                        <PiArrowUpRight />
+                      </span>
+                      <small>
+                        {state.professionals.some(
+                          (p) =>
+                            p.publication === "published" &&
+                            p.region === "Georgia" &&
+                            p.categoryId === c.id,
+                        )
+                          ? t("Con perfiles en Georgia", "Profiles in Georgia")
+                          : t(
+                              "Sin oferta publicada en Georgia",
+                              "No published supply in Georgia",
+                            )}
+                      </small>
+                    </button>
+                  </MagicCard>
                 );
               })}
               {!visible.length && (

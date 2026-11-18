@@ -40,7 +40,7 @@ test("portada y carruseles navegan sin errores", async ({ page }) => {
     .toBeGreaterThan(0);
   await page.evaluate(async () => {
     await document.fonts.ready;
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   });
   await page.screenshot({
     path: ".artifacts/home-desktop.png",

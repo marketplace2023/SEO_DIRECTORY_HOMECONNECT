@@ -7,6 +7,10 @@ import { useAuth } from "@/auth/auth-provider";
 import { useStore } from "@/domain/store";
 import { portalHref } from "@/lib/portals";
 import { navigate } from "@/lib/navigation";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import type { Language } from "@/domain/types";
 export type SidebarItem = {
   key: string;
@@ -121,19 +125,35 @@ export function DashboardFrame({
               <small>{user?.email}</small>
             </div>
           </div>
-          {items.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => navigate(`${path}/${item.key}`)}
-              aria-label={item.label}
-              aria-current={item.key === active ? "page" : undefined}
-              className={item.key === active ? "selected" : ""}
-            >
-              <item.icon />
-              {item.label}
-              {!!item.badge && <span>{item.badge}</span>}
-            </button>
-          ))}
+          <Separator className="my-3" />
+          <p className="mb-3 px-3 text-[10px] font-semibold tracking-[.14em] text-neutral-400 uppercase">
+            {language === "es" ? "Tu espacio de trabajo" : "Your workspace"}
+          </p>
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="space-y-1 pr-2">
+              {items.map((item) => (
+                <Button
+                  variant="ghost"
+                  key={item.key}
+                  onClick={() => navigate(`${path}/${item.key}`)}
+                  aria-label={item.label}
+                  aria-current={item.key === active ? "page" : undefined}
+                  className={`h-auto w-full justify-start gap-3 rounded-lg px-3 py-3 text-left text-[13px] font-medium ${item.key === active ? "selected bg-red-50 text-red-700 hover:bg-red-50" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"}`}
+                >
+                  <item.icon />
+                  {item.label}
+                  {!!item.badge && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-auto rounded-md px-1.5 py-0 text-[10px]"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
         </nav>
         {syncError && (
           <p role="alert" className="eco-error">

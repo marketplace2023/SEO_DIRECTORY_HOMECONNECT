@@ -8,6 +8,8 @@ La implementación de **SEO local, confirmación de email y Google Business Prof
 
 El [mapa y catálogo ampliado](docs/mapa-y-catalogo.md) incorpora 48 categorías con ilustraciones propias, definiciones y límites, 240 servicios y búsqueda compartida entre lista y mapa. Los contratistas pueden configurar una ubicación pública desde su ficha.
 
+La [composición visual y procedencia de componentes](docs/componentes-visuales.md) identifica dónde se usan shadcn/ui, Magic UI, Aceternity UI y Swiper. La portada incorpora una galería interactiva y filtros por familias de oficios; los paneles comparten controles, tarjetas, navegación y estados shadcn.
+
 | Aplicación | Proyecto | Dirección |
 |---|---|---|
 | Marketplace y cuenta del consumidor | Raíz | http://127.0.0.1:5175 |

@@ -1,3 +1,4 @@
+import { NativeSelect } from "@/components/ui/native-select";
 import { PiMagnifyingGlass, PiMapPin, PiArrowUpRight } from "react-icons/pi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,16 +37,16 @@ export function SearchBar({
   const es = language === "es";
   return (
     <form
-      className="search-bar"
+      className="grid grid-cols-1 items-center gap-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-[0_8px_30px_-15px_#8c3d3225] md:grid-cols-[1.2fr_1.4fr_auto] md:p-5"
       onSubmit={(e) => {
         e.preventDefault();
         onSearch();
       }}
     >
-      <label className="search-service">
+      <label className="flex min-w-0 items-center gap-3 text-neutral-400 [&>span]:w-full">
         <PiMagnifyingGlass aria-hidden="true" />
         <span>
-          <span className="search-label">
+          <span className="mb-2 block text-[11px] font-semibold text-neutral-700">
             {es ? "¿Qué necesitas hacer?" : "What do you need done?"}
           </span>
           <Input
@@ -57,14 +58,17 @@ export function SearchBar({
           />
         </span>
       </label>
-      <div className="search-location">
+      <div className="flex min-w-0 items-center gap-3 text-neutral-400 [&>div]:w-full">
         <PiMapPin aria-hidden="true" />
         <div>
-          <label className="search-label" htmlFor="search-country">
+          <label
+            className="mb-2 block text-[11px] font-semibold text-neutral-700"
+            htmlFor="search-country"
+          >
             {es ? "¿Dónde?" : "Where?"}
           </label>
-          <div className="location-fields">
-            <select
+          <div className="grid min-w-0 grid-cols-2 gap-2">
+            <NativeSelect
               id="search-country"
               aria-label={es ? "País" : "Country"}
               value={country}
@@ -74,7 +78,7 @@ export function SearchBar({
               {countries.map((c) => (
                 <option key={c}>{c}</option>
               ))}
-            </select>
+            </NativeSelect>
             <Input
               aria-label={es ? "Ciudad" : "City"}
               placeholder={es ? "Ciudad" : "City"}
@@ -84,7 +88,7 @@ export function SearchBar({
           </div>
         </div>
       </div>
-      <Button type="submit" className="search-submit">
+      <Button type="submit" className="h-11 rounded-lg px-6 md:self-end">
         {es ? "Encontrar" : "Find a pro"}
         <PiArrowUpRight />
       </Button>
