@@ -1,0 +1,43 @@
+/** SQL names only. Native names refer to Odoo 18; column compatibility is not implied. */
+export const tables = {
+  accounts: "res_users",
+  professionals: "res_partner",
+  categories: "product_category",
+  services: "product_template",
+  materials: "product_product",
+  proposals: "sale_order",
+  projects: "project_project",
+  milestones: "project_milestone",
+  messages: "mail_message",
+  requests: "service_request",
+  credentials: "contractor_credential",
+  portfolio: "contractor_portfolio",
+  favorites: "contractor_favorite",
+  audit: "audit_event",
+  datasets: "prototype_dataset",
+  migrations: "schema_migration",
+} as const;
+export const stateTables = [
+  tables.professionals,
+  tables.materials,
+  tables.proposals,
+  tables.projects,
+  tables.milestones,
+  tables.messages,
+  tables.requests,
+  tables.credentials,
+  tables.portfolio,
+  tables.favorites,
+  tables.audit,
+] as const;
+export const nativeTables = [
+  "res_users",
+  "res_partner",
+  "product_category",
+  "product_template",
+  "product_product",
+  "sale_order",
+  "project_project",
+  "project_milestone",
+  "mail_message",
+] as const;

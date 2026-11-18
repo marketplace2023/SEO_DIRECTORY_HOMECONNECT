@@ -1,0 +1,284 @@
+{
+  "requests": [
+    {
+      "id": "seed-request-kitchen",
+      "ownerId": "demo-owner",
+      "title": "Una cocina más abierta en Miami",
+      "categoryId": "remodeling",
+      "serviceId": "remodeling-1",
+      "location": "Miami, Estados Unidos",
+      "description": "Renovar los gabinetes, instalar una isla y mejorar la iluminación. Cocina de 18 m². Fotografías y visita previa por acordar.",
+      "budget": 8500,
+      "date": "2026-12-02",
+      "createdAt": "2026-11-14T14:00:00Z",
+      "status": "awarded"
+    },
+    {
+      "id": "seed-request-paint",
+      "ownerId": "demo-owner",
+      "title": "Pintar el salón y dos habitaciones",
+      "categoryId": "painting",
+      "serviceId": "painting-1",
+      "location": "Madrid, España",
+      "description": "Pintura interior lavable en tonos claros. Incluye preparación de paredes, protección del mobiliario y limpieza final. Superficie aproximada: 85 m².",
+      "budget": 1400,
+      "date": "2026-12-05",
+      "createdAt": "2026-11-16T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "seed-request-roof",
+      "ownerId": "demo-owner",
+      "title": "Revisar una filtración en el techo",
+      "categoryId": "roofing",
+      "serviceId": "roofing-2",
+      "location": "Lawrenceville, Georgia, Estados Unidos",
+      "description": "Hay humedad cerca de una ventana después de las lluvias. Necesitamos diagnóstico del techo y propuesta de reparación.",
+      "budget": 2200,
+      "date": "2026-11-25",
+      "createdAt": "2026-11-16T11:30:00Z",
+      "status": "open"
+    },
+    {
+      "id": "seed-request-clima",
+      "ownerId": "demo-owner",
+      "title": "Mantenimiento del aire del estudio",
+      "categoryId": "hvac",
+      "serviceId": "hvac-3",
+      "professionalId": "clima",
+      "location": "Caracas, Venezuela",
+      "description": "Limpieza de ductos y revisión de dos equipos de aire acondicionado del estudio.",
+      "budget": 280,
+      "date": "2026-11-12",
+      "createdAt": "2026-11-08T10:00:00Z",
+      "status": "awarded"
+    },
+    {
+      "id": "seed-request-lights",
+      "ownerId": "demo-owner",
+      "title": "Nueva iluminación para la sala",
+      "categoryId": "electrical",
+      "serviceId": "electrical-1",
+      "location": "Toronto, Canadá",
+      "description": "Instalar seis puntos de luz cálida y revisar el circuito existente. Se requiere visita para confirmar cableado.",
+      "budget": 900,
+      "date": "2026-12-08",
+      "createdAt": "2026-11-15T15:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "seed-request-water",
+      "ownerId": "demo-owner",
+      "title": "Cambiar los grifos de la cocina",
+      "categoryId": "plumbing",
+      "serviceId": "plumbing-1",
+      "location": "Bogotá, Colombia",
+      "description": "Sustituir dos grifos y revisar las conexiones. Los grifos los proporciona el cliente.",
+      "budget": 180,
+      "date": "2026-12-03",
+      "createdAt": "2026-11-17T08:00:00Z",
+      "status": "open"
+    }
+  ],
+  "proposals": [
+    {
+      "id": "seed-proposal-ruiz",
+      "requestId": "seed-request-kitchen",
+      "professionalId": "ruiz",
+      "amount": 8200,
+      "currency": "USD",
+      "days": 18,
+      "description": "Incluye diseño de distribución, gabinetes, isla y preparación de instalaciones. Visita de planificación antes del inicio.",
+      "createdAt": "2026-11-15T10:00:00Z",
+      "status": "accepted"
+    },
+    {
+      "id": "seed-proposal-habita",
+      "requestId": "seed-request-kitchen",
+      "professionalId": "habita",
+      "amount": 7900,
+      "currency": "USD",
+      "days": 22,
+      "description": "Renovación de gabinetes y encimera con materiales de catálogo. Electrodomésticos no incluidos.",
+      "createdAt": "2026-11-15T12:00:00Z",
+      "status": "declined"
+    },
+    {
+      "id": "seed-proposal-nova",
+      "requestId": "seed-request-paint",
+      "professionalId": "nova",
+      "amount": 1280,
+      "currency": "USD",
+      "days": 5,
+      "description": "Pintura lavable en dos manos, reparación de pequeñas grietas y protección completa. Materiales incluidos.",
+      "createdAt": "2026-11-16T13:00:00Z",
+      "status": "submitted"
+    },
+    {
+      "id": "seed-proposal-color",
+      "requestId": "seed-request-paint",
+      "professionalId": "color-casa",
+      "amount": 1150,
+      "currency": "USD",
+      "days": 7,
+      "description": "Preparación y pintura de paredes y techos. Incluye materiales y limpieza; colores a confirmar.",
+      "createdAt": "2026-11-17T09:00:00Z",
+      "status": "submitted"
+    },
+    {
+      "id": "seed-proposal-clima",
+      "requestId": "seed-request-clima",
+      "professionalId": "clima",
+      "amount": 250,
+      "currency": "USD",
+      "days": 2,
+      "description": "Limpieza de ductos, revisión de filtros y prueba de funcionamiento de ambos equipos.",
+      "createdAt": "2026-11-09T10:00:00Z",
+      "status": "accepted"
+    },
+    {
+      "id": "seed-proposal-lights",
+      "requestId": "seed-request-lights",
+      "professionalId": "brightspark",
+      "amount": 860,
+      "currency": "USD",
+      "days": 3,
+      "description": "Instalación de seis luminarias, conexiones y prueba de seguridad. Luminarias suministradas por el cliente.",
+      "createdAt": "2026-11-16T15:00:00Z",
+      "status": "submitted"
+    }
+  ],
+  "projects": [
+    {
+      "id": "seed-project-kitchen",
+      "requestId": "seed-request-kitchen",
+      "proposalId": "seed-proposal-ruiz",
+      "title": "Una cocina más abierta en Miami",
+      "professionalId": "ruiz",
+      "amount": 8200,
+      "status": "active",
+      "milestones": [
+        {
+          "id": "planning",
+          "title": {
+            "es": "Visita y planificación",
+            "en": "Site visit and planning"
+          },
+          "done": true
+        },
+        {
+          "id": "work",
+          "title": { "es": "Ejecución del trabajo", "en": "Work in progress" },
+          "done": false
+        },
+        {
+          "id": "delivery",
+          "title": {
+            "es": "Entrega y revisión final",
+            "en": "Delivery and final review"
+          },
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "seed-project-clima",
+      "requestId": "seed-request-clima",
+      "proposalId": "seed-proposal-clima",
+      "title": "Mantenimiento del aire del estudio",
+      "professionalId": "clima",
+      "amount": 250,
+      "status": "completed",
+      "milestones": [
+        {
+          "id": "planning",
+          "title": {
+            "es": "Visita y planificación",
+            "en": "Site visit and planning"
+          },
+          "done": true
+        },
+        {
+          "id": "work",
+          "title": { "es": "Ejecución del trabajo", "en": "Work in progress" },
+          "done": true
+        },
+        {
+          "id": "delivery",
+          "title": {
+            "es": "Entrega y revisión final",
+            "en": "Delivery and final review"
+          },
+          "done": true
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "id": "seed-msg-1",
+      "professionalId": "ruiz",
+      "sender": "owner",
+      "text": "Nos gustaría mantener la isla de la propuesta. ¿Podemos revisar las medidas durante la visita?",
+      "createdAt": "2026-11-15T14:00:00Z"
+    },
+    {
+      "id": "seed-msg-2",
+      "professionalId": "ruiz",
+      "sender": "contractor",
+      "text": "Sí, la visita de planificación está incluida. Revisaremos circulación, enchufes y medidas antes de fabricar.",
+      "createdAt": "2026-11-15T14:20:00Z"
+    },
+    {
+      "id": "seed-msg-3",
+      "professionalId": "nova",
+      "sender": "owner",
+      "text": "¿La propuesta incluye proteger los muebles del salón?",
+      "createdAt": "2026-11-16T16:00:00Z"
+    },
+    {
+      "id": "seed-msg-4",
+      "professionalId": "nova",
+      "sender": "contractor",
+      "text": "Sí, incluimos protección del mobiliario y limpieza al finalizar cada jornada.",
+      "createdAt": "2026-11-16T16:30:00Z"
+    },
+    {
+      "id": "seed-msg-5",
+      "professionalId": "peachtree",
+      "sender": "owner",
+      "text": "La humedad aparece después de lluvias fuertes. Podemos enviar fotos de la zona antes de la visita.",
+      "createdAt": "2026-11-17T09:30:00Z"
+    }
+  ],
+  "audit": [
+    {
+      "id": "seed-audit-1",
+      "at": "2026-11-17T09:00:00Z",
+      "actor": "contractor",
+      "action": "proposal",
+      "entityId": "seed-proposal-color"
+    },
+    {
+      "id": "seed-audit-2",
+      "at": "2026-11-16T15:00:00Z",
+      "actor": "contractor",
+      "action": "proposal",
+      "entityId": "seed-proposal-lights"
+    },
+    {
+      "id": "seed-audit-3",
+      "at": "2026-11-15T17:00:00Z",
+      "actor": "owner",
+      "action": "accept",
+      "entityId": "seed-project-kitchen"
+    },
+    {
+      "id": "seed-audit-4",
+      "at": "2026-11-14T14:00:00Z",
+      "actor": "owner",
+      "action": "request",
+      "entityId": "seed-request-kitchen"
+    }
+  ]
+}

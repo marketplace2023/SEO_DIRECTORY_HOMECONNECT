@@ -1,0 +1,1073 @@
+{
+  "version": 1,
+  "seedRevision": 2,
+  "professionals": [
+    {
+      "id": "ruiz",
+      "name": "Construcciones Ruiz",
+      "fur": "SN-CTR-0001",
+      "categoryId": "remodeling",
+      "city": "Miami",
+      "region": "Florida",
+      "country": "Estados Unidos",
+      "years": 15,
+      "rating": 4.8,
+      "coverage": [
+        "Miami",
+        "Coral Gables",
+        "Doral"
+      ],
+      "serviceIds": [
+        "remodeling-1",
+        "remodeling-2",
+        "remodeling-3"
+      ],
+      "img": "/images/professional-0.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a remodelación, con atención en Miami y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to remodeling, serving Miami and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "ruiz-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-1",
+          "note": ""
+        },
+        {
+          "id": "ruiz-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-1",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "ruiz-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-0.jpg"
+        }
+      ]
+    },
+    {
+      "id": "brightspark",
+      "name": "BrightSpark Electric",
+      "fur": "SN-CTR-0002",
+      "categoryId": "electrical",
+      "city": "Toronto",
+      "region": "Ontario",
+      "country": "Canadá",
+      "years": 9,
+      "rating": 4.7,
+      "coverage": [
+        "Toronto",
+        "North York",
+        "Scarborough"
+      ],
+      "serviceIds": [
+        "electrical-1",
+        "electrical-2",
+        "electrical-3"
+      ],
+      "img": "/images/professional-1.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a electricidad, con atención en Toronto y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to electrical, serving Toronto and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "brightspark-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-2",
+          "note": ""
+        },
+        {
+          "id": "brightspark-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-2",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "brightspark-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-1.jpg"
+        }
+      ]
+    },
+    {
+      "id": "aquafix",
+      "name": "AquaFix Solutions",
+      "fur": "SN-CTR-0003",
+      "categoryId": "plumbing",
+      "city": "Bogotá",
+      "region": "Bogotá D.C.",
+      "country": "Colombia",
+      "years": 7,
+      "rating": 4.6,
+      "coverage": [
+        "Bogotá",
+        "Chía",
+        "Soacha"
+      ],
+      "serviceIds": [
+        "plumbing-1",
+        "plumbing-2",
+        "plumbing-3"
+      ],
+      "img": "/images/professional-2.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a plomería, con atención en Bogotá y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to plumbing, serving Bogotá and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "aquafix-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "pending",
+          "reference": "DEMO-ID-3",
+          "note": ""
+        },
+        {
+          "id": "aquafix-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-3",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "aquafix-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-2.jpg"
+        }
+      ]
+    },
+    {
+      "id": "nova",
+      "name": "Pintura Nova",
+      "fur": "SN-CTR-0004",
+      "categoryId": "painting",
+      "city": "Madrid",
+      "region": "Madrid",
+      "country": "España",
+      "years": 11,
+      "rating": 4.9,
+      "coverage": [
+        "Madrid",
+        "Getafe",
+        "Leganés"
+      ],
+      "serviceIds": [
+        "painting-1",
+        "painting-2",
+        "painting-3"
+      ],
+      "img": "/images/professional-3.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a pintura, con atención en Madrid y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to painting, serving Madrid and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "nova-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-4",
+          "note": ""
+        },
+        {
+          "id": "nova-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-4",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "nova-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-3.jpg"
+        }
+      ]
+    },
+    {
+      "id": "verde",
+      "name": "Verde Hogar",
+      "fur": "SN-CTR-0005",
+      "categoryId": "landscaping",
+      "city": "Lima",
+      "region": "Lima",
+      "country": "Perú",
+      "years": 6,
+      "rating": 4.5,
+      "coverage": [
+        "Lima",
+        "Miraflores",
+        "San Isidro"
+      ],
+      "serviceIds": [
+        "landscaping-1",
+        "landscaping-2",
+        "landscaping-3"
+      ],
+      "img": "/images/professional-4.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a jardinería y paisajismo, con atención en Lima y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to landscaping, serving Lima and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "verde-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "pending",
+          "reference": "DEMO-ID-5",
+          "note": ""
+        },
+        {
+          "id": "verde-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-5",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "verde-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-4.jpg"
+        }
+      ]
+    },
+    {
+      "id": "clima",
+      "name": "Clima Hogar",
+      "fur": "SN-CTR-0006",
+      "categoryId": "hvac",
+      "city": "Caracas",
+      "region": "Distrito Capital",
+      "country": "Venezuela",
+      "years": 10,
+      "rating": 4.8,
+      "coverage": [
+        "Caracas",
+        "Chacao",
+        "Baruta"
+      ],
+      "serviceIds": [
+        "hvac-1",
+        "hvac-2",
+        "hvac-3"
+      ],
+      "img": "/images/process.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a climatización, con atención en Caracas y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to hvac, serving Caracas and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "clima-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-6",
+          "note": ""
+        },
+        {
+          "id": "clima-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-6",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "clima-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/process.jpg"
+        }
+      ]
+    },
+    {
+      "id": "habita",
+      "name": "Estudio Habita",
+      "fur": "SN-CTR-0007",
+      "categoryId": "remodeling",
+      "city": "Miami",
+      "region": "Florida",
+      "country": "Estados Unidos",
+      "years": 8,
+      "rating": 4.6,
+      "coverage": [
+        "Miami",
+        "Doral",
+        "Hialeah"
+      ],
+      "serviceIds": [
+        "remodeling-1",
+        "remodeling-2",
+        "remodeling-3"
+      ],
+      "img": "/images/professional-0.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a remodelación, con atención en Miami y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to remodeling, serving Miami and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "habita-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-7",
+          "note": ""
+        },
+        {
+          "id": "habita-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-7",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "habita-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-0.jpg"
+        }
+      ]
+    },
+    {
+      "id": "color-casa",
+      "name": "Color y Casa",
+      "fur": "SN-CTR-0008",
+      "categoryId": "painting",
+      "city": "Madrid",
+      "region": "Madrid",
+      "country": "España",
+      "years": 5,
+      "rating": 4.7,
+      "coverage": [
+        "Madrid",
+        "Getafe"
+      ],
+      "serviceIds": [
+        "painting-1",
+        "painting-2",
+        "painting-3"
+      ],
+      "img": "/images/professional-3.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a pintura, con atención en Madrid y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to painting, serving Madrid and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "color-casa-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-8",
+          "note": ""
+        },
+        {
+          "id": "color-casa-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-8",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "color-casa-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-3.jpg"
+        }
+      ]
+    },
+    {
+      "id": "peachtree",
+      "name": "Peachtree Roof Studio",
+      "fur": "SN-CTR-0009",
+      "categoryId": "roofing",
+      "city": "Lawrenceville",
+      "region": "Georgia",
+      "country": "Estados Unidos",
+      "years": 12,
+      "rating": 4.8,
+      "coverage": [
+        "Lawrenceville",
+        "Duluth",
+        "Suwanee"
+      ],
+      "serviceIds": [
+        "roofing-1",
+        "roofing-2",
+        "roofing-3"
+      ],
+      "img": "/images/professional-0.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a techos y cubiertas, con atención en Lawrenceville y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to roofing, serving Lawrenceville and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "peachtree-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-9",
+          "note": ""
+        },
+        {
+          "id": "peachtree-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-9",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "peachtree-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-0.jpg"
+        }
+      ]
+    },
+    {
+      "id": "gwinnett",
+      "name": "Gwinnett Aqua Taller",
+      "fur": "SN-CTR-0010",
+      "categoryId": "plumbing",
+      "city": "Lawrenceville",
+      "region": "Georgia",
+      "country": "Estados Unidos",
+      "years": 8,
+      "rating": 4.7,
+      "coverage": [
+        "Lawrenceville",
+        "Dacula",
+        "Buford"
+      ],
+      "serviceIds": [
+        "plumbing-1",
+        "plumbing-2",
+        "plumbing-3"
+      ],
+      "img": "/images/professional-2.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a plomería, con atención en Lawrenceville y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to plumbing, serving Lawrenceville and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "gwinnett-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-10",
+          "note": ""
+        },
+        {
+          "id": "gwinnett-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-10",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "gwinnett-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-2.jpg"
+        }
+      ]
+    },
+    {
+      "id": "atlanta-clima",
+      "name": "Atlanta Clima Studio",
+      "fur": "SN-CTR-0011",
+      "categoryId": "hvac",
+      "city": "Atlanta",
+      "region": "Georgia",
+      "country": "Estados Unidos",
+      "years": 10,
+      "rating": 4.9,
+      "coverage": [
+        "Atlanta",
+        "Roswell",
+        "Alpharetta"
+      ],
+      "serviceIds": [
+        "hvac-1",
+        "hvac-2",
+        "hvac-3"
+      ],
+      "img": "/images/process.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a climatización, con atención en Atlanta y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to hvac, serving Atlanta and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "atlanta-clima-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-11",
+          "note": ""
+        },
+        {
+          "id": "atlanta-clima-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-11",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "atlanta-clima-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/process.jpg"
+        }
+      ]
+    },
+    {
+      "id": "roswell",
+      "name": "Roswell Circuit Lab",
+      "fur": "SN-CTR-0012",
+      "categoryId": "electrical",
+      "city": "Roswell",
+      "region": "Georgia",
+      "country": "Estados Unidos",
+      "years": 9,
+      "rating": 4.8,
+      "coverage": [
+        "Roswell",
+        "Alpharetta",
+        "Atlanta"
+      ],
+      "serviceIds": [
+        "electrical-1",
+        "electrical-2",
+        "electrical-3"
+      ],
+      "img": "/images/professional-1.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a electricidad, con atención en Roswell y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to electrical, serving Roswell and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "roswell-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-12",
+          "note": ""
+        },
+        {
+          "id": "roswell-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-12",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "roswell-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-1.jpg"
+        }
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "id": "seed-request-kitchen",
+      "ownerId": "demo-owner",
+      "title": "Una cocina más abierta en Miami",
+      "categoryId": "remodeling",
+      "serviceId": "remodeling-1",
+      "location": "Miami, Estados Unidos",
+      "description": "Renovar los gabinetes, instalar una isla y mejorar la iluminación. Cocina de 18 m². Fotografías y visita previa por acordar.",
+      "budget": 8500,
+      "date": "2026-12-02",
+      "createdAt": "2026-11-14T14:00:00Z",
+      "status": "awarded"
+    },
+    {
+      "id": "seed-request-paint",
+      "ownerId": "demo-owner",
+      "title": "Pintar el salón y dos habitaciones",
+      "categoryId": "painting",
+      "serviceId": "painting-1",
+      "location": "Madrid, España",
+      "description": "Pintura interior lavable en tonos claros. Incluye preparación de paredes, protección del mobiliario y limpieza final. Superficie aproximada: 85 m².",
+      "budget": 1400,
+      "date": "2026-12-05",
+      "createdAt": "2026-11-16T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "seed-request-roof",
+      "ownerId": "demo-owner",
+      "title": "Revisar una filtración en el techo",
+      "categoryId": "roofing",
+      "serviceId": "roofing-2",
+      "location": "Lawrenceville, Georgia, Estados Unidos",
+      "description": "Hay humedad cerca de una ventana después de las lluvias. Necesitamos diagnóstico del techo y propuesta de reparación.",
+      "budget": 2200,
+      "date": "2026-11-25",
+      "createdAt": "2026-11-16T11:30:00Z",
+      "status": "open"
+    },
+    {
+      "id": "seed-request-clima",
+      "ownerId": "demo-owner",
+      "title": "Mantenimiento del aire del estudio",
+      "categoryId": "hvac",
+      "serviceId": "hvac-3",
+      "professionalId": "clima",
+      "location": "Caracas, Venezuela",
+      "description": "Limpieza de ductos y revisión de dos equipos de aire acondicionado del estudio.",
+      "budget": 280,
+      "date": "2026-11-12",
+      "createdAt": "2026-11-08T10:00:00Z",
+      "status": "awarded"
+    },
+    {
+      "id": "seed-request-lights",
+      "ownerId": "demo-owner",
+      "title": "Nueva iluminación para la sala",
+      "categoryId": "electrical",
+      "serviceId": "electrical-1",
+      "location": "Toronto, Canadá",
+      "description": "Instalar seis puntos de luz cálida y revisar el circuito existente. Se requiere visita para confirmar cableado.",
+      "budget": 900,
+      "date": "2026-12-08",
+      "createdAt": "2026-11-15T15:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "seed-request-water",
+      "ownerId": "demo-owner",
+      "title": "Cambiar los grifos de la cocina",
+      "categoryId": "plumbing",
+      "serviceId": "plumbing-1",
+      "location": "Bogotá, Colombia",
+      "description": "Sustituir dos grifos y revisar las conexiones. Los grifos los proporciona el cliente.",
+      "budget": 180,
+      "date": "2026-12-03",
+      "createdAt": "2026-11-17T08:00:00Z",
+      "status": "open"
+    }
+  ],
+  "proposals": [
+    {
+      "id": "seed-proposal-ruiz",
+      "requestId": "seed-request-kitchen",
+      "professionalId": "ruiz",
+      "amount": 8200,
+      "currency": "USD",
+      "days": 18,
+      "description": "Incluye diseño de distribución, gabinetes, isla y preparación de instalaciones. Visita de planificación antes del inicio.",
+      "createdAt": "2026-11-15T10:00:00Z",
+      "status": "accepted"
+    },
+    {
+      "id": "seed-proposal-habita",
+      "requestId": "seed-request-kitchen",
+      "professionalId": "habita",
+      "amount": 7900,
+      "currency": "USD",
+      "days": 22,
+      "description": "Renovación de gabinetes y encimera con materiales de catálogo. Electrodomésticos no incluidos.",
+      "createdAt": "2026-11-15T12:00:00Z",
+      "status": "declined"
+    },
+    {
+      "id": "seed-proposal-nova",
+      "requestId": "seed-request-paint",
+      "professionalId": "nova",
+      "amount": 1280,
+      "currency": "USD",
+      "days": 5,
+      "description": "Pintura lavable en dos manos, reparación de pequeñas grietas y protección completa. Materiales incluidos.",
+      "createdAt": "2026-11-16T13:00:00Z",
+      "status": "submitted"
+    },
+    {
+      "id": "seed-proposal-color",
+      "requestId": "seed-request-paint",
+      "professionalId": "color-casa",
+      "amount": 1150,
+      "currency": "USD",
+      "days": 7,
+      "description": "Preparación y pintura de paredes y techos. Incluye materiales y limpieza; colores a confirmar.",
+      "createdAt": "2026-11-17T09:00:00Z",
+      "status": "submitted"
+    },
+    {
+      "id": "seed-proposal-clima",
+      "requestId": "seed-request-clima",
+      "professionalId": "clima",
+      "amount": 250,
+      "currency": "USD",
+      "days": 2,
+      "description": "Limpieza de ductos, revisión de filtros y prueba de funcionamiento de ambos equipos.",
+      "createdAt": "2026-11-09T10:00:00Z",
+      "status": "accepted"
+    },
+    {
+      "id": "seed-proposal-lights",
+      "requestId": "seed-request-lights",
+      "professionalId": "brightspark",
+      "amount": 860,
+      "currency": "USD",
+      "days": 3,
+      "description": "Instalación de seis luminarias, conexiones y prueba de seguridad. Luminarias suministradas por el cliente.",
+      "createdAt": "2026-11-16T15:00:00Z",
+      "status": "submitted"
+    }
+  ],
+  "projects": [
+    {
+      "id": "seed-project-kitchen",
+      "requestId": "seed-request-kitchen",
+      "proposalId": "seed-proposal-ruiz",
+      "title": "Una cocina más abierta en Miami",
+      "professionalId": "ruiz",
+      "amount": 8200,
+      "status": "active",
+      "milestones": [
+        {
+          "id": "planning",
+          "title": {
+            "es": "Visita y planificación",
+            "en": "Site visit and planning"
+          },
+          "done": true
+        },
+        {
+          "id": "work",
+          "title": {
+            "es": "Ejecución del trabajo",
+            "en": "Work in progress"
+          },
+          "done": false
+        },
+        {
+          "id": "delivery",
+          "title": {
+            "es": "Entrega y revisión final",
+            "en": "Delivery and final review"
+          },
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "seed-project-clima",
+      "requestId": "seed-request-clima",
+      "proposalId": "seed-proposal-clima",
+      "title": "Mantenimiento del aire del estudio",
+      "professionalId": "clima",
+      "amount": 250,
+      "status": "completed",
+      "milestones": [
+        {
+          "id": "planning",
+          "title": {
+            "es": "Visita y planificación",
+            "en": "Site visit and planning"
+          },
+          "done": true
+        },
+        {
+          "id": "work",
+          "title": {
+            "es": "Ejecución del trabajo",
+            "en": "Work in progress"
+          },
+          "done": true
+        },
+        {
+          "id": "delivery",
+          "title": {
+            "es": "Entrega y revisión final",
+            "en": "Delivery and final review"
+          },
+          "done": true
+        }
+      ]
+    }
+  ],
+  "favorites": [
+    "ruiz",
+    "nova",
+    "peachtree"
+  ],
+  "messages": [
+    {
+      "id": "seed-msg-1",
+      "professionalId": "ruiz",
+      "sender": "owner",
+      "text": "Nos gustaría mantener la isla de la propuesta. ¿Podemos revisar las medidas durante la visita?",
+      "createdAt": "2026-11-15T14:00:00Z"
+    },
+    {
+      "id": "seed-msg-2",
+      "professionalId": "ruiz",
+      "sender": "contractor",
+      "text": "Sí, la visita de planificación está incluida. Revisaremos circulación, enchufes y medidas antes de fabricar.",
+      "createdAt": "2026-11-15T14:20:00Z"
+    },
+    {
+      "id": "seed-msg-3",
+      "professionalId": "nova",
+      "sender": "owner",
+      "text": "¿La propuesta incluye proteger los muebles del salón?",
+      "createdAt": "2026-11-16T16:00:00Z"
+    },
+    {
+      "id": "seed-msg-4",
+      "professionalId": "nova",
+      "sender": "contractor",
+      "text": "Sí, incluimos protección del mobiliario y limpieza al finalizar cada jornada.",
+      "createdAt": "2026-11-16T16:30:00Z"
+    },
+    {
+      "id": "seed-msg-5",
+      "professionalId": "peachtree",
+      "sender": "owner",
+      "text": "La humedad aparece después de lluvias fuertes. Podemos enviar fotos de la zona antes de la visita.",
+      "createdAt": "2026-11-17T09:30:00Z"
+    }
+  ],
+  "materials": [
+    {
+      "id": "paint",
+      "name": "Pintura interior mate · 4 L",
+      "unit": "envase",
+      "stock": 18,
+      "price": 32
+    },
+    {
+      "id": "membrane",
+      "name": "Membrana impermeabilizante · 10 m²",
+      "unit": "rollo",
+      "stock": 7,
+      "price": 64
+    },
+    {
+      "id": "cable",
+      "name": "Cable eléctrico · 100 m",
+      "unit": "bobina",
+      "stock": 12,
+      "price": 45
+    }
+  ],
+  "team": [
+    {
+      "id": "member-1",
+      "name": "Ana Salcedo",
+      "specialty": "Coordinación de proyectos"
+    },
+    {
+      "id": "member-2",
+      "name": "Luis Paredes",
+      "specialty": "Supervisión de obra"
+    }
+  ],
+  "audit": [
+    {
+      "id": "seed-audit-1",
+      "at": "2026-11-17T09:00:00Z",
+      "actor": "contractor",
+      "action": "proposal",
+      "entityId": "seed-proposal-color"
+    },
+    {
+      "id": "seed-audit-2",
+      "at": "2026-11-16T15:00:00Z",
+      "actor": "contractor",
+      "action": "proposal",
+      "entityId": "seed-proposal-lights"
+    },
+    {
+      "id": "seed-audit-3",
+      "at": "2026-11-15T17:00:00Z",
+      "actor": "owner",
+      "action": "accept",
+      "entityId": "seed-project-kitchen"
+    },
+    {
+      "id": "seed-audit-4",
+      "at": "2026-11-14T14:00:00Z",
+      "actor": "owner",
+      "action": "request",
+      "entityId": "seed-request-kitchen"
+    }
+  ],
+  "accounts": [
+    {
+      "id": "demo-owner",
+      "role": "owner",
+      "name": "Carolina Mendoza",
+      "email": "carolina@example.test",
+      "label": {
+        "es": "Consumidora de prueba",
+        "en": "Demo consumer"
+      }
+    },
+    {
+      "id": "demo-contractor",
+      "role": "contractor",
+      "name": "Construcciones Ruiz",
+      "email": "ruiz@example.test",
+      "label": {
+        "es": "Contratista de prueba",
+        "en": "Demo contractor"
+      }
+    },
+    {
+      "id": "demo-admin",
+      "role": "admin",
+      "name": "Lucía Ramos",
+      "email": "admin@example.test",
+      "label": {
+        "es": "Administradora de prueba",
+        "en": "Demo administrator"
+      }
+    }
+  ]
+}

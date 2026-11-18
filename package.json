@@ -1,0 +1,59 @@
+{
+  "name": "servinexo-prototype",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/start-apps.mjs",
+    "dev:web": "vite --host 127.0.0.1",
+    "dev:contractor": "npm run dev --workspace @servinexo/contractor",
+    "dev:admin": "npm run dev --workspace @servinexo/admin",
+    "dev:api": "tsx scripts/demo-api.ts",
+    "dev:refresh": "node scripts/start-apps.mjs --force",
+    "build": "tsc -b && vite build && npm run build --workspace @servinexo/contractor && npm run build --workspace @servinexo/admin",
+    "build:web": "tsc -b && vite build",
+    "build:contractor": "npm run build --workspace @servinexo/contractor",
+    "build:admin": "npm run build --workspace @servinexo/admin",
+    "typecheck": "tsc -b",
+    "preview": "vite preview --host 127.0.0.1",
+    "test:e2e": "playwright test",
+    "seed:export": "tsx scripts/seed-demo.ts",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"apps/*/src/**/*.{ts,tsx}\" \"server/**/*.ts\" \"scripts/*.{ts,mjs}\" \"config/*.ts\" \"tests/*.ts\" \"*.{ts,json}\"",
+    "db:migrate": "tsx scripts/database.ts migrate",
+    "db:inspect": "tsx scripts/database.ts inspect"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "@fontsource-variable/open-sans": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "leaflet": "^1.9.4",
+    "motion": "^14.14.0",
+    "radix-ui": "^1.8.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-icons": "^5.7.0",
+    "react-leaflet": "^5.0.0",
+    "swiper": "^14.4.0",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "prettier": "^3.10.1",
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}
