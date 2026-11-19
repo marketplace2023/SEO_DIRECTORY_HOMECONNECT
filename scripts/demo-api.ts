@@ -514,6 +514,17 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return;
     }
     if (url.pathname === "/api/auth/register") {
+      if (
+        process.env.HOME_CONNECT_REGISTRATION_ENABLED === "false" ||
+        (process.env.NODE_ENV === "production" &&
+          (!process.env.SMTP_HOST || !process.env.SMTP_FROM))
+      ) {
+        send(503, {
+          error:
+            "El registro estará disponible cuando se configure el envío de correo. Las cuentas existentes pueden iniciar sesión.",
+        });
+        return;
+      }
       const input = z
         .object({
           name: z.string().trim().min(2).max(100),
@@ -684,7 +695,7 @@ const server = createServer((req, res) => {
     } else res.end();
   });
 });
-server.listen(port, "127.0.0.1", () =>
+server.listen(port, process.env.SERVINEXO_API_HOST || "127.0.0.1", () =>
   console.log(`Servinexo demo API: http://127.0.0.1:${port}`),
 );
 function stop() {

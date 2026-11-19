@@ -12,5 +12,8 @@ export function clientOrigins() {
     "import.meta.env.VITE_DEMO_API_ORIGIN": JSON.stringify(
       process.env.SERVINEXO_API_ORIGIN || "http://127.0.0.1:5190",
     ),
+    "import.meta.env.VITE_REGISTRATION_ENABLED": JSON.stringify(
+      process.env.HOME_CONNECT_REGISTRATION_ENABLED || "true",
+    ),
   };
 }
