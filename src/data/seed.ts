@@ -1,5 +1,7 @@
 import type { DemoState, Professional } from "@/domain/types";
 import { categories, services } from "@/data/catalog";
+import { cityLocation } from "@/domain/geography";
+import { professionalLocations } from "./locations";
 import scenarios from "./seed-scenarios.json" with { type: "json" };
 
 const records = [
@@ -174,6 +176,13 @@ export function createSeed(): DemoState {
       region,
       country,
       years,
+      location: professionalLocations[id]
+        ? {
+            latitude: professionalLocations[id][0],
+            longitude: professionalLocations[id][1],
+            precision: "city",
+          }
+        : cityLocation(city, region, country),
       rating,
       coverage: coverage.split("|"),
       serviceIds: services

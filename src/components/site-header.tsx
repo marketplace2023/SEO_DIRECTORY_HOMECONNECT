@@ -93,8 +93,8 @@ export function SiteHeader({
                     onClick={() => setServicesOpen(false)}
                   >
                     {es
-                      ? "Ver las 32 especialidades"
-                      : "View all 32 specialties"}
+                      ? `Ver las ${categories.length} especialidades`
+                      : `View all ${categories.length} specialties`}
                     <PiArrowUpRight />
                   </a>
                   <div>

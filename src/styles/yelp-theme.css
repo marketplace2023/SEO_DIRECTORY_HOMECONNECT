@@ -5,13 +5,6 @@ h3 {
   font-family: "Poppins", Arial, sans-serif;
   font-weight: 600;
 }
-.hero-copy h1 {
-  font-family: "Poppins", Arial, sans-serif;
-  font-size: clamp(2.7rem, 4.5vw, 4.3rem);
-  letter-spacing: -0.055em;
-  font-weight: 700;
-}
-.hero-copy h1 em,
 .project-cta h2 em {
   font-style: normal;
   font-weight: 700;
@@ -39,16 +32,12 @@ h3 {
   background: #fff1f1;
   color: #8c1414;
 }
-.hero-copy h1 em,
 .project-cta h2 em {
   color: var(--primary);
 }
 .project-cta-inner,
 .workspace-welcome {
   background: #fff1f1;
-}
-.professional-rating svg {
-  color: #f15c4f;
 }
 .category-icon,
 .category-tile:hover .category-icon {
@@ -59,10 +48,6 @@ h3 {
 .service-tile:hover {
   background: #fff1f1;
   border-color: #f2b3b3;
-}
-.verified-badge {
-  background: #ffffffed;
-  color: #444;
 }
 .eco-badge.verified,
 .eco-badge.accepted,

@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useAuth } from "@/auth/auth-provider";
+import { VerificationNotice } from "@/auth/email-pages";
 import { demoPost } from "@/domain/demo-client";
 import { PiArrowRight, PiArrowUpRight } from "react-icons/pi";
 import { categories, services } from "@/data/catalog";
@@ -62,10 +63,16 @@ export function RequestPage({
         (!recipient || recipient.serviceIds.includes(s.id)),
     ) ||
     services.find((s) => s.id === recipient?.serviceIds[0]) ||
+    services.find(
+      (s) =>
+        s.categoryId === route.params.get("category") &&
+        (!recipient || recipient.serviceIds.includes(s.id)),
+    ) ||
     services[0];
   const [categoryId, setCategory] = useState(initial.categoryId);
   const [serviceId, setService] = useState(initial.id);
   const [error, setError] = useState("");
+  if (user && !user.emailVerified) return <VerificationNotice />;
   if (
     (route.params.has("professional") && !recipient) ||
     (route.params.has("service") &&

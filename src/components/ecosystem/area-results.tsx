@@ -14,6 +14,7 @@ import { PiMapPin } from "react-icons/pi";
 import { ProfessionalCard } from "@/components/professional-card";
 import { categoryName } from "@/data/catalog";
 import { professionalLocations } from "@/data/locations";
+import { locationOf } from "@/domain/geography";
 import { usCities, usCounties } from "@/data/us-areas";
 import { normalize, type Language, type Professional } from "@/domain/types";
 import type { UsArea } from "@/domain/us-area";
@@ -160,8 +161,14 @@ export default function AreaResults({
           state === area.state &&
           [en, es].some((name) => normalize(name) === normalize(person.city)),
       );
+      const declared = locationOf(person);
       const position =
-        (city && geography.cities[city[0]]) ?? professionalLocations[person.id];
+        person.location === null
+          ? undefined
+          : declared
+            ? ([declared.latitude, declared.longitude] as Point)
+            : ((city && geography.cities[city[0]]) ??
+              professionalLocations[person.id]);
       if (!position) continue;
       mapped.add(person.id);
       const key = position.join(",");

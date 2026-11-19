@@ -34,6 +34,7 @@ export function SiteFooter({
           "#/areas",
           es ? "Explorar por estado y ciudad" : "Explore by state and city",
         ],
+        ["/georgia", es ? "Servicios en Georgia" : "Georgia local services"],
         ["#/coverage", es ? "Mapa de profesionales" : "Professional map"],
         ["#/", es ? "Volver al inicio" : "Back to home"],
       ],

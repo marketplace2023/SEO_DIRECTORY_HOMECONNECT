@@ -8,7 +8,7 @@ import {
 } from "react";
 import { PiMagnifyingGlass, PiMapPin, PiCrosshair, PiX } from "react-icons/pi";
 import { categories, services } from "@/data/catalog";
-import { categoryIcons } from "@/components/category-icons";
+import { categoryIcon } from "@/components/category-icons";
 import { useStore } from "@/domain/store";
 import { normalize } from "@/domain/types";
 import { queryCategory, searchLocations } from "@/domain/search";
@@ -325,7 +325,7 @@ export function SearchBar({
                 const category = categories.find(
                   (category) => category.id === item.categoryId,
                 )!;
-                const Icon = categoryIcons[category.reference - 1];
+                const Icon = categoryIcon(category.id);
                 return (
                   <button
                     type="button"

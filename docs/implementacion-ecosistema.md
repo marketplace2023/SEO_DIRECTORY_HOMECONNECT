@@ -1,6 +1,6 @@
 # Ecosistema frontend · segunda iteración
 
-Implementación local guiada por `alcance-seo-gallery.md`. Mantiene React, Tailwind 4, shadcn/ui, Magic UI, Aceternity UI, Swiper y React Icons, con la identidad editorial de Servinexo.
+Registro histórico de la segunda iteración. El estado vigente del mapa y el catálogo está en [mapa-y-catalogo.md](mapa-y-catalogo.md); las cuentas, SEO y Google se documentan en [seo-email-google.md](seo-email-google.md). Los límites y cifras de esta iteración histórica no son el inventario actual de HOME CONNECT.
 
 ## Incluido
 

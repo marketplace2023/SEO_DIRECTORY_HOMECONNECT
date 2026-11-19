@@ -77,20 +77,20 @@ test("catálogo normalizado, servicio y enlace compartible con filtros", async (
   page,
 }) => {
   await page.goto("/#/catalog");
-  await expect(page.locator(".catalog-category")).toHaveCount(32);
+  await expect(page.locator(".catalog-category")).toHaveCount(48);
   await page
     .locator(".catalog-category")
     .filter({ hasText: "Pintura" })
     .click();
   await expect(page).toHaveURL(/category=painting/);
-  await expect(page.locator(".service-tile")).toHaveCount(3);
+  await expect(page.locator(".service-tile")).toHaveCount(5);
   await page.getByRole("button", { name: /Pintura de interiores/ }).click();
   await expect(page).toHaveURL(/services\/painting-1/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Pintura de interiores",
   );
   await page.goto("/#/professionals?category=remodeling&city=Doral");
-  await expect(page.getByRole("status")).toHaveText("2 perfiles de ejemplo");
+  await expect(page.getByRole("status")).toHaveText("2 perfiles publicados");
   await page.reload();
   await expect(
     page.getByRole("combobox", { name: "Categoría", exact: true }),
@@ -98,7 +98,7 @@ test("catálogo normalizado, servicio y enlace compartible con filtros", async (
   await expect(
     page.getByRole("combobox", { name: "¿Dónde?", exact: true }),
   ).toHaveValue("Doral");
-  await expect(page.getByRole("status")).toHaveText("2 perfiles de ejemplo");
+  await expect(page.getByRole("status")).toHaveText("2 perfiles publicados");
 });
 
 test("solicitud → comparación de propuestas → proyecto → hitos, con persistencia", async ({
@@ -209,7 +209,19 @@ test("credenciales: devolución con observación, reenvío y aprobación", async
 });
 
 test("favoritos, mensajes entre roles y publicación", async ({ page }) => {
+  let restoreSession!: () => void;
+  const sessionReady = new Promise<void>((resolve) => {
+    restoreSession = resolve;
+  });
+  await page.route("**/api/auth/me?**", async (route) => {
+    await sessionReady;
+    await route.continue();
+  });
   await page.goto("/#/professionals/ruiz");
+  await expect(
+    page.getByRole("button", { name: "Guardado", exact: true }),
+  ).toBeDisabled();
+  restoreSession();
   await page.getByRole("button", { name: "Guardado", exact: true }).click();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(
@@ -358,6 +370,6 @@ test("pantallas móviles, rutas desconocidas y recuperación de almacenamiento i
   );
   await page.reload();
   await page.goto("/#/professionals");
-  await expect(page.getByRole("status")).toHaveText("12 perfiles de ejemplo");
+  await expect(page.getByRole("status")).toHaveText("12 perfiles publicados");
   expect(errors).toEqual([]);
 });

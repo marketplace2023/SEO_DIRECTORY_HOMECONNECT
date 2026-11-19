@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { currentPortal, rolePortal, portalHref } from "./portals";
 import { roleNames, type Role } from "@/domain/types";
 export type Route = { path: string; params: URLSearchParams };
@@ -11,7 +11,13 @@ export function navigate(path: string, params?: URLSearchParams) {
   const target =
     path.startsWith("/workspace/") && Object.hasOwn(roleNames, role)
       ? rolePortal(role as Role)
-      : ["/login", "/register"].includes(path)
+      : [
+            "/login",
+            "/register",
+            "/verify-email",
+            "/forgot-password",
+            "/reset-password",
+          ].includes(path)
         ? currentPortal()
         : "web";
   const route = `${path}${params?.size ? `?${params}` : ""}`;
@@ -23,14 +29,15 @@ export function navigate(path: string, params?: URLSearchParams) {
 }
 export function useRoute() {
   const [route, setRoute] = useState(readRoute);
+  const lastPath = useRef(route.path);
   useEffect(() => {
     let currentPath = readRoute().path;
     const onChange = () => {
       const next = readRoute();
       setRoute(next);
-      if (currentPath !== "/areas" || next.path !== "/areas")
+      if (lastPath.current !== next.path)
         window.scrollTo({ top: 0, behavior: "instant" });
-      currentPath = next.path;
+      lastPath.current = next.path;
     };
     window.addEventListener("hashchange", onChange);
     return () => window.removeEventListener("hashchange", onChange);

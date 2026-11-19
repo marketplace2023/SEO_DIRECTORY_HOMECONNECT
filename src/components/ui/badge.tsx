@@ -1,3 +1,5 @@
+// Source: https://ui.shadcn.com/r/styles/new-york-v4/badge.json
+// Local adaptations: project cn path, React Icons and image accessibility where applicable.
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";

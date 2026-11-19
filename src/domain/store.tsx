@@ -14,6 +14,9 @@ import { stateSchema, hasValidRelations } from "./schema";
 import { demoPost, demoEndpoint } from "./demo-client";
 import { socialLinksSchema, type SocialLinks } from "./social-links";
 import { useAuth } from "@/auth/auth-provider";
+import { readToken } from "@/auth/auth-client";
+import { normalize } from "./types";
+import { cityLocation } from "./geography";
 import type {
   DemoState,
   Role,
@@ -22,6 +25,7 @@ import type {
   EvidenceState,
   Material,
   TeamMember,
+  Professional,
 } from "./types";
 
 export const STORAGE_KEY = "servinexo.ecosystem.v1";
@@ -56,6 +60,7 @@ type Command =
       coverage: string[];
       bio: string;
       language: "es" | "en";
+      location?: Professional["location"];
     }
   | { type: "material"; value: Omit<Material, "id">; materialId?: string }
   | { type: "member"; value: Omit<TeamMember, "id"> }
@@ -72,6 +77,14 @@ const allowedRequests = (state: DemoState, professionalId: string) =>
   state.requests.filter(
     (r) =>
       r.status === "open" &&
+      state.professionals.some(
+        (p) => p.id === professionalId && p.publication === "published",
+      ) &&
+      state.professionals
+        .find((p) => p.id === professionalId)
+        ?.coverage.some((area) =>
+          normalize(r.location).includes(normalize(area)),
+        ) &&
       (r.professionalId
         ? r.professionalId === professionalId
         : state.professionals
@@ -455,6 +468,12 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
                   ...p,
                   name: action.name.trim(),
                   city: action.city.trim(),
+                  location:
+                    action.location !== undefined
+                      ? action.location
+                      : p.city !== action.city.trim()
+                        ? cityLocation(action.city.trim(), p.region, p.country)
+                        : p.location,
                   coverage: action.coverage,
                   bio: { ...p.bio, [action.language]: action.bio.trim() },
                   socialLinks:
@@ -539,7 +558,7 @@ export function StoreProvider({
   children: ReactNode;
   initialRole?: Role;
 }) {
-  const { user } = useAuth();
+  const { user, checking } = useAuth();
   const [state, dispatch] = useReducer(reducer, undefined, load);
   const [role, setRole] = useState<Role>(initialRole);
   const [professionalId, setProfessionalId] = useState(
@@ -556,7 +575,9 @@ export function StoreProvider({
     if (user?.professionalId) setProfessionalId(user.professionalId);
   }, [user?.professionalId]);
   useEffect(() => {
+    if (checking) return;
     let active = true;
+    sessionStorage.setItem("homeconnect.professional", professionalId);
     const initial = load();
     const boot = demoPost("/api/demo/bootstrap", initial).then((remote) => {
       if (active && transport.current.pending === 0)
@@ -566,28 +587,53 @@ export function StoreProvider({
     transport.current.tail = boot.catch(() => {
       if (active) setSyncError(true);
     });
-    const stream = new EventSource(demoEndpoint("/api/demo/events"));
-    stream.onmessage = (event) => {
-      if (!active || transport.current.pending || transport.current.dirty)
-        return;
-      try {
-        const parsed = stateSchema.safeParse(JSON.parse(event.data));
-        if (parsed.success && hasValidRelations(parsed.data)) {
-          dispatch({ type: "hydrate", value: parsed.data });
-          setSyncError(false);
-        }
-      } catch {
-        /* Ignore incomplete events. */
+    let stream: EventSource | undefined;
+    let reconnect: number | undefined;
+    const connect = async () => {
+      let endpoint = demoEndpoint("/api/demo/events");
+      if (user) {
+        const response = await fetch(demoEndpoint("/api/demo/stream-ticket"), {
+          method: "POST",
+          headers: { Authorization: `Bearer ${readToken()}` },
+        });
+        if (!response.ok) throw Error("Session unavailable");
+        const { ticket } = await response.json();
+        endpoint += "&ticket=" + ticket;
       }
+      if (!active) return;
+      stream = new EventSource(endpoint);
+      stream.onmessage = (event) => {
+        if (!active || transport.current.pending || transport.current.dirty)
+          return;
+        try {
+          const parsed = stateSchema.safeParse(JSON.parse(event.data));
+          if (parsed.success && hasValidRelations(parsed.data)) {
+            dispatch({ type: "hydrate", value: parsed.data });
+            setSyncError(false);
+          }
+        } catch {
+          /* Ignore incomplete events. */
+        }
+      };
+      stream.onerror = () => {
+        stream?.close();
+        if (active) {
+          setSyncError(true);
+          reconnect = window.setTimeout(() => {
+            void connect().catch(() => setSyncError(true));
+          }, 2000);
+        }
+      };
     };
-    stream.onerror = () => {
+    void connect().catch(() => {
       if (active) setSyncError(true);
-    };
+    });
     return () => {
       active = false;
-      stream.close();
+      stream?.close();
+      window.clearTimeout(reconnect);
     };
-  }, []);
+  }, [user?.id, professionalId, checking]);
   useEffect(() => {
     const receive = (event: StorageEvent) => {
       if (event.key !== STORAGE_KEY || !event.newValue) return;
@@ -640,7 +686,10 @@ export function StoreProvider({
         role,
         setRole,
         professionalId,
-        setProfessionalId,
+        setProfessionalId: (id) => {
+          sessionStorage.setItem("homeconnect.professional", id);
+          setProfessionalId(id);
+        },
         storageError,
         syncError,
         send: (command) => {

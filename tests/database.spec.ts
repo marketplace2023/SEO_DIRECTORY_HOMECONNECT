@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { Database } from "../server/database/database";
 import { tables } from "../server/database/tables";
 import { createSeed } from "../src/data/seed";
+import { cityLocation } from "../src/domain/geography";
 test("SQL: nombres Odoo, migración conservadora, relaciones y persistencia tras reinicio", async () => {
   test.setTimeout(60000);
   const directory = mkdtempSync(join(tmpdir(), "directory-db-")),
@@ -56,8 +57,16 @@ test("SQL: nombres Odoo, migración conservadora, relaciones y persistencia tras
     expect((await db.loadStates()).get("default")).toEqual(seed);
     const changed = structuredClone(seed);
     changed.professionals[0].name = "Persisted modification";
+    changed.professionals[0].location = {
+      latitude: 25.8,
+      longitude: -80.2,
+      precision: "public",
+    };
     await db.saveState("default", changed);
     await db.saveState("isolated", seed);
+    const oldGeography = structuredClone(seed);
+    delete oldGeography.professionals[0].location;
+    await db.saveState("old-geography", oldGeography);
     await db.close();
     writeFileSync(legacy, JSON.stringify({ default: seed }));
     db = new Database(dbPath);
@@ -67,6 +76,18 @@ test("SQL: nombres Odoo, migración conservadora, relaciones y persistencia tras
       "Persisted modification",
     );
     expect((await db.loadStates()).get("isolated")).toEqual(seed);
+    expect(
+      (await db.loadStates()).get("default")?.professionals[0].location,
+    ).toEqual(changed.professionals[0].location);
+    expect(
+      (await db.loadStates()).get("old-geography")?.professionals[0].location,
+    ).toEqual(
+      cityLocation(
+        seed.professionals[0].city,
+        seed.professionals[0].region,
+        seed.professionals[0].country,
+      ),
+    );
     expect(await db.loadAccounts()).toEqual([account]);
   } finally {
     await db.close();

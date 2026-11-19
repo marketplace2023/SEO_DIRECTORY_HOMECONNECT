@@ -1,4 +1,5 @@
 import type { Category, Subcategory, Service, Language } from "@/domain/types";
+import { bilingual, categoryContent, serviceMode } from "./category-content";
 
 // Curated starting selection from SEO_GALLERY; not an exhaustive transcription.
 const rows = [
@@ -258,33 +259,173 @@ const rows = [
     "Sellado de filtraciones|Leak sealing",
     "Inspección de humedad|Moisture inspection",
   ],
+  [
+    "general-contractors",
+    "Contratistas generales",
+    "General contractors",
+    "Coordinación de ampliaciones|Addition coordination",
+    "Planificación de obra|Construction planning",
+    "Supervisión de avance|Construction progress assessment",
+  ],
+  [
+    "home-cleaning",
+    "Limpieza del hogar",
+    "Home cleaning",
+    "Limpieza habitual|Routine home cleaning",
+    "Limpieza de mudanza|Move-out cleaning",
+    "Limpieza profunda|Deep cleaning",
+  ],
+  [
+    "junk-removal",
+    "Retirada de enseres",
+    "Junk removal",
+    "Recogida de muebles|Furniture removal",
+    "Retirada de electrodomésticos|Appliance removal",
+    "Recogida de enseres|Household junk removal",
+  ],
+  [
+    "moving",
+    "Mudanzas",
+    "Moving",
+    "Mudanza local|Local moving",
+    "Embalaje doméstico|Household packing",
+    "Traslado de muebles|Furniture moving",
+  ],
+  [
+    "home-inspection",
+    "Inspección de viviendas",
+    "Home inspection",
+    "Inspección de compra|Pre-purchase inspection",
+    "Inspección de venta|Pre-listing inspection",
+    "Informe del estado visible|Visible condition assessment",
+  ],
+  [
+    "interior-design",
+    "Diseño de interiores",
+    "Interior design",
+    "Diseño de distribución|Layout design",
+    "Asesoría de materiales|Material selection",
+    "Diseño de color|Color design",
+  ],
+  [
+    "home-automation",
+    "Domótica",
+    "Home automation",
+    "Instalación de controles inteligentes|Smart control installation",
+    "Configuración de automatizaciones|Automation setup",
+    "Diagnóstico de domótica|Smart home diagnosis",
+  ],
+  [
+    "home-networks",
+    "Redes domésticas",
+    "Home networks",
+    "Instalación de Wi-Fi|Wi-Fi installation",
+    "Cableado de datos|Data cable installation",
+    "Mejora de cobertura Wi-Fi|Wi-Fi coverage assessment",
+  ],
+  [
+    "irrigation",
+    "Sistemas de riego",
+    "Irrigation",
+    "Instalación de riego por goteo|Drip irrigation installation",
+    "Reparación de aspersores|Sprinkler repair",
+    "Inspección de riego|Irrigation inspection",
+  ],
+  [
+    "excavation",
+    "Excavación y terrenos",
+    "Excavation",
+    "Excavación de zanjas|Trench excavation",
+    "Nivelación de terrenos|Site grading",
+    "Evaluación de movimiento de tierra|Earthwork assessment",
+  ],
+  [
+    "demolition",
+    "Demolición selectiva",
+    "Demolition",
+    "Desmontaje interior|Interior dismantling",
+    "Retirada de tabiques no portantes|Non-load-bearing partition removal",
+    "Recogida de escombros|Debris removal",
+  ],
+  [
+    "damage-restoration",
+    "Restauración por daños",
+    "Damage restoration",
+    "Secado tras filtraciones|Water damage drying",
+    "Reparación de acabados dañados|Damaged finish repair",
+    "Inspección de humedad residual|Residual moisture inspection",
+  ],
+  [
+    "chimneys",
+    "Chimeneas",
+    "Chimneys",
+    "Instalación de sombreretes|Chimney cap installation",
+    "Reparación de chimeneas|Chimney repair",
+    "Limpieza de chimeneas|Chimney cleaning",
+  ],
+  [
+    "cabinetry",
+    "Gabinetes a medida",
+    "Cabinetry",
+    "Instalación de gabinetes|Cabinet installation",
+    "Reparación de cajones|Drawer repair",
+    "Diseño de almacenamiento|Storage design",
+  ],
+  [
+    "countertops",
+    "Encimeras",
+    "Countertops",
+    "Instalación de encimeras|Countertop installation",
+    "Reparación de encimeras|Countertop repair",
+    "Medición de superficies|Countertop assessment",
+  ],
+  [
+    "glass-mirrors",
+    "Vidrios y espejos",
+    "Glass and mirrors",
+    "Instalación de espejos|Mirror installation",
+    "Reparación de mamparas|Shower enclosure repair",
+    "Ajuste de herrajes de vidrio|Glass hardware adjustment",
+  ],
 ] as const;
 export const categories: Category[] = rows.map(([id, es, en], i) => ({
   id,
   name: { es, en },
   reference: i + 1,
+  description: categoryContent[id].description,
+  excluded: categoryContent[id].excluded,
+  illustration: categoryContent[id].illustration,
+  image: `/CATEGORY_PICS/compatible/${id}.jpg`,
+  included: rows
+    .find((row) => row[0] === id)!
+    .slice(3)
+    .map((text) => bilingual(text)),
 }));
 export const subcategories: Subcategory[] = rows.flatMap(([id]) => [
   {
     id: `${id}-installation`,
+    image: `/CATEGORY_PICS/compatible/${id}-installation.jpg`,
     categoryId: id,
-    name: { es: "Instalación y proyectos", en: "Installation and projects" },
+    name: categoryContent[id].groups[0],
   },
   {
     id: `${id}-care`,
+    image: `/CATEGORY_PICS/compatible/${id}-care.jpg`,
     categoryId: id,
-    name: { es: "Reparación y cuidado", en: "Repair and care" },
+    name: categoryContent[id].groups[1],
   },
 ]);
 export const services: Service[] = rows.flatMap(([categoryId, , , ...names]) =>
-  names.map((name, i) => {
-    const [es, en] = name.split("|");
+  [
+    ...names.map((name) => bilingual(name)),
+    ...categoryContent[categoryId].extra,
+  ].map((name, i) => {
     return {
       id: `${categoryId}-${i + 1}`,
       categoryId,
-      subcategoryId: `${categoryId}-${i === 0 ? "installation" : "care"}`,
-      name: { es, en },
-      mode: (["installation", "repair", "maintenance"] as const)[i],
+      subcategoryId: `${categoryId}-${i === 0 || i === 3 ? "installation" : "care"}`,
+      name,
+      mode: serviceMode(name),
     };
   }),
 );

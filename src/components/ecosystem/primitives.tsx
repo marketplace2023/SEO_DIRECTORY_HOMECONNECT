@@ -1,4 +1,16 @@
-import type { ReactNode } from "react";
+import { isValidElement, type ReactNode, type ComponentProps } from "react";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import {
+  Empty as EmptyBase,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyDescription,
+} from "@/components/ui/empty";
+import { MagicCard } from "@/components/ui/magic-card";
+import { NumberTicker } from "@/components/ui/number-ticker";
 import { PiArrowUpRight, PiFolderOpen } from "react-icons/pi";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,8 +52,17 @@ export function Field({
 }) {
   return (
     <label className="eco-field">
-      <span>{label}</span>
-      {children}
+      <Label asChild>
+        <span>{label}</span>
+      </Label>
+      {isValidElement(children) && children.type === "select" ? (
+        <NativeSelect
+          {...(children.props as ComponentProps<"select">)}
+          size="default"
+        />
+      ) : (
+        children
+      )}
     </label>
   );
 }
@@ -55,20 +76,39 @@ export function Empty({
   children?: ReactNode;
 }) {
   return (
-    <div className="eco-empty">
-      <PiFolderOpen aria-hidden="true" />
-      <h2>{title}</h2>
-      {description && <p>{description}</p>}
+    <EmptyBase className="eco-empty rounded-xl border-dashed p-8!">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <PiFolderOpen aria-hidden="true" />
+        </EmptyMedia>
+        <h2>{title}</h2>
+        {description && <EmptyDescription>{description}</EmptyDescription>}
+      </EmptyHeader>
       {children}
-    </div>
+    </EmptyBase>
   );
 }
 export function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="eco-stat">
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </div>
+    <MagicCard
+      gradientFrom="#e00707"
+      gradientTo="#f5b5a7"
+      gradientColor="#fff1ed"
+      gradientOpacity={0.4}
+      className="eco-stat rounded-xl p-0!"
+    >
+      <div className="space-y-4 p-5">
+        <p className="text-xs font-medium text-neutral-500">{label}</p>
+        <strong className="block font-sans text-3xl font-bold tracking-tight tabular-nums">
+          {typeof value === "number" ? (
+            <NumberTicker value={value} className="text-inherit" />
+          ) : (
+            value
+          )}
+        </strong>
+        <div className="h-0.5 w-8 bg-primary/70" aria-hidden="true" />
+      </div>
+    </MagicCard>
   );
 }
 export function EvidenceBadge({
@@ -79,9 +119,9 @@ export function EvidenceBadge({
   language: Language;
 }) {
   return (
-    <span className={`eco-badge ${status}`}>
+    <Badge variant="outline" className={`eco-badge ${status}`}>
       {evidenceNames[status][language]}
-    </span>
+    </Badge>
   );
 }
 export function ActionLink({
@@ -108,12 +148,14 @@ export function Panel({
   action?: ReactNode;
 }) {
   return (
-    <section className="eco-panel">
-      <div className="eco-panel-title">
-        <h2>{title}</h2>
+    <Card className="eco-panel gap-0 rounded-xl! p-0! shadow-none">
+      <CardHeader className="eco-panel-title mb-0! flex items-center justify-between gap-4 border-b border-neutral-100 px-6 py-5">
+        <CardTitle>
+          <h2 className="text-base! tracking-tight">{title}</h2>
+        </CardTitle>
         {action}
-      </div>
-      {children}
-    </section>
+      </CardHeader>
+      <CardContent className="p-6">{children}</CardContent>
+    </Card>
   );
 }

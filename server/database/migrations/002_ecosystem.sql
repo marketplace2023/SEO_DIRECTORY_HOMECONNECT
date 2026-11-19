@@ -1,0 +1,12 @@
+BEGIN;
+CREATE TABLE IF NOT EXISTS ir_config_parameter (namespace TEXT NOT NULL, id TEXT NOT NULL, data JSONB NOT NULL, PRIMARY KEY(namespace,id));
+CREATE TABLE IF NOT EXISTS auth_token (id TEXT PRIMARY KEY, namespace TEXT NOT NULL, user_id TEXT NOT NULL, purpose TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL);
+CREATE TABLE IF NOT EXISTS mail_mail (id TEXT PRIMARY KEY, namespace TEXT NOT NULL, data JSONB NOT NULL);
+CREATE TABLE IF NOT EXISTS google_business_connection (namespace TEXT NOT NULL, id TEXT NOT NULL, data JSONB NOT NULL, PRIMARY KEY(namespace,id));
+CREATE TABLE IF NOT EXISTS google_oauth_state (id TEXT PRIMARY KEY, data JSONB NOT NULL, expires_at TIMESTAMPTZ NOT NULL);
+CREATE TABLE IF NOT EXISTS rating_rating (namespace TEXT NOT NULL, id TEXT NOT NULL, data JSONB NOT NULL, PRIMARY KEY(namespace,id));
+CREATE TABLE IF NOT EXISTS support_ticket (namespace TEXT NOT NULL, id TEXT NOT NULL, data JSONB NOT NULL, PRIMARY KEY(namespace,id));
+CREATE TABLE IF NOT EXISTS ir_attachment (namespace TEXT NOT NULL, id TEXT NOT NULL, data JSONB NOT NULL, PRIMARY KEY(namespace,id));
+CREATE UNIQUE INDEX IF NOT EXISTS rating_project_unique ON rating_rating(namespace,(data->>'projectId'));
+INSERT INTO schema_migration(id) VALUES('002_ecosystem') ON CONFLICT DO NOTHING;
+COMMIT;

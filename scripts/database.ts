@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import '../server/config/env';
 import { Database } from "../server/database/database";
 import { tables, nativeTables } from "../server/database/tables";
 const origin = process.env.SERVINEXO_API_ORIGIN || "http://127.0.0.1:5190";

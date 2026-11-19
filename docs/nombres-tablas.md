@@ -21,6 +21,8 @@ La referencia de nombres nativos es Odoo 18. Se conservan los nombres originales
 | Espacios de datos del prototipo | `prototype_dataset` | Técnico propio |
 | Versiones de migración | `schema_migration` | Técnico propio |
 
+La migración `002_ecosystem.sql` añade `ir_config_parameter`, `mail_mail`, `rating_rating` e `ir_attachment` usando nombres de Odoo, y `auth_token`, `google_business_connection`, `google_oauth_state` y `support_ticket` como tablas propias. Se mantiene el alcance de compatibilidad exclusivamente de nombres.
+
 “Propio” significa que no se adopta una tabla equivalente de los módulos base, catálogo, ventas, proyectos y correo revisados en Odoo 18; otros addons pueden ofrecer modelos similares. Una solicitud del consumidor no se considera automáticamente un lead de CRM, ni la auditoría de negocio un log técnico.
 
 ## Implementación

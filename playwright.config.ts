@@ -1,5 +1,16 @@
 import { defineConfig } from "@playwright/test";
 const env = {
+  NODE_ENV: "test",
+  PUBLIC_SITE_URL: "http://127.0.0.1:5194",
+  SEO_INDEXING_ENABLED: "false",
+  SMTP_HOST: "",
+  SMTP_USER: "",
+  SMTP_PASSWORD: "",
+  SMTP_FROM: "",
+  GOOGLE_CLIENT_ID: "",
+  GOOGLE_CLIENT_SECRET: "",
+  GOOGLE_TOKEN_ENCRYPTION_KEY: "",
+  GOOGLE_API_ACCESS_APPROVED: "false",
   SERVINEXO_VITE_CACHE: "e2e",
   SERVINEXO_WEB_ORIGIN: "http://127.0.0.1:5194",
   SERVINEXO_CONTRACTOR_ORIGIN: "http://127.0.0.1:5195",

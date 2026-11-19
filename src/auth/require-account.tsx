@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useAuth } from "./auth-provider";
 import type { AccountRole } from "./types";
+import { VerificationNotice } from "./email-pages";
 export function RequireAccount({
   role,
   children,
@@ -32,5 +33,7 @@ export function RequireAccount({
         Abriendo inicio de sesión…
       </p>
     );
+  if (!user.emailVerified && window.location.hash.startsWith("#/quote"))
+    return <VerificationNotice />;
   return children;
 }

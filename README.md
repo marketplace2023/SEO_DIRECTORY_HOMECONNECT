@@ -2,6 +2,14 @@
 
 Tres aplicaciones React + TypeScript en un monorepo, con servidores, rutas, módulos y compilaciones propios. Identidad inspirada en Yelp: rojo `#e00707`, blanco, grises, Open Sans y Poppins alojadas localmente.
 
+El mercado inicial confirmado es **Georgia, Estados Unidos**. El [alcance realista para Georgia](docs/alcance-realista-georgia.md) contrasta Yelp y BuildZoom, documenta lo que existe, los bloqueantes del lanzamiento y las etapas propuestas. Las referencias históricas de SEO_GALLERY no sustituyen ese diagnóstico del estado actual.
+
+La implementación de **SEO local, confirmación de email y Google Business Profile** se describe en [seo-email-google.md](docs/seo-email-google.md). Incluye páginas HTML `/georgia`, gestión SEO en administración, buzón local de pruebas sin SMTP y conexión OAuth pendiente de credenciales/aprobación externas. No hay dominio ni proveedor de correo real configurados.
+
+El [mapa y catálogo ampliado](docs/mapa-y-catalogo.md) incorpora 48 categorías, 96 subcategorías con sus fotografías de `public/CATEGORY_PICS`, definiciones y límites, 240 servicios y búsqueda compartida entre lista y mapa. El administrador consulta la jerarquía con sus imágenes desde Catálogo. Los contratistas pueden configurar una ubicación pública desde su ficha.
+
+La [composición visual y procedencia de componentes](docs/componentes-visuales.md) identifica dónde se usan shadcn/ui, Magic UI, Aceternity UI y Swiper. La portada incorpora una galería interactiva y filtros por familias de oficios; los paneles comparten controles, tarjetas, navegación y estados shadcn.
+
 | Aplicación | Proyecto | Dirección |
 |---|---|---|
 | Marketplace y cuenta del consumidor | Raíz | http://127.0.0.1:5175 |
@@ -24,7 +32,7 @@ Si una instalación de dependencias deja una caché Vite antigua, detén los ser
 
 ## Acceso y registro
 
-La web permite explorar servicios, perfiles y mapa y solicitar presupuestos sin sesión. El formulario ofrece acceso o registro opcionales y permite continuar como invitado con nombre, correo y teléfono opcional. El contratista puede consultar esos datos en el detalle de la solicitud. El dashboard requiere una cuenta de consumidor. Su registro y login permanecen en la web principal.
+La web permite explorar servicios, perfiles y mapa y solicitar presupuestos sin sesión. El formulario ofrece acceso o registro opcionales y permite continuar como invitado con nombre, correo y teléfono opcional. El contratista puede consultar esos datos en el detalle de la solicitud. El dashboard requiere una cuenta de consumidor. Su registro y login permanecen en la web principal. El acceso con cuenta incluye confirmación de correo y recuperación de contraseña. En desarrollo sin SMTP se utiliza un buzón de pruebas autenticado.
 
 Contratistas tiene login y registro propios. El registro crea una ficha FUR en borrador con la especialidad y ciudad elegidas. Cada cuenta nueva está vinculada a su ficha. Administración revisa credenciales y controla su publicación. Solo la cuenta de muestra permite seleccionar otros perfiles para probar escenarios.
 
@@ -50,11 +58,11 @@ Más detalle en [aplicaciones separadas](docs/aplicaciones-separadas.md), [proye
 
 ## Datos y cuentas locales
 
-La muestra contiene 12 contratistas, 32 categorías, 64 subcategorías, 96 servicios, 6 solicitudes, 6 propuestas, 2 proyectos y 5 mensajes. `npm run seed:export` valida y exporta `public/demo-seed.json`.
+La muestra contiene 12 contratistas, 48 categorías, 96 subcategorías, 240 servicios, 6 solicitudes, 6 propuestas, 2 proyectos y 5 mensajes. `npm run seed:export` valida y exporta `public/demo-seed.json`.
 
 El servicio comparte cambios entre los tres orígenes mediante HTTP y eventos SSE. Persiste datos y cuentas en PostgreSQL embebido (PGlite), en `.local/demo-state.pgdata`. Importa una sola vez los JSON anteriores sin borrarlos. Las contraseñas siguen derivadas mediante scrypt. El navegador conserva una caché de datos y un token propio de su aplicación. Las vistas del consumidor filtran sus solicitudes, proyectos, mensajes y favoritos por cuenta.
 
-Los comandos requieren una sesión y validan el rol. Un contratista registrado no puede editar la ficha de otra cuenta. Este servicio es infraestructura de prototipo en loopback: no implementa toda la autorización de lectura, endurecimiento, entrega de correos ni recuperación de contraseñas necesarios para producción. Utiliza datos ficticios. Pagos y Odoo siguen pendientes.
+Los comandos requieren una sesión y validan el rol. Bootstrap y SSE proyectan los datos por cuenta; los visitantes no reciben solicitudes ni conversaciones privadas. Los documentos subidos tienen control de acceso y el portafolio requiere autorización de publicación. El correo real necesita configurar SMTP. El servicio sigue siendo infraestructura de piloto: requiere hosting HTTPS, copias incluyendo archivos, monitoreo y operación antes de recibir datos reales. Pagos y Odoo siguen pendientes.
 
 El mapa usa React Leaflet, cartografía local de países y los 159 condados de Georgia. La capa opcional de calles de OpenStreetMap requiere internet. Las coordenadas de profesionales son aproximadas. Fuentes: `public/maps/README.md` y `public/images/sources.json`.
 

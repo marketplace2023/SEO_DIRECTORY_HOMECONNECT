@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import "../server/config/env.ts";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
@@ -28,6 +29,8 @@ export function portalConfig(name: "contractor" | "admin", port: number) {
           for (const asset of [
             "images",
             "maps",
+            "category-art",
+            "CATEGORY_PICS",
             "favicon.svg",
             "demo-seed.json",
           ]) {
@@ -40,7 +43,7 @@ export function portalConfig(name: "contractor" | "admin", port: number) {
           server.middlewares.use((req, res, next) => {
             const pathname = req.url?.split("?")[0] || "";
             if (
-              !/^\/(images|maps)\//.test(pathname) &&
+              !/^\/(images|maps|category-art|CATEGORY_PICS)\//.test(pathname) &&
               !["/favicon.svg", "/demo-seed.json"].includes(pathname)
             )
               return next();
@@ -58,6 +61,7 @@ export function portalConfig(name: "contractor" | "admin", port: number) {
               const types: Record<string, string> = {
                 ".jpg": "image/jpeg",
                 ".png": "image/png",
+                ".webp": "image/webp",
                 ".svg": "image/svg+xml",
                 ".json": "application/json",
                 ".geojson": "application/geo+json",

@@ -3,7 +3,10 @@ import { stateSchema, hasValidRelations } from "./schema";
 import { apiEndpoint } from "@/lib/api";
 import { readToken } from "@/auth/auth-client";
 
-export const demoEndpoint = apiEndpoint;
+export const demoEndpoint = (path: string) =>
+  apiEndpoint(path) +
+  "&professional=" +
+  encodeURIComponent(sessionStorage.getItem("homeconnect.professional") || "");
 export async function demoPost(
   path: string,
   data: unknown,

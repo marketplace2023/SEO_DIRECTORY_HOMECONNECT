@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { tables, stateTables } from "./tables";
 import { categories, subcategories, services } from "../../src/data/catalog";
+import { cityLocation } from "../../src/domain/geography";
 import { stateSchema, hasValidRelations } from "../../src/domain/schema";
 import type { DemoState } from "../../src/domain/types";
 import type { AuthUser } from "../../src/auth/types";
@@ -21,6 +22,12 @@ export class Database {
     await this.sql.exec(
       readFileSync(
         new URL("./migrations/001_initial.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    await this.sql.exec(
+      readFileSync(
+        new URL("./migrations/002_ecosystem.sql", import.meta.url),
         "utf8",
       ),
     );
@@ -186,9 +193,21 @@ export class Database {
         audit: (await read(tables.audit)).map((r) => r.data),
       };
       const parsed = stateSchema.parse(state);
+      let locationsAdded = false;
+      for (const person of parsed.professionals) {
+        if (person.location === undefined) {
+          person.location = cityLocation(
+            person.city,
+            person.region,
+            person.country,
+          );
+          locationsAdded = true;
+        }
+      }
       if (!hasValidRelations(parsed))
         throw Error("Invalid persisted relations");
       result.set(dataset.namespace, parsed);
+      if (locationsAdded) await this.saveState(dataset.namespace, parsed);
     }
     return result;
   }

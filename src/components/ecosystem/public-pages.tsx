@@ -1,3 +1,4 @@
+import { PublicReviews } from "./pilot-panels";
 import { useEffect, useState } from "react";
 import {
   PiArrowUpRight,
@@ -26,7 +27,7 @@ import {
   serviceName,
 } from "@/data/catalog";
 import { useStore } from "@/domain/store";
-import { findProfessionals } from "@/domain/queries";
+import { findProfessionals, filtersFromParams } from "@/domain/queries";
 import {
   cityLabel,
   countyById,
@@ -37,14 +38,18 @@ import {
 } from "@/domain/us-area";
 import { normalize, type Language, type Professional } from "@/domain/types";
 import { isPublicWebUrl, socialPlatforms } from "@/domain/social-links";
+import { useAuth } from "@/auth/auth-provider";
 import { navigate, type Route } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { SearchBar } from "@/components/search-bar";
 import { searchParams } from "@/domain/search";
 import { useCart } from "@/domain/cart";
 import { ProfessionalCard } from "@/components/professional-card";
-import { categoryIcons } from "@/components/category-icons";
+
+import { CategoryScope } from "./category-scope";
+
+import { parseBounds } from "@/domain/geography";
 import {
   PageTitle,
   Field,
@@ -65,142 +70,8 @@ const socialIcons = {
   other: PiLinkSimple,
 };
 
-export function CatalogPage({
-  route,
-  language,
-}: {
-  route: Route;
-  language: Language;
-}) {
-  const t = copy(language);
-  const [query, setQuery] = useState("");
-  const selected = categories.find(
-    (c) => c.id === route.params.get("category"),
-  );
-  const visible = categories.filter((c) =>
-    normalize(c.name[language]).includes(normalize(query)),
-  );
-  return (
-    <>
-      <PageTitle
-        eyebrow={t("ELIGE TU SIGUIENTE PASO", "CHOOSE YOUR NEXT STEP")}
-        title={
-          selected?.name[language] ||
-          t("Una especialidad para cada idea.", "A specialty for every idea.")
-        }
-        description={t(
-          "32 categorías. Explora nuestra selección inicial de servicios y encuentra quién puede ayudarte.",
-          "32 categories. Explore our starting selection of services and find someone who can help.",
-        )}
-        action={
-          <Button onClick={() => navigate("/professionals")}>
-            {t("Ver profesionales", "See professionals")}
-            <PiArrowUpRight />
-          </Button>
-        }
-      />
-      <div className="catalog-layout">
-        <aside className="catalog-sidebar">
-          <Field label={t("Buscar categoría", "Find a category")}>
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("Ej. pintura", "E.g. painting")}
-            />
-          </Field>
-          <button
-            className={!selected ? "selected" : ""}
-            onClick={() => navigate("/catalog")}
-          >
-            {t("Todas las categorías", "All categories")}
-            <span>32</span>
-          </button>
-          {visible.map((c) => {
-            const Icon = categoryIcons[c.reference - 1] || PiBuildings;
-            return (
-              <button
-                key={c.id}
-                className={selected?.id === c.id ? "selected" : ""}
-                onClick={() =>
-                  navigate("/catalog", new URLSearchParams({ category: c.id }))
-                }
-              >
-                <Icon />
-                {c.name[language]}
-              </button>
-            );
-          })}
-          {!visible.length && <p>{t("Sin coincidencias", "No matches")}</p>}
-        </aside>
-        <div className="catalog-content">
-          {selected ? (
-            <>
-              {subcategories
-                .filter((s) => s.categoryId === selected.id)
-                .map((group) => (
-                  <Panel key={group.id} title={group.name[language]}>
-                    <div className="service-grid">
-                      {services
-                        .filter((s) => s.subcategoryId === group.id)
-                        .map((service) => (
-                          <ServiceTile
-                            key={service.id}
-                            serviceId={service.id}
-                            language={language}
-                          />
-                        ))}
-                    </div>
-                  </Panel>
-                ))}
-              <p className="eco-note">
-                {t(
-                  "Selección inicial normalizada a partir de las referencias. Ampliaremos el catálogo sin duplicar categorías.",
-                  "An initial selection normalized from the references. The catalog can expand without duplicating categories.",
-                )}
-              </p>
-            </>
-          ) : (
-            <div className="catalog-category-grid">
-              {visible.map((c) => {
-                const Icon = categoryIcons[c.reference - 1] || PiBuildings;
-                return (
-                  <button
-                    key={c.id}
-                    className="catalog-category"
-                    onClick={() =>
-                      navigate(
-                        "/catalog",
-                        new URLSearchParams({ category: c.id }),
-                      )
-                    }
-                  >
-                    <span className="catalog-index">
-                      {String(c.reference).padStart(2, "0")}
-                    </span>
-                    <Icon />
-                    <h2>{c.name[language]}</h2>
-                    <span>
-                      3 {t("servicios", "services")}
-                      <PiArrowUpRight />
-                    </span>
-                  </button>
-                );
-              })}
-              {!visible.length && (
-                <Empty
-                  title={t(
-                    "No encontramos esa categoría",
-                    "Category not found",
-                  )}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
+export { CatalogPage } from "./catalog-page";
+
 export function ServiceTile({
   serviceId,
   language,
@@ -311,6 +182,10 @@ export function ServicePage({
           )}
         </Panel>
       </div>
+      <CategoryScope
+        category={categories.find((c) => c.id === service.categoryId)!}
+        language={language}
+      />
     </>
   );
 }
@@ -385,16 +260,14 @@ export function DirectoryPage({
     if (key === "category") params.delete("subcategory");
     navigate("/professionals", params);
   };
-  const results = findProfessionals(state, {
-    query: route.params.get("q") || "",
-    categoryId: category,
-    subcategoryId: subcategory,
-    country: route.params.get("country") || "",
-    city: route.params.get("city") || "",
-    verifiedOnly: verified,
-    minimumRating: min,
+  const matched = findProfessionals(state, {
+    ...filtersFromParams(route.params),
     usArea: area,
   });
+  const results =
+    route.params.get("sort") === "name"
+      ? [...matched].sort((a, b) => a.name.localeCompare(b.name))
+      : matched;
   return (
     <>
       <PageTitle
@@ -517,8 +390,17 @@ export function DirectoryPage({
       </div>
       <div className="eco-results-summary">
         <p role="status">
-          {results.length} {t("perfiles de ejemplo", "sample profiles")}
+          {results.length} {t("perfiles publicados", "published profiles")}
         </p>
+        <Button
+          variant="outline"
+          onClick={() =>
+            navigate("/coverage", new URLSearchParams(route.params))
+          }
+        >
+          <PiMapPin />
+          {t("Ver en el mapa", "View on map")}
+        </Button>
         <Button variant="ghost" onClick={() => navigate("/professionals")}>
           {t("Limpiar filtros", "Clear filters")}
         </Button>
@@ -532,8 +414,8 @@ export function DirectoryPage({
       ) : (
         <Empty
           title={t(
-            "No hay perfiles de ejemplo con estos filtros.",
-            "No sample profiles match these filters.",
+            "No hay perfiles publicados con estos filtros.",
+            "No published profiles match these filters.",
           )}
           description={t(
             "Prueba otra especialidad o una ubicación cercana.",
@@ -553,6 +435,7 @@ export function ProfilePage({
 }) {
   const { state, role, send } = useStore();
   const cart = useCart();
+  const { checking } = useAuth();
   const t = copy(language);
   const person = state.professionals.find(
     (p) => p.id === id && p.publication === "published",
@@ -584,7 +467,10 @@ export function ProfilePage({
         <img src={person.img} alt={categoryName(person.categoryId, language)} />
         <div>
           <p className="eyebrow">
-            {person.fur} · {t("PERFIL DE DEMOSTRACIÓN", "DEMO PROFILE")}
+            {person.fur} ·{" "}
+            {person.id.startsWith("pro-")
+              ? t("PERFIL PROFESIONAL", "BUSINESS PROFILE")
+              : t("PERFIL DE DEMOSTRACIÓN", "DEMO PROFILE")}
           </p>
           <h1>{person.name}</h1>
           <p className="fur-specialty">
@@ -617,6 +503,7 @@ export function ProfilePage({
             {role === "owner" && (
               <Button
                 variant="outline"
+                disabled={checking}
                 aria-pressed={favorite}
                 onClick={() => send({ type: "favorite", professionalId: id })}
               >
@@ -636,12 +523,15 @@ export function ProfilePage({
                 <figure key={work.id}>
                   <img src={work.image} alt={work.title[language]} />
                   <figcaption>
-                    {work.title[language]} · {t("ilustrativo", "illustrative")}
+                    {work.title[language]}
+                    {!person.id.startsWith("pro-") &&
+                      " · " + t("ilustrativo", "illustrative")}
                   </figcaption>
                 </figure>
               ))}
             </div>
           </Panel>
+          <PublicReviews professionalId={id} />
           <Panel title={t("Nuestros servicios", "Our services")}>
             <div className="service-grid">
               {person.serviceIds.map((service) => (

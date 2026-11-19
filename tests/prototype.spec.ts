@@ -11,12 +11,12 @@ test("portada y cuadrículas de categorías y profesionales navegan sin errores"
     "Grandes ideas.",
   );
   await expect(page.locator(".home-category-grid .category-tile")).toHaveCount(
-    32,
+    48,
   );
   await expect(page.locator(".home-professional-grid article")).toHaveCount(12);
   await page.locator(".category-footnote").scrollIntoViewIfNeeded();
   await expect(page.locator(".category-footnote")).toContainText(
-    "32 especialidades",
+    "48 especialidades",
   );
   await page.locator("#how-it-works").scrollIntoViewIfNeeded();
   await expect(page.locator(".how-step").first().locator("..")).toHaveCSS(
@@ -24,7 +24,7 @@ test("portada y cuadrículas de categorías y profesionales navegan sin errores"
     "1",
   );
   await expect(page.locator(".category-footnote")).toContainText(
-    "32 especialidades",
+    "48 especialidades",
   );
   await expect
     .poll(() =>
@@ -35,7 +35,7 @@ test("portada y cuadrículas de categorías y profesionales navegan sin errores"
     .toBeGreaterThan(0);
   await page.evaluate(async () => {
     await document.fonts.ready;
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   });
   await page.screenshot({
     path: ".artifacts/home-desktop.png",
@@ -67,12 +67,15 @@ test("buscador, filtros y perfil conservan su comportamiento", async ({
   await page
     .getByRole("combobox", { name: "¿Dónde?", exact: true })
     .fill("Venezuela");
-  await page.getByRole("option", { name: "Venezuela", exact: true }).click();
+  await page
+    .getByRole("listbox", { name: "Ubicaciones sugeridas" })
+    .getByRole("option", { name: "Venezuela", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Buscar profesionales", exact: true })
     .click();
   await expect(
-    page.getByText("No hay perfiles de ejemplo con estos filtros."),
+    page.getByText("No hay perfiles publicados con estos filtros."),
   ).toBeVisible();
   await page.getByRole("button", { name: "Limpiar filtros" }).click();
   await expect(page.getByRole("status")).toContainText("12 perfiles");
@@ -108,5 +111,5 @@ test("móvil sin desbordamiento y cambio de idioma", async ({ page }) => {
   await page
     .getByRole("button", { name: "Find professionals", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText("12 sample profiles");
+  await expect(page.getByRole("status")).toContainText("12 published profiles");
 });

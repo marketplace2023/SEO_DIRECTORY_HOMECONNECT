@@ -99,6 +99,14 @@ export const stateSchema: z.ZodType<DemoState> = z.object({
       region: text,
       country: text,
       coverage: z.array(text),
+      location: z
+        .object({
+          latitude: z.number().min(-90).max(90),
+          longitude: z.number().min(-180).max(180),
+          precision: z.enum(["city", "public"]),
+        })
+        .nullable()
+        .optional(),
       years: z.number().nonnegative(),
       rating: z.number().min(0).max(5),
       img: text,

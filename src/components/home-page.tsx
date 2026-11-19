@@ -1,11 +1,11 @@
+import { useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DiscoveryHero } from "./home-discovery-hero";
+import { HomeSubcategories } from "./home-subcategories";
 import { UsAreaMap } from "@/components/ecosystem/us-area-map";
-import { EnvironmentCards } from "@/components/ecosystem/environment-access";
 import { navigate } from "@/lib/navigation";
 import {
   PiArrowUpRight,
-  PiCheck,
-  PiSparkle,
-  PiSealCheckFill,
   PiChatCircleDots,
   PiCompass,
   PiHandshake,
@@ -16,7 +16,7 @@ import { NumberTicker } from "@/components/ui/number-ticker";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { ProfessionalCard } from "@/components/professional-card";
 import type { SearchBarProps } from "@/components/search-bar";
-import { categoryIcons } from "@/components/category-icons";
+import { categoryIcon } from "@/components/category-icons";
 import translations from "@/data/translations.json";
 import { categories, categoryName } from "@/data/catalog";
 import type { Professional } from "@/domain/types";
@@ -38,6 +38,38 @@ export function HomePage({
 }) {
   const es = search.language === "es";
   const t = translations[search.language];
+  const [family, setFamily] = useState("all");
+  const exterior = [
+    "roofing",
+    "landscaping",
+    "trees",
+    "fencing",
+    "decks",
+    "gutters",
+    "siding",
+    "pools",
+    "pressure-washing",
+  ];
+  const systems = [
+    "plumbing",
+    "electrical",
+    "hvac",
+    "solar",
+    "appliances",
+    "septic",
+    "home-automation",
+    "home-networks",
+    "irrigation",
+  ];
+  const catalog = categories.filter(
+    (c) =>
+      family === "all" ||
+      (family === "outside"
+        ? exterior.includes(c.id)
+        : family === "systems"
+          ? systems.includes(c.id)
+          : !exterior.includes(c.id) && !systems.includes(c.id)),
+  );
   const steps = [
     {
       icon: PiCompass,
@@ -65,125 +97,12 @@ export function HomePage({
   ];
   return (
     <>
-      <section
-        className="hero-section site-container"
-        aria-labelledby="hero-title"
-      >
-        <div className="hero-copy">
-          <BlurFade delay={0.05}>
-            <p className="eyebrow">
-              <span className="short-line" />
-              {es ? "EL PUNTO DE ENCUENTRO" : "THE MEETING POINT"}
-            </p>
-          </BlurFade>
-          <BlurFade delay={0.13}>
-            <h1 id="hero-title">
-              {es ? (
-                <>
-                  Grandes ideas.
-                  <br />
-                  Las{" "}
-                  <em>
-                    manos
-                    <br className="desktop-break" /> correctas.
-                  </em>
-                </>
-              ) : (
-                <>
-                  Big ideas.
-                  <br />
-                  The{" "}
-                  <em>
-                    right
-                    <br className="desktop-break" /> hands.
-                  </em>
-                </>
-              )}
-            </h1>
-          </BlurFade>
-          <BlurFade delay={0.21}>
-            <p className="hero-description">
-              {es
-                ? "Para ese cambio que llevas tiempo imaginando, hay alguien que sabe hacerlo realidad. Encuéntralo aquí."
-                : "For that change you’ve been imagining, there’s someone who knows how to make it happen. Find them here."}
-            </p>
-          </BlurFade>
-          <BlurFade delay={0.28}>
-            <div className="hero-highlights">
-              <span>
-                <PiCheck />
-                {es ? "Talento por descubrir" : "Talent to discover"}
-              </span>
-              <span>
-                <PiCheck />
-                {es ? "Cerca de ti" : "Close to you"}
-              </span>
-            </div>
-          </BlurFade>
-        </div>
-        <div className="hero-visual">
-          <div className="hero-photo">
-            <img
-              src="/images/hero.jpg"
-              alt={
-                es
-                  ? "Sala luminosa con materiales naturales y mobiliario de madera"
-                  : "Bright living room with natural materials and wooden furniture"
-              }
-              fetchPriority="high"
-            />
-            <div className="photo-caption">
-              <span>
-                {es ? "ESPACIOS QUE INSPIRAN" : "SPACES THAT INSPIRE"}
-              </span>
-              <p>
-                {es
-                  ? "Tu próxima idea empieza aquí."
-                  : "Your next idea starts here."}
-              </p>
-              <PiArrowUpRight />
-            </div>
-          </div>
-          <div className="hero-stamp">
-            <PiSparkle />
-            <span>
-              {es ? "De la idea" : "From idea"}
-              <br />
-              <b>{es ? "a lo increíble." : "to incredible."}</b>
-            </span>
-          </div>
-          <div className="floating-profile">
-            <span className="floating-avatar">CR</span>
-            <div>
-              <strong>
-                Construcciones Ruiz <PiSealCheckFill />
-              </strong>
-              <span>
-                {es ? "Construcción · Miami" : "Construction · Miami"}
-              </span>
-            </div>
-            <span className="sample-label">DEMO</span>
-          </div>
-          <span className="visual-coordinate">
-            01 / {es ? "HAZLO POSIBLE" : "MAKE IT HAPPEN"}
-          </span>
-        </div>
-        <div className="hero-search">
-          <div className="popular-search">
-            <span>{es ? "¿Por dónde empezar?" : "Where to start?"}</span>
-            {[29, 4, 3].map((index) => (
-              <button
-                key={index}
-                onClick={() => onCategory(categories[index].id)}
-              >
-                {categories[index].name[search.language]}
-                <PiArrowUpRight />
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-      <EnvironmentCards language={search.language} />
+      <DiscoveryHero
+        search={search}
+        onCategory={onCategory}
+        onQuote={onQuote}
+        showSearch={false}
+      />
       <section
         className="categories-section site-container"
         aria-labelledby="category-title"
@@ -206,15 +125,37 @@ export function HomePage({
             </h2>
           </div>
         </div>
+        <Tabs value={family} onValueChange={setFamily} className="mb-6">
+          <TabsList variant="line" className="max-w-full overflow-x-auto">
+            <TabsTrigger value="all">{es ? "Todos" : "All"}</TabsTrigger>
+            <TabsTrigger value="outside">
+              {es ? "Exterior" : "Outside"}
+            </TabsTrigger>
+            <TabsTrigger value="inside">
+              {es ? "Interior" : "Inside"}
+            </TabsTrigger>
+            <TabsTrigger value="systems">
+              {es ? "Instalaciones" : "Systems"}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         <div className="home-category-grid">
-          {categories.map((category, index) => {
-            const Icon = categoryIcons[index];
+          {catalog.map((category) => {
+            const Icon = categoryIcon(category.id);
             return (
               <button
                 key={category.id}
                 className="category-tile"
                 onClick={() => onCategory(category.id)}
               >
+                <img
+                  className="home-category-photo"
+                  src={category.image}
+                  alt=""
+                  loading="lazy"
+                  width={160}
+                  height={107}
+                />
                 <Icon className="category-icon" />
                 <span>{category.name[search.language]}</span>
                 <PiArrowUpRight className="category-arrow" />
@@ -234,6 +175,7 @@ export function HomePage({
           </span>
         </div>
       </section>
+      <HomeSubcategories language={search.language} />
       <section
         className="professionals-section"
         aria-labelledby="professionals-title"

@@ -1,7 +1,9 @@
+import { AttachmentsPanel } from "@/components/ecosystem/attachments-panel";
 import { useStore } from "@/domain/store";
 import type { Language } from "@/domain/types";
 import { useState, type FormEvent } from "react";
 import { categoryName } from "@/data/catalog";
+import { cityLocation } from "@/domain/geography";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +24,7 @@ export function ProfileEditor({ language }: { language: Language }) {
   const t = copy(language);
   const person = state.professionals.find((p) => p.id === professionalId)!;
   const [saved, setSaved] = useState(false);
+  const [locationError, setLocationError] = useState("");
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -40,7 +43,44 @@ export function ProfileEditor({ language }: { language: Language }) {
     const socialLinks: SocialLinks = Object.fromEntries(
       socialPlatforms.map(([key]) => [key, String(data.get(key) ?? "").trim()]),
     );
-    send({ type: "profile", name, city, bio, coverage, language, socialLinks });
+    const manual = data.get("mapMode") === "public";
+    const latitude = Number(data.get("latitude")),
+      longitude = Number(data.get("longitude"));
+    if (
+      manual &&
+      (!String(data.get("latitude")).trim() ||
+        !String(data.get("longitude")).trim() ||
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        Math.abs(latitude) > 90 ||
+        Math.abs(longitude) > 180 ||
+        !data.get("publicLocation"))
+    ) {
+      setLocationError(
+        t(
+          "Revisa las coordenadas y autoriza su publicación.",
+          "Check the coordinates and authorize publication.",
+        ),
+      );
+      return;
+    }
+    setLocationError("");
+    const location =
+      data.get("mapMode") === "hidden"
+        ? null
+        : manual
+          ? { latitude, longitude, precision: "public" as const }
+          : cityLocation(city, person.region, person.country);
+    send({
+      type: "profile",
+      name,
+      city,
+      bio,
+      coverage,
+      language,
+      location,
+      socialLinks,
+    });
     setSaved(true);
   };
   return (
@@ -135,6 +175,72 @@ export function ProfileEditor({ language }: { language: Language }) {
               ))}
             </div>
           </fieldset>
+          <fieldset className="map-profile-fields">
+            <legend>
+              {t("Ubicación en el mapa público", "Public map location")}
+            </legend>
+            <Field label={t("Tipo de ubicación", "Location type")}>
+              <select
+                name="mapMode"
+                defaultValue={
+                  person.location?.precision === "public"
+                    ? "public"
+                    : person.location === null
+                      ? "hidden"
+                      : "city"
+                }
+              >
+                <option value="city">
+                  {t(
+                    "Centro aproximado de la ciudad",
+                    "Approximate city center",
+                  )}
+                </option>
+                <option value="public">
+                  {t("Punto público autorizado", "Authorized public point")}
+                </option>
+                <option value="hidden">
+                  {t("Sin marcador público", "No public marker")}
+                </option>
+              </select>
+            </Field>
+            <p className="eco-note">
+              {t(
+                "El centro de ciudad no representa una dirección ni verifica tu cobertura. Si la ciudad no está en el piloto, puedes indicar un punto público autorizado o mantener la ficha sin marcador.",
+                "A city center is not an address or verified coverage. For other cities, choose an authorized public point or keep the listing without a marker.",
+              )}
+            </p>
+            <div className="eco-form-grid">
+              <Field label={t("Latitud pública", "Public latitude")}>
+                <Input
+                  type="number"
+                  name="latitude"
+                  step="any"
+                  min={-90}
+                  max={90}
+                  defaultValue={person.location?.latitude ?? ""}
+                />
+              </Field>
+              <Field label={t("Longitud pública", "Public longitude")}>
+                <Input
+                  type="number"
+                  name="longitude"
+                  step="any"
+                  min={-180}
+                  max={180}
+                  defaultValue={person.location?.longitude ?? ""}
+                />
+              </Field>
+            </div>
+            <label className="verified-filter">
+              <input type="checkbox" name="publicLocation" />
+              {t(
+                "Autorizo mostrar este punto al seleccionar punto público. No es una dirección privada.",
+                "I authorize this point to be displayed when choosing public point. It is not a private address.",
+              )}
+            </label>
+            {locationError && <p role="alert">{locationError}</p>}
+          </fieldset>
           <Button type="submit">{t("Guardar ficha", "Save record")}</Button>
           {saved && (
             <p role="status" className="eco-success">
@@ -143,6 +249,8 @@ export function ProfileEditor({ language }: { language: Language }) {
           )}
         </form>
       </Panel>
+      <AttachmentsPanel targetId={professionalId} purpose="portfolio" />
+      <AttachmentsPanel targetId={professionalId} purpose="credential" />
       <Panel title={t("Credenciales y evidencias", "Credentials and evidence")}>
         <p className="eco-note">
           {t(
