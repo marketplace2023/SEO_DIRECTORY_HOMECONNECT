@@ -24,9 +24,13 @@ export function navigate(path: string, params?: URLSearchParams) {
 export function useRoute() {
   const [route, setRoute] = useState(readRoute);
   useEffect(() => {
+    let currentPath = readRoute().path;
     const onChange = () => {
-      setRoute(readRoute());
-      window.scrollTo({ top: 0, behavior: "instant" });
+      const next = readRoute();
+      setRoute(next);
+      if (currentPath !== "/areas" || next.path !== "/areas")
+        window.scrollTo({ top: 0, behavior: "instant" });
+      currentPath = next.path;
     };
     window.addEventListener("hashchange", onChange);
     return () => window.removeEventListener("hashchange", onChange);

@@ -41,7 +41,7 @@ export function AuthForm({
   const next =
     requested.startsWith(home) ||
     (application === "web" &&
-      /^\/(quote|professionals)(\/|\?|$)/.test(requested))
+      /^\/(quote|professionals|notifications|cart)(\/|\?|$)/.test(requested))
       ? requested
       : home;
   useEffect(() => {

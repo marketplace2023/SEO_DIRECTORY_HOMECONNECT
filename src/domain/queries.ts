@@ -1,5 +1,7 @@
-import { categories, services } from "@/data/catalog";
+import { services } from "@/data/catalog";
 import { normalize, type DemoState } from "./types";
+import { matchesUsArea, type UsArea } from "./us-area";
+import { matchesSearch } from "./search";
 
 export type ProfessionalFilters = {
   query?: string;
@@ -9,7 +11,28 @@ export type ProfessionalFilters = {
   city?: string;
   verifiedOnly?: boolean;
   minimumRating?: number;
+  usArea?: UsArea;
 };
+export function mostRequestedProfessionals(state: DemoState) {
+  const counts = new Map<string, number>();
+  for (const request of state.requests) {
+    if (request.professionalId)
+      counts.set(
+        request.professionalId,
+        (counts.get(request.professionalId) ?? 0) + 1,
+      );
+  }
+  return state.professionals
+    .filter((person) => person.publication === "published")
+    .map((person) => ({ person, requests: counts.get(person.id) ?? 0 }))
+    .sort(
+      (a, b) =>
+        b.requests - a.requests ||
+        b.person.rating - a.person.rating ||
+        a.person.name.localeCompare(b.person.name),
+    )
+    .slice(0, 12);
+}
 /** Shared query boundary for the local adapter; no network requests are made. */
 export function findProfessionals(
   state: DemoState,
@@ -19,26 +42,16 @@ export function findProfessionals(
     const offered = services.filter((service) =>
       person.serviceIds.includes(service.id),
     );
-    const category = categories.find(
-      (category) => category.id === person.categoryId,
-    );
-    const searchable = [
-      person.name,
-      person.city,
-      person.country,
-      category?.name.es,
-      category?.name.en,
-      ...offered.flatMap((service) => [service.name.es, service.name.en]),
-    ].join(" ");
     return (
       person.publication === "published" &&
+      (!filters.usArea || matchesUsArea(person, filters.usArea)) &&
       (!filters.categoryId || person.categoryId === filters.categoryId) &&
       (!filters.subcategoryId ||
         offered.some(
           (service) => service.subcategoryId === filters.subcategoryId,
         )) &&
       (!filters.country || person.country === filters.country) &&
-      normalize(person.coverage.join(" ")).includes(
+      normalize([person.city, ...person.coverage].join(" ")).includes(
         normalize(filters.city || ""),
       ) &&
       (!filters.verifiedOnly ||
@@ -46,7 +59,7 @@ export function findProfessionals(
           (credential) => credential.status === "verified",
         )) &&
       person.rating >= (filters.minimumRating || 0) &&
-      normalize(searchable).includes(normalize(filters.query || ""))
+      matchesSearch(person, filters.query || "")
     );
   });
 }

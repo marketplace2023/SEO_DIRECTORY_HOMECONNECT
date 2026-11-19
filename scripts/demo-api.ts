@@ -9,6 +9,11 @@ import { Database } from "../server/database/database";
 import { Accounts } from "../server/auth/accounts";
 import { categories, services } from "../src/data/catalog";
 import { randomUUID } from "node:crypto";
+import { socialLinksSchema } from "../src/domain/social-links";
+import {
+  guestContactSchema,
+  quoteInputSchema,
+} from "../src/domain/quote-input";
 
 const port = Number(process.env.SERVINEXO_API_PORT || 5190);
 const file = resolve(
@@ -95,6 +100,7 @@ const fields: Record<string, z.ZodType> = {
   }),
   publication: z.object({ professionalId: text }),
   profile: z.object({
+    socialLinks: socialLinksSchema.optional(),
     name: text,
     city: text,
     coverage: z.array(text),
@@ -121,6 +127,7 @@ function publish(session: string, state: DemoState) {
   for (const stream of streams.get(session) || [])
     stream.write(`data: ${JSON.stringify(state)}\n\n`);
 }
+let mutationTail = Promise.resolve();
 const server = createServer(async (req, res) => {
   const origin = req.headers.origin;
   if (origin && !origins.has(origin)) {
@@ -196,6 +203,12 @@ const server = createServer(async (req, res) => {
     send(404, { error: "Not found" });
     return;
   }
+  const previousMutation = mutationTail;
+  let releaseMutation!: () => void;
+  mutationTail = new Promise<void>((resolve) => {
+    releaseMutation = resolve;
+  });
+  await previousMutation;
   try {
     let body = "";
     for await (const chunk of req) {
@@ -206,6 +219,46 @@ const server = createServer(async (req, res) => {
       }
     }
     const data = JSON.parse(body);
+    if (url.pathname === "/api/demo/guest-requests") {
+      const input = z
+        .object({
+          id: z.string().uuid(),
+          value: quoteInputSchema,
+          contact: guestContactSchema,
+        })
+        .parse(data);
+      const state = states.get(session) || createSeed();
+      const existing = state.requests.find(
+        (request) => request.id === input.id,
+      );
+      if (existing) {
+        if (existing.ownerId !== "guest-" + input.id) {
+          send(409, { error: "Request identifier already used" });
+          return;
+        }
+        send(200, state);
+        return;
+      }
+      const next = reducer(state, {
+        type: "request",
+        actor: "owner",
+        actorId: "guest-" + input.id,
+        actingProfessional: "",
+        id: input.id,
+        at: new Date().toISOString(),
+        value: { ...input.value, guestContact: input.contact },
+      });
+      if (next === state || !hasValidRelations(next)) {
+        send(400, { error: "Invalid request" });
+        return;
+      }
+      // Persist before acknowledging a submission so a failed write can be retried.
+      await database.saveState(session, next);
+      states.set(session, next);
+      publish(session, next);
+      send(201, next);
+      return;
+    }
     if (url.pathname === "/api/auth/login") {
       const input = z
         .object({
@@ -372,6 +425,8 @@ const server = createServer(async (req, res) => {
       error:
         "Revisa los datos enviados. La contraseña debe incluir al menos 8 caracteres, una letra y un número.",
     });
+  } finally {
+    releaseMutation();
   }
 });
 server.listen(port, "127.0.0.1", () =>

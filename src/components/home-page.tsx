@@ -1,14 +1,8 @@
-import { useRef, useState } from "react";
-import { MapSurface } from "@/components/ecosystem/map-surface";
+import { UsAreaMap } from "@/components/ecosystem/us-area-map";
 import { EnvironmentCards } from "@/components/ecosystem/environment-access";
 import { navigate } from "@/lib/navigation";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { A11y, Keyboard, FreeMode } from "swiper/modules";
-import type { Swiper as SwiperInstance } from "swiper";
 import {
   PiArrowUpRight,
-  PiArrowRight,
-  PiArrowLeft,
   PiCheck,
   PiSparkle,
   PiSealCheckFill,
@@ -21,7 +15,7 @@ import { BlurFade } from "@/components/ui/blur-fade";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { ProfessionalCard } from "@/components/professional-card";
-import { SearchBar, type SearchBarProps } from "@/components/search-bar";
+import type { SearchBarProps } from "@/components/search-bar";
 import { categoryIcons } from "@/components/category-icons";
 import translations from "@/data/translations.json";
 import { categories, categoryName } from "@/data/catalog";
@@ -36,7 +30,7 @@ export function HomePage({
   onQuote,
 }: {
   search: SearchBarProps;
-  professionals: Professional[];
+  professionals: { person: Professional; requests: number }[];
   onCategory: (id: string) => void;
   onProfile: (id: string) => void;
   onExplore: () => void;
@@ -44,16 +38,6 @@ export function HomePage({
 }) {
   const es = search.language === "es";
   const t = translations[search.language];
-  const categorySlider = useRef<SwiperInstance | null>(null);
-  const professionalSlider = useRef<SwiperInstance | null>(null);
-  const [categoryEdges, setCategoryEdges] = useState({
-    start: true,
-    end: false,
-  });
-  const [professionalEdges, setProfessionalEdges] = useState({
-    start: true,
-    end: false,
-  });
   const steps = [
     {
       icon: PiCompass,
@@ -185,7 +169,6 @@ export function HomePage({
           </span>
         </div>
         <div className="hero-search">
-          <SearchBar {...search} />
           <div className="popular-search">
             <span>{es ? "¿Por dónde empezar?" : "Where to start?"}</span>
             {[29, 4, 3].map((index) => (
@@ -222,59 +205,23 @@ export function HomePage({
               )}
             </h2>
           </div>
-          <div className="slider-controls">
-            <button
-              aria-label={es ? "Categorías anteriores" : "Previous categories"}
-              disabled={categoryEdges.start}
-              onClick={() => categorySlider.current?.slidePrev()}
-            >
-              <PiArrowLeft />
-            </button>
-            <button
-              aria-label={es ? "Siguientes categorías" : "Next categories"}
-              disabled={categoryEdges.end}
-              onClick={() => categorySlider.current?.slideNext()}
-            >
-              <PiArrowRight />
-            </button>
-          </div>
         </div>
-        <Swiper
-          modules={[A11y, Keyboard, FreeMode]}
-          keyboard={{ enabled: true, onlyInViewport: true }}
-          freeMode
-          slidesPerView={2.15}
-          spaceBetween={12}
-          breakpoints={{
-            540: { slidesPerView: 3.3 },
-            800: { slidesPerView: 4.4 },
-            1100: { slidesPerView: 6 },
-          }}
-          onSwiper={(swiper) => {
-            categorySlider.current = swiper;
-            setCategoryEdges({ start: swiper.isBeginning, end: swiper.isEnd });
-          }}
-          onSlideChange={(swiper) =>
-            setCategoryEdges({ start: swiper.isBeginning, end: swiper.isEnd })
-          }
-          className="category-swiper"
-        >
-          {categories.map((_, index) => {
+        <div className="home-category-grid">
+          {categories.map((category, index) => {
             const Icon = categoryIcons[index];
             return (
-              <SwiperSlide key={index}>
-                <button
-                  className="category-tile"
-                  onClick={() => onCategory(categories[index].id)}
-                >
-                  <Icon className="category-icon" />
-                  <span>{categories[index].name[search.language]}</span>
-                  <PiArrowUpRight className="category-arrow" />
-                </button>
-              </SwiperSlide>
+              <button
+                key={category.id}
+                className="category-tile"
+                onClick={() => onCategory(category.id)}
+              >
+                <Icon className="category-icon" />
+                <span>{category.name[search.language]}</span>
+                <PiArrowUpRight className="category-arrow" />
+              </button>
             );
           })}
-        </Swiper>
+        </div>
         <div className="category-footnote">
           <span>
             {es
@@ -295,29 +242,19 @@ export function HomePage({
           <div className="section-heading">
             <div>
               <p className="eyebrow">
-                {es ? "CONOCE EL TALENTO" : "MEET THE TALENT"}
+                {es ? "LOS MÁS SOLICITADOS" : "MOST REQUESTED"}
               </p>
               <h2 id="professionals-title">
-                {es ? (
-                  <>
-                    Gente que sabe
-                    <br />
-                    <em>hacer que pase.</em>
-                  </>
-                ) : (
-                  <>
-                    People who know
-                    <br />
-                    <em>how to make it happen.</em>
-                  </>
-                )}
+                {es
+                  ? "Contratistas más cotizados"
+                  : "Most requested contractors"}
               </h2>
             </div>
             <div className="section-heading-side">
               <p>
                 {es
-                  ? "Descubre a los profesionales detrás de tu próximo proyecto."
-                  : "Discover the professionals behind your next project."}
+                  ? "Ordenados por solicitudes de presupuesto recibidas."
+                  : "Ranked by quote requests received."}
               </p>
               <button className="text-link" onClick={onExplore}>
                 {es ? "Explorar profesionales" : "Explore professionals"}
@@ -325,33 +262,9 @@ export function HomePage({
               </button>
             </div>
           </div>
-          <Swiper
-            modules={[A11y, Keyboard]}
-            keyboard={{ enabled: true, onlyInViewport: true }}
-            slidesPerView={1.12}
-            spaceBetween={24}
-            breakpoints={{
-              600: { slidesPerView: 1.8 },
-              900: { slidesPerView: 2.6 },
-              1200: { slidesPerView: 3.2 },
-            }}
-            onSwiper={(swiper) => {
-              professionalSlider.current = swiper;
-              setProfessionalEdges({
-                start: swiper.isBeginning,
-                end: swiper.isEnd,
-              });
-            }}
-            onSlideChange={(swiper) =>
-              setProfessionalEdges({
-                start: swiper.isBeginning,
-                end: swiper.isEnd,
-              })
-            }
-            className="professional-swiper"
-          >
-            {professionals.map((person) => (
-              <SwiperSlide key={person.name}>
+          <div className="home-professional-grid">
+            {professionals.map(({ person, requests }) => (
+              <article className="home-featured-contractor" key={person.id}>
                 <ProfessionalCard
                   person={person}
                   category={categoryName(person.categoryId, search.language)}
@@ -360,54 +273,46 @@ export function HomePage({
                   verifiedLabel={es ? "Verificado · demo" : "Verified · demo"}
                   onOpen={() => onProfile(person.id)}
                 />
-              </SwiperSlide>
+                <p className="home-contractor-demand">
+                  {requests}{" "}
+                  {requests === 1
+                    ? es
+                      ? "solicitud de presupuesto"
+                      : "quote request"
+                    : es
+                      ? "solicitudes de presupuesto"
+                      : "quote requests"}
+                </p>
+              </article>
             ))}
-          </Swiper>
-          <div className="professional-bottom">
-            <p>
-              {es
-                ? "Una selección de perfiles para explorar el prototipo."
-                : "A selection of profiles to explore the prototype."}
-            </p>
-            <div className="slider-controls">
-              <button
-                aria-label={
-                  es ? "Profesionales anteriores" : "Previous professionals"
-                }
-                disabled={professionalEdges.start}
-                onClick={() => professionalSlider.current?.slidePrev()}
-              >
-                <PiArrowLeft />
-              </button>
-              <button
-                aria-label={
-                  es ? "Siguientes profesionales" : "Next professionals"
-                }
-                disabled={professionalEdges.end}
-                onClick={() => professionalSlider.current?.slideNext()}
-              >
-                <PiArrowRight />
-              </button>
-            </div>
           </div>
         </div>
       </section>
-      <section className="home-map-preview site-container">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">
-              {es ? "CONECTA POR UBICACION" : "CONNECT BY LOCATION"}
-            </p>
-            <h2>
-              {es ? "Encuentra talento en el mapa." : "Find talent on the map."}
-            </h2>
-          </div>
-          <Button variant="outline" onClick={() => navigate("/coverage")}>
-            {es ? "Abrir mapa completo" : "Open full map"}
-            <PiArrowUpRight />
+      <section
+        className="home-map-preview site-container us-home-map"
+        aria-labelledby="home-area-title"
+      >
+        <div className="us-home-map-copy">
+          <PiCompass aria-hidden="true" />
+          <h2 id="home-area-title">
+            {es ? "Explora el mapa de zonas" : "Explore the area map"}
+          </h2>
+          <p>
+            {es
+              ? "Encuentra profesionales en Estados Unidos por estado, ciudad o especialidad."
+              : "Find professionals in the United States by state, city, or specialty."}
+          </p>
+          <Button asChild size="lg">
+            <a href="#/areas">
+              {es ? "Abrir mapa de zonas" : "Open area map"}
+              <PiArrowUpRight />
+            </a>
           </Button>
         </div>
-        <MapSurface language={search.language} compact />
+        <UsAreaMap
+          language={search.language}
+          getHref={({ state }) => `#/areas?state=${state}`}
+        />
       </section>
       <section
         id="how-it-works"

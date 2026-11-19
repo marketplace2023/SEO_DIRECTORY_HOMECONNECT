@@ -246,6 +246,20 @@ export function RequestDetail({
               </dd>
             </div>
           </dl>
+          {contractor && request.guestContact && (
+            <div className="eco-notice">
+              <h3>{t("Contacto del solicitante", "Requester contact")}</h3>
+              <p>{request.guestContact.name}</p>
+              <p>
+                <a href={`mailto:${request.guestContact.email}`}>
+                  {request.guestContact.email}
+                </a>
+              </p>
+              {request.guestContact.phone && (
+                <p>{request.guestContact.phone}</p>
+              )}
+            </div>
+          )}
           {!contractor && request.status === "open" && (
             <Button
               variant="outline"

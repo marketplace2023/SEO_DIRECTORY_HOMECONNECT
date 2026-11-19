@@ -96,7 +96,7 @@ test("catálogo normalizado, servicio y enlace compartible con filtros", async (
     page.getByRole("combobox", { name: "Categoría", exact: true }),
   ).toHaveValue("remodeling");
   await expect(
-    page.getByRole("textbox", { name: "Ciudad", exact: true }),
+    page.getByRole("combobox", { name: "¿Dónde?", exact: true }),
   ).toHaveValue("Doral");
   await expect(page.getByRole("status")).toHaveText("2 perfiles de ejemplo");
 });

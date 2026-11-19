@@ -114,6 +114,14 @@ export function CoverageMap({
             "Explora el piloto de Georgia y las ubicaciones internacionales. Selecciona un marcador o un contratista para acercarte a su zona.",
             "Explore the Georgia pilot and international locations. Select a marker or contractor to zoom to their area.",
           )}
+          action={
+            <Button asChild variant="outline">
+              <a href="#/areas">
+                <PiGlobeHemisphereWest />
+                {t("Mapa de zonas de EE. UU.", "U.S. area map")}
+              </a>
+            </Button>
+          }
         />
       )}
       <div className="map-toolbar">

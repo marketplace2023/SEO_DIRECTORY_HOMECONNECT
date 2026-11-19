@@ -12,6 +12,7 @@ import { upgradeSeed } from "@/data/seed-migration";
 import { services } from "@/data/catalog";
 import { stateSchema, hasValidRelations } from "./schema";
 import { demoPost, demoEndpoint } from "./demo-client";
+import { socialLinksSchema, type SocialLinks } from "./social-links";
 import { useAuth } from "@/auth/auth-provider";
 import type {
   DemoState,
@@ -49,6 +50,7 @@ type Command =
   | { type: "publication"; professionalId: string }
   | {
       type: "profile";
+      socialLinks?: SocialLinks;
       name: string;
       city: string;
       coverage: string[];
@@ -439,6 +441,8 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
         !action.name.trim() ||
         !action.city.trim() ||
         !action.bio.trim() ||
+        (action.socialLinks !== undefined &&
+          !socialLinksSchema.safeParse(action.socialLinks).success) ||
         !action.coverage.length
       )
         return state;
@@ -453,6 +457,10 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
                   city: action.city.trim(),
                   coverage: action.coverage,
                   bio: { ...p.bio, [action.language]: action.bio.trim() },
+                  socialLinks:
+                    action.socialLinks === undefined
+                      ? p.socialLinks
+                      : socialLinksSchema.parse(action.socialLinks),
                 }
               : p,
           ),

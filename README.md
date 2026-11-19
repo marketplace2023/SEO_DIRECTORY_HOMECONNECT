@@ -24,7 +24,7 @@ Si una instalación de dependencias deja una caché Vite antigua, detén los ser
 
 ## Acceso y registro
 
-La web permite explorar servicios, perfiles y mapa sin sesión. Publicar solicitudes y entrar al dashboard requiere una cuenta de consumidor. Su registro y login permanecen en la web principal.
+La web permite explorar servicios, perfiles y mapa y solicitar presupuestos sin sesión. El formulario ofrece acceso o registro opcionales y permite continuar como invitado con nombre, correo y teléfono opcional. El contratista puede consultar esos datos en el detalle de la solicitud. El dashboard requiere una cuenta de consumidor. Su registro y login permanecen en la web principal.
 
 Contratistas tiene login y registro propios. El registro crea una ficha FUR en borrador con la especialidad y ciudad elegidas. Cada cuenta nueva está vinculada a su ficha. Administración revisa credenciales y controla su publicación. Solo la cuenta de muestra permite seleccionar otros perfiles para probar escenarios.
 
