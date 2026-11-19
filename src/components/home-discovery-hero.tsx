@@ -10,7 +10,7 @@ import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button
 import { DirectionAwareHover } from "@/components/ui/direction-aware-hover";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { SearchBar, type SearchBarProps } from "@/components/search-bar";
-import { categories } from "@/data/catalog";
+import { homeCategories } from "@/data/catalog";
 import { navigate } from "@/lib/navigation";
 
 export function DiscoveryHero({
@@ -100,7 +100,7 @@ export function DiscoveryHero({
           <div className="mt-9 flex gap-7 border-t border-neutral-200 pt-5 text-xs text-neutral-500">
             <span>
               <NumberTicker
-                value={categories.length}
+                value={homeCategories.length}
                 className="mr-1 text-lg font-bold text-neutral-900"
               />
               {es ? "especialidades" : "trades"}

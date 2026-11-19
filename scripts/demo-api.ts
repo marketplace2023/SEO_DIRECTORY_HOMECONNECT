@@ -19,9 +19,12 @@ import { cityLocation } from "../src/domain/geography";
 import { randomUUID } from "node:crypto";
 import { socialLinksSchema } from "../src/domain/social-links";
 import {
-  guestContactSchema,
-  quoteInputSchema,
-} from "../src/domain/quote-input";
+  budgetInput,
+  measurementInput,
+  partInput,
+  valuationInput,
+} from "../src/domain/estimating";
+import { quoteInputSchema } from "../src/domain/quote-input";
 import { visibleState } from "../server/security/visibility";
 import { RateLimit } from "../server/security/rate-limit";
 import type { AuthUser } from "../src/auth/types";
@@ -83,6 +86,10 @@ const value = z
     type: z.enum([
       "request",
       "proposal",
+      "part",
+      "measurement",
+      "budget",
+      "valuation",
       "accept",
       "cancel",
       "milestone",
@@ -111,18 +118,7 @@ const value = z
   })
   .passthrough();
 const fields: Record<string, z.ZodType> = {
-  request: z.object({
-    value: z.object({
-      title: text,
-      categoryId: text,
-      serviceId: text,
-      professionalId: text.optional(),
-      location: text,
-      description: text,
-      budget: z.number().nonnegative().nullable(),
-      date: text,
-    }),
-  }),
+  request: z.object({ value: quoteInputSchema }),
   proposal: z.object({
     value: z.object({
       requestId: text,
@@ -131,6 +127,13 @@ const fields: Record<string, z.ZodType> = {
       description: text,
     }),
   }),
+  part: z.object({
+    partId: z.string().min(1).max(100).optional(),
+    value: partInput,
+  }),
+  measurement: z.object({ value: measurementInput }),
+  budget: z.object({ value: budgetInput }),
+  valuation: z.object({ value: valuationInput }),
   accept: z.object({ proposalId: text }),
   cancel: z.object({ requestId: text }),
   milestone: z.object({ projectId: text, milestoneId: text }),
@@ -388,50 +391,6 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
     }
     const data = body ? JSON.parse(body) : {};
-    if (url.pathname === "/api/demo/guest-requests") {
-      const input = z
-        .object({
-          id: z.string().uuid(),
-          value: quoteInputSchema,
-          contact: guestContactSchema,
-        })
-        .parse(data);
-      const state = states.get(session) || createSeed();
-      const existing = state.requests.find(
-        (request) => request.id === input.id,
-      );
-      if (existing) {
-        if (existing.ownerId !== "guest-" + input.id) {
-          send(409, { error: "Request identifier already used" });
-          return;
-        }
-        send(200, { ...visibleState(state, null), requests: [existing] });
-        return;
-      }
-      const next = reducer(state, {
-        type: "request",
-        actor: "owner",
-        actorId: "guest-" + input.id,
-        actingProfessional: "",
-        id: input.id,
-        at: new Date().toISOString(),
-        value: { ...input.value, guestContact: input.contact },
-      });
-      if (next === state || !hasValidRelations(next)) {
-        send(400, { error: "Invalid request" });
-        return;
-      }
-      // Persist before acknowledging a submission so a failed write can be retried.
-      await database.saveState(session, next);
-      states.set(session, next);
-      publish(session, next);
-      send(201, {
-        ...visibleState(next, null),
-        requests: next.requests.filter((request) => request.id === input.id),
-      });
-      return;
-    }
-
     if (
       await attachments.route(
         url.pathname,
@@ -662,7 +621,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
       if (
         !user.emailVerified &&
-        ["request", "proposal", "message"].includes(action.type)
+        ["request", "proposal", "budget", "message"].includes(action.type)
       ) {
         send(403, {
           error: "Confirma tu correo antes de realizar esta acción.",
@@ -680,8 +639,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
       if (
         user.role === "contractor" &&
-        !user.demo &&
-        action.actingProfessional !== user.professionalId
+        action.actingProfessional !==
+          viewUser(user, action.actingProfessional)?.professionalId
       ) {
         send(403, { error: "Solo puedes gestionar tu perfil profesional." });
         return;
@@ -709,8 +668,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
           ),
         );
       if (!hasValidRelations(next)) throw Error("Invalid state transition");
+      await database.saveState(session, next);
       states.set(session, next);
-      await persist(session);
       publish(session, next);
       send(200, visibleState(next, viewUser(user, action.actingProfessional)));
       return;

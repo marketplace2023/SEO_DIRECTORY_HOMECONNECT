@@ -1,3 +1,4 @@
+import { ProfessionalFilters } from "./professional-filters";
 import {
   lazy,
   Suspense,
@@ -14,7 +15,7 @@ import {
 } from "react-icons/pi";
 import { categories, categoryName } from "@/data/catalog";
 import { usCities, usCounties, usStates } from "@/data/us-areas";
-import { findProfessionals } from "@/domain/queries";
+import { findProfessionals, orderProfessionals } from "@/domain/queries";
 import { useStore } from "@/domain/store";
 import {
   cityById,
@@ -72,6 +73,10 @@ export function AreaExplorer({
     const next = usAreaParams(selection);
     if (input.trim()) next.set("q", input.trim());
     if (service) next.set("category", service);
+    for (const key of ["initials", "sort"]) {
+      const value = route.params.get(key);
+      if (value) next.set(key, value);
+    }
     return next;
   };
   const href = (selection: UsArea) => {
@@ -88,11 +93,21 @@ export function AreaExplorer({
     const next = parseAreaQuery(query);
     navigate("/areas", params(next.area ?? area, next.service));
   };
-  const list = findProfessionals(state, {
-    query: parsed.service,
-    categoryId: category,
-    usArea: area,
-  });
+  const update = (key: string, value: string) => {
+    const next = params(area, parseAreaQuery(query).service);
+    value ? next.set(key, value) : next.delete(key);
+    navigate("/areas", next);
+  };
+  const list = orderProfessionals(
+    findProfessionals(state, {
+      initials: route.params.get("initials") ?? undefined,
+      query: parsed.service,
+      categoryId: category,
+      usArea: area,
+    }),
+    route.params.get("sort"),
+    language,
+  );
   const towns = usCities.filter(
     ([, , , region, county]) =>
       (!area.state || region === area.state) &&
@@ -229,7 +244,7 @@ export function AreaExplorer({
             ))}
           </select>
         </Field>
-        <Field label={t("Especialidad", "Specialty")}>
+        <Field label={t("Categoría de servicio", "Service category")}>
           <select value={category} onChange={(e) => move(area, e.target.value)}>
             <option value="">
               {t("Todas las especialidades", "All specialties")}
@@ -241,6 +256,11 @@ export function AreaExplorer({
             ))}
           </select>
         </Field>
+        <ProfessionalFilters
+          language={language}
+          params={route.params}
+          update={update}
+        />
         <Button type="submit">
           <PiMagnifyingGlass />
           {t("Buscar", "Search")}
@@ -248,6 +268,13 @@ export function AreaExplorer({
         <Button asChild variant="outline">
           <a href="#/areas">{t("Limpiar filtros", "Clear filters")}</a>
         </Button>
+        {categories.some(({ id }) => id === category) && (
+          <Button asChild variant="link">
+            <a href={`#/catalog?category=${category}`}>
+              {t("Ver alcance de la categoría", "View category scope")}
+            </a>
+          </Button>
+        )}
       </form>
       {area.state ? (
         <Suspense

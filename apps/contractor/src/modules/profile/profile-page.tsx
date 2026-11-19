@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   isPublicWebUrl,
+  socialLinksSchema,
   socialPlatforms,
   type SocialLinks,
 } from "@/domain/social-links";
@@ -161,19 +162,31 @@ export function ProfileEditor({ language }: { language: Language }) {
                     onChange={(event) => {
                       const input = event.currentTarget;
                       input.setCustomValidity(
-                        !input.value.trim() ||
-                          isPublicWebUrl(input.value.trim())
-                          ? ""
-                          : t(
-                              "Introduce un enlace completo con https://.",
-                              "Enter a full URL starting with https://.",
-                            ),
+                        key === "googleBusiness"
+                          ? socialLinksSchema.shape.googleBusiness.safeParse(
+                              input.value.trim(),
+                            ).success
+                            ? ""
+                            : t(
+                                "Introduce un enlace público de Google Maps o del Perfil de Empresa.",
+                                "Enter a public Google Maps or Business Profile link.",
+                              )
+                          : !input.value.trim() ||
+                              isPublicWebUrl(input.value.trim())
+                            ? ""
+                            : t(
+                                "Introduce un enlace completo con https://.",
+                                "Enter a full URL starting with https://.",
+                              ),
                       );
                     }}
                   />
                 </Field>
               ))}
             </div>
+            <a className="text-link" href="#/workspace/contractor/google">
+              {t("Administrar conexión con Google", "Manage Google connection")}
+            </a>
           </fieldset>
           <fieldset className="map-profile-fields">
             <legend>

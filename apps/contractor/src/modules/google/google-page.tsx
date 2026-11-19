@@ -32,7 +32,7 @@ export function GooglePage() {
       setMessage(
         path === "sync"
           ? `Sincronización completada: ${result.count} fichas autorizadas.`
-          : "Cambios guardados.",
+          : "Cambios registrados.",
       );
       await load();
     } catch (error) {
@@ -48,6 +48,9 @@ export function GooglePage() {
         CONNECT consultará tus fichas autorizadas para ayudarte a mantener
         información local consistente.
       </p>
+      <a className="text-link" href="#/workspace/contractor/profile">
+        Añadir el enlace público de tu ficha de Google
+      </a>
       <p className="eco-note">
         Conectar Google Business Profile no verifica una licencia profesional ni
         garantiza posicionamiento. Esta versión consulta datos; no modifica ni

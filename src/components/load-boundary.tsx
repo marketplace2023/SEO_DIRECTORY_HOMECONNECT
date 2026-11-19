@@ -28,7 +28,7 @@ export class LoadBoundary extends Component<Props, { failed: boolean }> {
         </h2>
         <p className="eco-body">
           {es
-            ? "Recarga la página para volver a intentarlo. Los datos guardados de tu demostración se conservarán."
+            ? "Recarga la página para volver a intentarlo. Los datos de tu demostración se conservarán."
             : "Reload the page to try again. Your saved demo data will be preserved."}
         </p>
         <Button onClick={() => window.location.reload()}>

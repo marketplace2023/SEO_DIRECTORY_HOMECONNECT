@@ -13,7 +13,7 @@ import { normalize, type Language } from "@/domain/types";
 import { useStore } from "@/domain/store";
 import { navigate, type Route } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-import { categoryIcon } from "@/components/category-icons";
+import { categoryIcon, serviceIcon } from "@/components/category-icons";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { Button } from "@/components/ui/button";
 import { DirectionAwareHover } from "@/components/ui/direction-aware-hover";
@@ -48,7 +48,7 @@ export function CatalogPage({
         category.description[language],
         ...category.included.map((item) => item[language]),
       ].join(" "),
-    ).includes(normalize(query)),
+    ).includes(normalize(query.trim())),
   );
   const published = (id: string) =>
     state.professionals.filter(
@@ -119,6 +119,12 @@ export function CatalogPage({
                   >
                     <PiMapPin aria-hidden="true" />
                     {t("Explorar en el mapa", "Explore on the map")}
+                  </Button>
+                  <Button asChild variant="link" className="h-12 px-0">
+                    <a href={`#/areas?state=GA&category=${selected.id}`}>
+                      {t("Contratistas por zona", "Contractors by area")}
+                      <PiArrowUpRight aria-hidden="true" />
+                    </a>
                   </Button>
                 </div>
                 <p className="mt-5 flex items-start gap-2 text-xs leading-5 text-neutral-500">
@@ -381,24 +387,31 @@ export function CatalogPage({
                             </span>
                           </div>
                           <ul className="divide-y divide-neutral-100 xl:min-h-40">
-                            {items.map((service) => (
-                              <li key={service.id}>
-                                <button
-                                  className="service-tile group/row relative flex min-h-0! w-full items-center justify-between gap-4 rounded-none! border-0! bg-transparent! px-0! py-4! text-left hover:text-primary"
-                                  onClick={() =>
-                                    navigate(`/services/${service.id}`)
-                                  }
-                                >
-                                  <span className="text-[13px]! leading-5! font-medium text-neutral-700! group-hover/row:text-primary!">
-                                    {service.name[language]}
-                                  </span>
-                                  <PiArrowUpRight
-                                    aria-hidden="true"
-                                    className="static! size-4 shrink-0 text-neutral-400 transition-transform group-hover/row:translate-x-0.5 group-hover/row:-translate-y-0.5 group-hover/row:text-primary"
-                                  />
-                                </button>
-                              </li>
-                            ))}
+                            {items.map((service) => {
+                              const ServiceIcon = serviceIcon(service);
+                              return (
+                                <li key={service.id}>
+                                  <button
+                                    className="service-tile group/row relative flex min-h-0! w-full items-center justify-between gap-4 rounded-none! border-0! bg-transparent! px-0! py-4! text-left hover:text-primary"
+                                    onClick={() =>
+                                      navigate(`/services/${service.id}`)
+                                    }
+                                  >
+                                    <span className="inline-flex items-center gap-2 text-[13px]! leading-5! font-medium text-neutral-700! group-hover/row:text-primary!">
+                                      <ServiceIcon
+                                        className="size-5 shrink-0 text-primary"
+                                        aria-hidden="true"
+                                      />
+                                      {service.name[language]}
+                                    </span>
+                                    <PiArrowUpRight
+                                      aria-hidden="true"
+                                      className="static! size-4 shrink-0 text-neutral-400 transition-transform group-hover/row:translate-x-0.5 group-hover/row:-translate-y-0.5 group-hover/row:text-primary"
+                                    />
+                                  </button>
+                                </li>
+                              );
+                            })}
                           </ul>
                           <Button
                             variant="secondary"
@@ -477,45 +490,55 @@ export function CatalogPage({
                 </span>
               </div>
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {visible.map((category) => (
-                  <MagicCard
-                    key={category.id}
-                    className="rounded-2xl"
-                    gradientFrom="#e00707"
-                    gradientTo="#f5b5a7"
-                    gradientColor="#fff1f1"
-                    gradientOpacity={0.22}
-                  >
-                    <button
-                      className="catalog-category h-full w-full border-0! bg-transparent!"
-                      onClick={() => selectCategory(category.id)}
+                {visible.map((category) => {
+                  const CategoryIcon = categoryIcon(category.id);
+                  return (
+                    <MagicCard
+                      key={category.id}
+                      className="rounded-2xl"
+                      gradientFrom="#e00707"
+                      gradientTo="#f5b5a7"
+                      gradientColor="#fff1f1"
+                      gradientOpacity={0.22}
                     >
-                      <img
-                        src={category.image}
-                        alt=""
-                        loading="lazy"
-                        width={376}
-                        height={332}
-                      />
-                      <h2 className="text-base! leading-6! font-semibold!">
-                        {category.name[language]}
-                      </h2>
-                      <p>{category.description[language]}</p>
-                      <span className="flex w-full items-center justify-between text-xs font-semibold text-primary">
-                        {t("Explorar servicios", "Explore services")}
-                        <PiArrowUpRight aria-hidden="true" />
-                      </span>
-                      <small>
-                        {published(category.id)
-                          ? t("Con perfiles en Georgia", "Profiles in Georgia")
-                          : t(
-                              "Sin oferta publicada en Georgia",
-                              "No published supply in Georgia",
-                            )}
-                      </small>
-                    </button>
-                  </MagicCard>
-                ))}
+                      <button
+                        className="catalog-category h-full w-full border-0! bg-transparent!"
+                        onClick={() => selectCategory(category.id)}
+                      >
+                        <img
+                          src={category.image}
+                          alt=""
+                          loading="lazy"
+                          width={376}
+                          height={332}
+                        />
+                        <h2 className="text-base! leading-6! font-semibold!">
+                          <CategoryIcon
+                            className="mr-2 inline size-5 text-primary"
+                            aria-hidden="true"
+                          />
+                          {category.name[language]}
+                        </h2>
+                        <p>{category.description[language]}</p>
+                        <span className="flex w-full items-center justify-between text-xs font-semibold text-primary">
+                          {t("Explorar servicios", "Explore services")}
+                          <PiArrowUpRight aria-hidden="true" />
+                        </span>
+                        <small>
+                          {published(category.id)
+                            ? t(
+                                "Con perfiles en Georgia",
+                                "Profiles in Georgia",
+                              )
+                            : t(
+                                "Sin oferta publicada en Georgia",
+                                "No published supply in Georgia",
+                              )}
+                        </small>
+                      </button>
+                    </MagicCard>
+                  );
+                })}
               </div>
               {!visible.length && (
                 <Empty

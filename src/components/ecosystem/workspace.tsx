@@ -27,7 +27,7 @@ const sections = [
   { key: "overview", es: "Resumen", en: "Overview", icon: PiSquaresFour },
   { key: "requests", es: "Solicitudes", en: "Requests", icon: PiClipboardText },
   { key: "projects", es: "Proyectos", en: "Projects", icon: PiFolderOpen },
-  { key: "favorites", es: "Guardados", en: "Saved", icon: PiHeart },
+  { key: "favorites", es: "Favoritos", en: "Favorites", icon: PiHeart },
   { key: "messages", es: "Mensajes", en: "Messages", icon: PiChatCircleDots },
   {
     key: "coverage",
@@ -115,7 +115,7 @@ export function Workspace({
                   }
                 />
                 <Stat
-                  label={t("Perfiles guardados", "Saved profiles")}
+                  label={t("Perfiles favoritos", "Favorite profiles")}
                   value={state.favorites.length}
                 />
               </div>
@@ -155,7 +155,9 @@ export function Workspace({
           {tab === "messages" && <Messages route={route} language={language} />}
           {tab === "coverage" && <CoveragePanel language={language} />}
           {tab === "favorites" && (
-            <Panel title={t("Profesionales guardados", "Saved professionals")}>
+            <Panel
+              title={t("Profesionales favoritos", "Favorite professionals")}
+            >
               {state.professionals.some(
                 (p) =>
                   state.favorites.includes(p.id) &&
@@ -175,12 +177,12 @@ export function Workspace({
               ) : (
                 <Empty
                   title={t(
-                    "Guarda una buena conexión",
-                    "Save a good connection",
+                    "Aún no tienes favoritos",
+                    "You don’t have any favorites yet",
                   )}
                   description={t(
-                    "Abre una ficha y pulsa Guardar para encontrarla aquí.",
-                    "Open a profile and choose Save to find it here.",
+                    "Abre una ficha y pulsa Añadir a favoritos para encontrarla aquí.",
+                    "Open a profile and choose Add to favorites to find it here.",
                   )}
                 >
                   <Button onClick={() => navigate("/professionals")}>

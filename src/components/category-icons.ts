@@ -19,7 +19,26 @@
   PiSolarPanel,
   PiSwimmingPool,
   PiBuildings,
+  PiBroom,
+  PiTruck,
+  PiTrash,
+  PiClipboardText,
+  PiCouch,
+  PiCircuitry,
+  PiNetwork,
+  PiShower,
+  PiShovel,
+  PiFire,
+  PiDresser,
+  PiFrameCorners,
+  PiPaintRoller,
+  PiFan,
+  PiWashingMachine,
+  PiBug,
+  PiMagnifyingGlass,
+  PiPencilRuler,
 } from "react-icons/pi";
+import type { Service } from "@/domain/types";
 const legacyIcons = [
   PiHouseLine,
   PiWrench,
@@ -89,4 +108,32 @@ const ids = [
   "waterproofing",
 ];
 const byId = Object.fromEntries(ids.map((id, i) => [id, legacyIcons[i]]));
+Object.assign(byId, {
+  hvac: PiFan,
+  painting: PiPaintRoller,
+  appliances: PiWashingMachine,
+  "pest-control": PiBug,
+  "general-contractors": PiBuildings,
+  "home-cleaning": PiBroom,
+  "junk-removal": PiTrash,
+  moving: PiTruck,
+  "home-inspection": PiClipboardText,
+  "interior-design": PiCouch,
+  "home-automation": PiCircuitry,
+  "home-networks": PiNetwork,
+  irrigation: PiShower,
+  excavation: PiShovel,
+  demolition: PiHammer,
+  "damage-restoration": PiWrench,
+  chimneys: PiFire,
+  cabinetry: PiDresser,
+  countertops: PiRuler,
+  "glass-mirrors": PiFrameCorners,
+});
 export const categoryIcon = (id: string) => byId[id] || PiBuildings;
+
+export function serviceIcon(service: Service) {
+  if (service.mode === "assessment") return PiMagnifyingGlass;
+  if (service.mode === "design") return PiPencilRuler;
+  return categoryIcon(service.categoryId);
+}

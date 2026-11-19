@@ -123,7 +123,11 @@ export function ContractorRoutes({
       ) : tab === "requests" ? (
         <Opportunities id={id} language={language} />
       ) : tab === "proposals" ? (
-        <Proposals language={language} />
+        <Proposals
+          key={professionalId}
+          language={language}
+          requestId={route.params.get("request") ?? undefined}
+        />
       ) : tab === "projects" ? (
         <Projects id={id} language={language} />
       ) : tab === "profile" ? (

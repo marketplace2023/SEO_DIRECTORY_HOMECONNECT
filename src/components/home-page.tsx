@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DiscoveryHero } from "./home-discovery-hero";
 import { HomeSubcategories } from "./home-subcategories";
 import { UsAreaMap } from "@/components/ecosystem/us-area-map";
-import { navigate } from "@/lib/navigation";
+import { Input } from "@/components/ui/input";
 import {
   PiArrowUpRight,
   PiChatCircleDots,
@@ -12,14 +12,13 @@ import {
 } from "react-icons/pi";
 import { Button } from "@/components/ui/button";
 import { BlurFade } from "@/components/ui/blur-fade";
-import { NumberTicker } from "@/components/ui/number-ticker";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { ProfessionalCard } from "@/components/professional-card";
 import type { SearchBarProps } from "@/components/search-bar";
 import { categoryIcon } from "@/components/category-icons";
 import translations from "@/data/translations.json";
-import { categories, categoryName } from "@/data/catalog";
-import type { Professional } from "@/domain/types";
+import { homeCategories, categoryName } from "@/data/catalog";
+import { normalize, type Professional } from "@/domain/types";
 
 export function HomePage({
   search,
@@ -39,6 +38,7 @@ export function HomePage({
   const es = search.language === "es";
   const t = translations[search.language];
   const [family, setFamily] = useState("all");
+  const [categoryQuery, setCategoryQuery] = useState("");
   const exterior = [
     "roofing",
     "landscaping",
@@ -57,18 +57,18 @@ export function HomePage({
     "solar",
     "appliances",
     "septic",
-    "home-automation",
-    "home-networks",
-    "irrigation",
   ];
-  const catalog = categories.filter(
+  const catalog = homeCategories.filter(
     (c) =>
-      family === "all" ||
-      (family === "outside"
-        ? exterior.includes(c.id)
-        : family === "systems"
-          ? systems.includes(c.id)
-          : !exterior.includes(c.id) && !systems.includes(c.id)),
+      normalize(`${c.name.es} ${c.name.en}`).includes(
+        normalize(categoryQuery.trim()),
+      ) &&
+      (family === "all" ||
+        (family === "outside"
+          ? exterior.includes(c.id)
+          : family === "systems"
+            ? systems.includes(c.id)
+            : !exterior.includes(c.id) && !systems.includes(c.id))),
   );
   const steps = [
     {
@@ -109,22 +109,23 @@ export function HomePage({
       >
         <div className="section-heading">
           <div>
-            <p className="eyebrow">
-              {es ? "UN MUNDO DE POSIBILIDADES" : "A WORLD OF POSSIBILITIES"}
-            </p>
             <h2 id="category-title">
-              {es ? (
-                <>
-                  ¿Qué tienes <em>en mente?</em>
-                </>
-              ) : (
-                <>
-                  What’s <em>on your mind?</em>
-                </>
-              )}
+              {es ? "Categorías de servicios" : "Service categories"}
             </h2>
           </div>
+          <a className="text-link" href="#/areas">
+            {es ? "Contratistas por zona" : "Contractors by area"}
+            <PiArrowUpRight aria-hidden="true" />
+          </a>
         </div>
+        <Input
+          type="search"
+          aria-label={es ? "Filtrar categorías" : "Filter categories"}
+          placeholder={es ? "Buscar una categoría…" : "Find a category…"}
+          value={categoryQuery}
+          onChange={(event) => setCategoryQuery(event.target.value)}
+          className="mb-4 max-w-sm"
+        />
         <Tabs value={family} onValueChange={setFamily} className="mb-6">
           <TabsList variant="line" className="max-w-full overflow-x-auto">
             <TabsTrigger value="all">{es ? "Todos" : "All"}</TabsTrigger>
@@ -163,17 +164,15 @@ export function HomePage({
             );
           })}
         </div>
-        <div className="category-footnote">
-          <span>
-            {es
-              ? "Del pequeño arreglo al gran proyecto."
-              : "From small repairs to big projects."}
-          </span>
-          <span>
-            <NumberTicker value={categories.length} className="text-inherit" />{" "}
-            {es ? "especialidades, un solo lugar" : "specialties, one place"}
-          </span>
-        </div>
+        <p className="category-footnote" role="status">
+          {catalog.length
+            ? es
+              ? `${catalog.length} de ${homeCategories.length} categorías`
+              : `${catalog.length} of ${homeCategories.length} categories`
+            : es
+              ? "No hay categorías que coincidan con estos filtros."
+              : "No categories match these filters."}
+        </p>
       </section>
       <HomeSubcategories language={search.language} />
       <section

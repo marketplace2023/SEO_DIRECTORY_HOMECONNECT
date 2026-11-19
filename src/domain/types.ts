@@ -1,4 +1,5 @@
 import type { SocialLinks } from "./social-links";
+import type { BudgetLine, Estimating } from "./estimating";
 
 export type Language = "es" | "en";
 export type Localized = { es: string; en: string };
@@ -94,6 +95,7 @@ export type Proposal = {
   currency: "USD";
   days: number;
   description: string;
+  lines?: BudgetLine[];
   createdAt: string;
   status: "submitted" | "accepted" | "declined";
 };
@@ -133,6 +135,7 @@ export type AuditEvent = {
 export type DemoState = {
   version: 1;
   seedRevision?: number;
+  estimating?: Estimating;
   professionals: Professional[];
   requests: QuoteRequest[];
   proposals: Proposal[];
@@ -165,9 +168,10 @@ export const normalize = (text: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-export const money = (value: number, lang: Language) =>
+export const money = (value: number, lang: Language, fractionDigits = 0) =>
   new Intl.NumberFormat(lang === "es" ? "es-VE" : "en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value);

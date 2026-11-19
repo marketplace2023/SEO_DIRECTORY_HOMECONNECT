@@ -17,6 +17,16 @@ import { useAuth } from "@/auth/auth-provider";
 import { readToken } from "@/auth/auth-client";
 import { normalize } from "./types";
 import { cityLocation } from "./geography";
+import { isGuestOwner } from "./guest-quotes";
+import {
+  budgetCents,
+  budgetLines,
+  budgetInput,
+  measurementInput,
+  partInput,
+  valuationInput,
+} from "./estimating";
+import type { z } from "zod";
 import type {
   DemoState,
   Role,
@@ -38,6 +48,10 @@ type Command =
       type: "proposal";
       value: Pick<Proposal, "requestId" | "amount" | "days" | "description">;
     }
+  | { type: "part"; partId?: string; value: z.input<typeof partInput> }
+  | { type: "measurement"; value: z.input<typeof measurementInput> }
+  | { type: "budget"; value: z.input<typeof budgetInput> }
+  | { type: "valuation"; value: z.input<typeof valuationInput> }
   | { type: "accept"; proposalId: string }
   | { type: "cancel"; requestId: string }
   | { type: "milestone"; projectId: string; milestoneId: string }
@@ -77,6 +91,7 @@ const allowedRequests = (state: DemoState, professionalId: string) =>
   state.requests.filter(
     (r) =>
       r.status === "open" &&
+      !isGuestOwner(r.ownerId) &&
       state.professionals.some(
         (p) => p.id === professionalId && p.publication === "published",
       ) &&
@@ -109,6 +124,105 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
     ].slice(0, 500),
   });
   switch (action.type) {
+    case "part": {
+      const professionalId = action.actingProfessional;
+      const estimating = state.estimating ?? {
+        parts: [],
+        measurements: [],
+        valuations: [],
+      };
+      const input = partInput.safeParse(action.value);
+      if (
+        action.actor !== "contractor" ||
+        !input.success ||
+        !state.professionals.some((person) => person.id === professionalId)
+      )
+        return state;
+      const id = action.partId ?? action.id;
+      const current = estimating.parts.find((part) => part.id === id);
+      if (
+        action.partId
+          ? current?.professionalId !== professionalId
+          : Boolean(current)
+      )
+        return state;
+      const part = { ...input.data, id, professionalId };
+      const parts = current
+        ? estimating.parts.map((row) => (row.id === id ? part : row))
+        : [...estimating.parts, part];
+      return audit({ ...state, estimating: { ...estimating, parts } }, id);
+    }
+    case "measurement": {
+      const professionalId = action.actingProfessional;
+      const estimating = state.estimating;
+      const input = measurementInput.safeParse(action.value);
+      if (action.actor !== "contractor" || !estimating || !input.success)
+        return state;
+      const { requestId, partId, quantity } = input.data;
+      if (
+        !estimating.parts.some(
+          (part) =>
+            part.id === partId && part.professionalId === professionalId,
+        ) ||
+        !allowedRequests(state, professionalId).some(
+          (request) => request.id === requestId,
+        ) ||
+        state.proposals.some(
+          (proposal) =>
+            proposal.requestId === requestId &&
+            proposal.professionalId === professionalId,
+        )
+      )
+        return state;
+      const measurements = estimating.measurements.filter(
+        (row) => row.requestId !== requestId || row.partId !== partId,
+      );
+      if (quantity > 0) measurements.push({ ...input.data, professionalId });
+      return audit(
+        { ...state, estimating: { ...estimating, measurements } },
+        requestId,
+      );
+    }
+    case "valuation": {
+      const input = valuationInput.safeParse(action.value);
+      if (action.actor !== "contractor" || !input.success) return state;
+      const { proposalId, progress } = input.data;
+      if (
+        !state.proposals.some(
+          (proposal) =>
+            proposal.id === proposalId &&
+            proposal.professionalId === action.actingProfessional &&
+            proposal.status === "accepted",
+        )
+      )
+        return state;
+      const estimating = state.estimating ?? {
+        parts: [],
+        measurements: [],
+        valuations: [],
+      };
+      if (
+        estimating.valuations.some(
+          (row) =>
+            row.id === action.id ||
+            (row.proposalId === proposalId && row.progress >= progress),
+        )
+      )
+        return state;
+      return audit(
+        {
+          ...state,
+          estimating: {
+            ...estimating,
+            valuations: [
+              ...estimating.valuations,
+              { ...input.data, id: action.id, at: action.at },
+            ],
+          },
+        },
+        proposalId,
+      );
+    }
     case "request": {
       if (
         action.actor !== "owner" ||
@@ -152,22 +266,44 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
         action.id,
       );
     }
+    case "budget":
     case "proposal": {
+      let value: Pick<
+        Proposal,
+        "requestId" | "amount" | "days" | "description" | "lines"
+      >;
+      if (action.type === "budget") {
+        const input = budgetInput.safeParse(action.value);
+        if (!input.success || !state.estimating) return state;
+        const lines = budgetLines(
+          state.estimating,
+          action.actingProfessional,
+          input.data.requestId,
+        );
+        const cents = budgetCents(lines);
+        if (!Number.isSafeInteger(cents) || cents !== input.data.expectedCents)
+          return state;
+        const { requestId, days, description } = input.data;
+        value = { requestId, days, description, amount: cents / 100, lines };
+      } else {
+        const { requestId, amount, days, description } = action.value;
+        value = { requestId, amount, days, description };
+      }
       if (
         action.actor !== "contractor" ||
         !allowedRequests(state, action.actingProfessional).some(
-          (r) => r.id === action.value.requestId,
+          (r) => r.id === value.requestId,
         ) ||
         state.proposals.some(
           (p) =>
-            p.requestId === action.value.requestId &&
+            p.requestId === value.requestId &&
             p.professionalId === action.actingProfessional,
         ) ||
-        !Number.isFinite(action.value.amount) ||
-        action.value.amount <= 0 ||
-        !Number.isInteger(action.value.days) ||
-        action.value.days < 1 ||
-        !action.value.description.trim()
+        !Number.isFinite(value.amount) ||
+        value.amount <= 0 ||
+        !Number.isInteger(value.days) ||
+        value.days < 1 ||
+        !value.description.trim()
       )
         return state;
       return audit(
@@ -175,7 +311,7 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
           ...state,
           proposals: [
             {
-              ...action.value,
+              ...value,
               professionalId: action.actingProfessional,
               id: action.id,
               currency: "USD",
@@ -342,6 +478,10 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
       };
     }
     case "message": {
+      const ownerId =
+        action.actor === "owner"
+          ? action.actorId || "demo-owner"
+          : action.ownerId || "demo-owner";
       if (
         !["owner", "contractor"].includes(action.actor) ||
         !action.text.trim() ||
@@ -350,6 +490,7 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
           action.professionalId !== action.actingProfessional)
       )
         return state;
+      if (isGuestOwner(ownerId)) return state;
       return {
         ...state,
         messages: [
@@ -357,10 +498,7 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
           {
             id: action.id,
             professionalId: action.professionalId,
-            ownerId:
-              action.actor === "owner"
-                ? action.actorId || "demo-owner"
-                : action.ownerId || "demo-owner",
+            ownerId,
             sender: action.actor as "owner" | "contractor",
             text: action.text.trim(),
             createdAt: action.at,
@@ -636,6 +774,7 @@ export function StoreProvider({
   }, [user?.id, professionalId, checking]);
   useEffect(() => {
     const receive = (event: StorageEvent) => {
+      if (initialRole === "contractor") return;
       if (event.key !== STORAGE_KEY || !event.newValue) return;
       try {
         const parsed = stateSchema.safeParse(JSON.parse(event.newValue));
@@ -647,10 +786,11 @@ export function StoreProvider({
     };
     window.addEventListener("storage", receive);
     return () => window.removeEventListener("storage", receive);
-  }, []);
+  }, [initialRole]);
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const { estimating, ...cacheable } = state;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cacheable));
       setStorageError(false);
     } catch {
       setStorageError(true);

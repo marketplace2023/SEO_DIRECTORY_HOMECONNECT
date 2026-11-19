@@ -10,7 +10,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { StoreProvider, useStore } from "@/domain/store";
 import { roleNames, type Language, type Role } from "@/domain/types";
 import { rolePortal, workspaceHref } from "@/lib/portals";
-import { categories } from "@/data/catalog";
 import { navigate, useRoute } from "@/lib/navigation";
 import {
   CatalogPage,
@@ -20,11 +19,12 @@ import {
   Missing,
 } from "@/components/ecosystem/public-pages";
 import { RequestPage } from "@/components/ecosystem/request-page";
+import { ContactAccountDialog } from "@/components/ecosystem/contact-account-dialog";
 import { copy } from "@/components/ecosystem/primitives";
 import { EnvironmentAccess } from "@/components/ecosystem/environment-access";
 import { MapSurface } from "@/components/ecosystem/map-surface";
 import { LoadBoundary } from "@/components/load-boundary";
-import { AuthProvider } from "@/auth/auth-provider";
+import { AuthProvider, useAuth } from "@/auth/auth-provider";
 import { RequireAccount } from "@/auth/require-account";
 import { LoginPage } from "@/modules/auth/login-page";
 import { RegisterPage } from "@/modules/auth/register-page";
@@ -87,6 +87,7 @@ export default function App() {
 }
 function Ecosystem() {
   const route = useRoute();
+  const { user, checking } = useAuth();
   const { state, role, setRole, storageError, syncError } = useStore();
   const [language, setLanguage] = useState<Language>("es");
   const [query, setQuery] = useState("");
@@ -175,7 +176,29 @@ function Ecosystem() {
       return <ProfilePage id={parts[1]} language={language} />;
     if (parts[0] === "services" && parts.length === 2)
       return <ServicePage id={parts[1]} language={language} />;
-    if (route.path === "/quote")
+    const quote = route.path === "/quote";
+    const message = route.path === "/workspace/owner/messages";
+    if ((quote || message) && checking) return <Loading />;
+    if ((quote || message) && !user) {
+      const params = new URLSearchParams(route.params);
+      params.delete("guest");
+      const professional = state.professionals.find(
+        (person) =>
+          person.id === params.get("professional") &&
+          person.publication === "published",
+      );
+      const next = route.path + (params.size ? "?" + params : "");
+      return (
+        <ContactAccountDialog
+          key={next}
+          next={next}
+          message={message}
+          person={professional}
+          language={language}
+        />
+      );
+    }
+    if (quote)
       return (
         <RequestPage
           key={route.params.toString()}
@@ -235,7 +258,7 @@ function Ecosystem() {
       <EnvironmentAccess language={language} path={route.path} />
       <div className="ecosystem-strip site-container">
         <button onClick={() => navigate("/catalog")}>
-          {categories.length} {t("especialidades", "specialties")}
+          {t("Catálogo de servicios", "Service catalog")}
           <PiArrowUpRight />
         </button>
         <button onClick={() => navigate("/coverage")}>

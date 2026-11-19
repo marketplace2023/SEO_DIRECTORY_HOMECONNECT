@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PiArrowUpRight } from "react-icons/pi";
-import { categories, subcategories, services } from "@/data/catalog";
+import { homeCategories, subcategories, services } from "@/data/catalog";
 import type { Language } from "@/domain/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { navigate } from "@/lib/navigation";
 
 export function HomeSubcategories({ language }: { language: Language }) {
-  const [categoryId, setCategoryId] = useState(categories[0].id);
+  const [categoryId, setCategoryId] = useState(homeCategories[0].id);
   const es = language === "es";
   return (
     <section
@@ -41,7 +41,7 @@ export function HomeSubcategories({ language }: { language: Language }) {
             value={categoryId}
             onChange={(event) => setCategoryId(event.target.value)}
           >
-            {categories.map((c) => (
+            {homeCategories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name[language]}
               </option>

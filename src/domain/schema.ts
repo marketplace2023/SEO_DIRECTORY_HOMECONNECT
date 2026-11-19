@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { budgetCents, budgetLineSchema, estimatingSchema } from "./estimating";
 import { socialLinksSchema } from "./social-links";
 import { guestContactSchema } from "./quote-input";
 import type { DemoState } from "./types";
@@ -27,6 +28,8 @@ export function hasValidRelations(state: DemoState): boolean {
   const proposals = new Map(
     state.proposals.map((proposal) => [proposal.id, proposal]),
   );
+  const estimating = state.estimating;
+  const parts = new Map(estimating?.parts.map((part) => [part.id, part]));
   return (
     state.professionals.length > 0 &&
     [
@@ -61,8 +64,32 @@ export function hasValidRelations(state: DemoState): boolean {
     ) &&
     state.proposals.every(
       (proposal) =>
-        people.has(proposal.professionalId) && requests.has(proposal.requestId),
+        people.has(proposal.professionalId) &&
+        requests.has(proposal.requestId) &&
+        (!proposal.lines ||
+          (proposal.lines.length > 0 &&
+            new Set(proposal.lines.map((line) => line.partId)).size ===
+              proposal.lines.length &&
+            budgetCents(proposal.lines) / 100 === proposal.amount)),
     ) &&
+    (!estimating ||
+      (unique(estimating.parts) &&
+        unique(estimating.valuations) &&
+        estimating.parts.every((part) => people.has(part.professionalId)) &&
+        estimating.measurements.every(
+          (row) =>
+            row.quantity > 0 &&
+            requests.has(row.requestId) &&
+            parts.get(row.partId)?.professionalId === row.professionalId,
+        ) &&
+        new Set(
+          estimating.measurements.map((row) =>
+            JSON.stringify([row.requestId, row.partId]),
+          ),
+        ).size === estimating.measurements.length &&
+        estimating.valuations.every(
+          (row) => proposals.get(row.proposalId)?.status === "accepted",
+        ))) &&
     state.projects.every((project) => {
       const proposal = proposals.get(project.proposalId);
       return (
@@ -87,6 +114,7 @@ export function hasValidRelations(state: DemoState): boolean {
 export const stateSchema: z.ZodType<DemoState> = z.object({
   version: z.literal(1),
   seedRevision: z.number().optional(),
+  estimating: estimatingSchema.optional(),
   professionals: z.array(
     z.object({
       id: text,
@@ -140,6 +168,7 @@ export const stateSchema: z.ZodType<DemoState> = z.object({
       professionalId: text,
       amount: z.number().positive(),
       currency: z.literal("USD"),
+      lines: z.array(budgetLineSchema).optional(),
       days: z.number().int().positive(),
       description: text,
       createdAt: text,

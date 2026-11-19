@@ -1,3 +1,4 @@
+import { ProfessionalFilters } from "./professional-filters";
 import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
@@ -29,7 +30,11 @@ import {
 } from "@/data/catalog";
 import type { Language } from "@/domain/types";
 import { displayedLocation, type MapBounds } from "@/domain/geography";
-import { filtersFromParams, findProfessionals } from "@/domain/queries";
+import {
+  filtersFromParams,
+  findProfessionals,
+  orderProfessionals,
+} from "@/domain/queries";
 import { navigate, useRoute } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -203,10 +208,7 @@ export function CoverageMap({
     commit(next);
   };
   const results = findProfessionals(state, filters);
-  const visible =
-    params.get("sort") === "name"
-      ? [...results].sort((a, b) => a.name.localeCompare(b.name))
-      : results;
+  const visible = orderProfessionals(results, params.get("sort"), language);
   const located = visible
     .map((p) => ({ person: p, point: displayedLocation(p, filters.bounds) }))
     .filter((row) => row.point !== null);
@@ -413,17 +415,11 @@ export function CoverageMap({
             <option value="4.5">4.5+</option>
           </select>
         </Field>
-        <Field label={t("Ordenar resultados", "Sort results")}>
-          <select
-            value={params.get("sort") || "default"}
-            onChange={(e) => update("sort", e.target.value)}
-          >
-            <option value="default">
-              {t("Orden del directorio", "Directory order")}
-            </option>
-            <option value="name">{t("Nombre A–Z", "Name A–Z")}</option>
-          </select>
-        </Field>
+        <ProfessionalFilters
+          language={language}
+          params={params}
+          update={update}
+        />
         <label className="verified-filter">
           <input
             type="checkbox"

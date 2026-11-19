@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Brand } from "@/components/brand";
 import "./auth.css";
 export function VerificationNotice() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
   const [message, setMessage] = useState(""),
     [mail, setMail] = useState<{ subject: string; text: string }[]>([]);
   if (!user || user.emailVerified) return null;
@@ -18,6 +18,20 @@ export function VerificationNotice() {
         antes de publicar solicitudes, enviar propuestas o conectar Google.
       </p>
       <div className="eco-actions">
+        <Button
+          variant="outline"
+          onClick={() =>
+            void refresh()
+              .then(() =>
+                setMessage(
+                  "Si ya confirmaste el correo, podrás continuar con tu solicitud.",
+                ),
+              )
+              .catch((error) => setMessage(error.message))
+          }
+        >
+          Ya confirmé mi correo
+        </Button>
         <Button
           variant="outline"
           onClick={() =>
@@ -72,6 +86,17 @@ export function EmailPage({
   const params = new URLSearchParams(window.location.hash.split("?")[1] || ""),
     token = params.get("token") || "";
   const targetSession = params.get("session");
+  const [contactReturn] = useState(() => {
+    try {
+      const next = sessionStorage.getItem("homeconnect.contact-return");
+      return next &&
+        /^\/(?:quote|workspace\/owner\/messages)(?:\?|$)/.test(next)
+        ? next
+        : "";
+    } catch {
+      return "";
+    }
+  });
   useEffect(() => {
     if (targetSession && /^[\w-]{1,80}$/.test(targetSession))
       localStorage.setItem("servinexo.demo-session", targetSession);
@@ -175,7 +200,25 @@ export function EmailPage({
           )}
           {message && <p role="status">{message}</p>}
         </form>
-        <a href="#/login">Volver al inicio de sesión</a>
+        {mode === "verify-email" &&
+        message &&
+        application === "web" &&
+        auth.user?.role === "owner" ? (
+          <a
+            href={`#${contactReturn || "/workspace/owner"}`}
+            onClick={() => {
+              try {
+                sessionStorage.removeItem("homeconnect.contact-return");
+              } catch {
+                /* Continue without storage. */
+              }
+            }}
+          >
+            Continuar a HOME CONNECT
+          </a>
+        ) : (
+          <a href="#/login">Volver al inicio de sesión</a>
+        )}
       </div>
     </main>
   );

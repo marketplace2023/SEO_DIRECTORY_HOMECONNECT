@@ -1,7 +1,5 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useAuth } from "@/auth/auth-provider";
-import { VerificationNotice } from "@/auth/email-pages";
-import { demoPost } from "@/domain/demo-client";
 import { PiArrowRight, PiArrowUpRight } from "react-icons/pi";
 import { categories, services } from "@/data/catalog";
 import { useStore } from "@/domain/store";
@@ -22,7 +20,6 @@ export function RequestPage({
 }) {
   const { state, send } = useStore();
   const { user } = useAuth();
-  const guest = !user;
   const t = copy(language);
   const draftKey = "homeconnect.quote-draft." + route.params.toString();
   const [draft] = useState<Record<string, string>>(() => {
@@ -41,16 +38,6 @@ export function RequestPage({
       return {};
     }
   });
-  const [submissionId] = useState(
-    () => draft.submissionId || crypto.randomUUID(),
-  );
-  const [skipAccount, setSkipAccount] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const submitting = useRef(false);
-  const accountNext = "/quote" + (route.params.size ? "?" + route.params : "");
-  const accountHref = (path: string) =>
-    "#" + path + "?next=" + encodeURIComponent(accountNext);
   const recipient = state.professionals.find(
     (p) =>
       p.id === route.params.get("professional") &&
@@ -72,7 +59,7 @@ export function RequestPage({
   const [categoryId, setCategory] = useState(initial.categoryId);
   const [serviceId, setService] = useState(initial.id);
   const [error, setError] = useState("");
-  if (user && !user.emailVerified) return <VerificationNotice />;
+  if (!user?.emailVerified || user.role !== "owner") return null;
   if (
     (route.params.has("professional") && !recipient) ||
     (route.params.has("service") &&
@@ -88,7 +75,7 @@ export function RequestPage({
       s.categoryId === categoryId &&
       (!recipient || recipient.serviceIds.includes(s.id)),
   );
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const title = String(data.get("title")).trim();
@@ -120,87 +107,15 @@ export function RequestPage({
       date: String(data.get("date")),
       ...(recipient ? { professionalId: recipient.id } : {}),
     };
-    if (guest) {
-      if (submitting.current) return;
-      submitting.current = true;
-      setBusy(true);
-      setError("");
-      try {
-        const remote = await demoPost("/api/demo/guest-requests", {
-          id: submissionId,
-          value,
-          contact: {
-            name: String(data.get("contactName")).trim(),
-            email: String(data.get("contactEmail")).trim(),
-            phone: String(data.get("contactPhone")).trim(),
-          },
-        });
-        if (!remote.requests.some((request) => request.id === submissionId))
-          throw Error("Request missing");
-        try {
-          sessionStorage.removeItem(draftKey);
-        } catch {
-          /* Submission is already saved. */
-        }
-        setSubmitted(true);
-      } catch {
-        setError(
-          t(
-            "No se pudo enviar la solicitud. Revisa la conexión e inténtalo de nuevo.",
-            "Could not submit the request. Check your connection and try again.",
-          ),
-        );
-      } finally {
-        submitting.current = false;
-        setBusy(false);
-      }
-    } else {
-      const id = send({ type: "request", value });
-      try {
-        sessionStorage.removeItem(draftKey);
-      } catch {
-        /* Continue without draft storage. */
-      }
-      navigate(`/workspace/owner/requests/${id}`);
+    const id = send({ type: "request", value });
+    if (!id) return;
+    try {
+      sessionStorage.removeItem(draftKey);
+    } catch {
+      /* The request can continue without browser storage. */
     }
+    navigate(`/workspace/owner/requests/${id}`);
   };
-  if (submitted)
-    return (
-      <Panel title={t("Solicitud enviada", "Request submitted")}>
-        <p role="status" className="eco-success">
-          {recipient
-            ? t(
-                `Tu solicitud se ha guardado para ${recipient.name}.`,
-                `Your request has been saved for ${recipient.name}.`,
-              )
-            : t(
-                "Tu solicitud se ha guardado para los contratistas de la especialidad.",
-                "Your request has been saved for contractors in this specialty.",
-              )}
-        </p>
-        <p>
-          {t(
-            "El contratista podrá consultar tus datos de contacto para responderte.",
-            "The contractor can use your contact details to respond.",
-          )}
-        </p>
-        <p className="eco-note">
-          {t("Referencia", "Reference")} {submissionId}
-        </p>
-        <div className="eco-actions">
-          <Button asChild>
-            <a href="#/register">
-              {t("Crear una cuenta", "Create an account")}
-            </a>
-          </Button>
-          <Button asChild variant="outline">
-            <a href="#/professionals">
-              {t("Omitir y seguir explorando", "Skip and keep exploring")}
-            </a>
-          </Button>
-        </div>
-      </Panel>
-    );
   return (
     <>
       <PageTitle
@@ -221,53 +136,12 @@ export function RequestPage({
                 new FormData(event.currentTarget).entries(),
               );
               try {
-                sessionStorage.setItem(
-                  draftKey,
-                  JSON.stringify({ ...values, submissionId }),
-                );
+                sessionStorage.setItem(draftKey, JSON.stringify(values));
               } catch {
                 /* The form remains usable without draft storage. */
               }
             }}
           >
-            {guest && !skipAccount && (
-              <div className="eco-notice">
-                <h3>
-                  {t(
-                    "¿Quieres usar tu cuenta?",
-                    "Would you like to use your account?",
-                  )}
-                </h3>
-                <p>
-                  {t(
-                    "Puedes solicitar tu presupuesto como invitado o iniciar sesión para gestionarlo desde tu espacio.",
-                    "Request a quote as a guest or sign in to manage it in your workspace.",
-                  )}
-                </p>
-                <div className="eco-actions">
-                  <Button asChild variant="outline">
-                    <a href={accountHref("/login")}>
-                      {t("Iniciar sesión", "Sign in")}
-                    </a>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <a href={accountHref("/register")}>
-                      {t("Crear cuenta", "Create account")}
-                    </a>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setSkipAccount(true)}
-                  >
-                    {t(
-                      "Omitir y continuar como invitado",
-                      "Skip and continue as guest",
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
             {recipient && (
               <div className="eco-notice">
                 {t("Solicitud dirigida a", "Request addressed to")}{" "}
@@ -374,85 +248,24 @@ export function RequestPage({
                 />
               </Field>
             </div>
-            {guest && (
-              <fieldset>
-                <legend className="font-semibold">
-                  {t("Tus datos de contacto", "Your contact details")}
-                </legend>
-                <p className="eco-note">
-                  {t(
-                    "El contratista utilizará estos datos para responder a tu solicitud.",
-                    "The contractor will use these details to respond to your request.",
-                  )}
-                </p>
-                <div className="eco-form-grid">
-                  <Field label={t("Nombre de contacto", "Contact name")}>
-                    <Input
-                      name="contactName"
-                      defaultValue={draft.contactName ?? ""}
-                      autoComplete="name"
-                      required
-                      minLength={2}
-                      maxLength={100}
-                    />
-                  </Field>
-                  <Field label={t("Correo electrónico", "Email address")}>
-                    <Input
-                      name="contactEmail"
-                      defaultValue={draft.contactEmail ?? ""}
-                      type="email"
-                      autoComplete="email"
-                      required
-                      maxLength={160}
-                    />
-                  </Field>
-                  <Field label={t("Teléfono (opcional)", "Phone (optional)")}>
-                    <Input
-                      name="contactPhone"
-                      defaultValue={draft.contactPhone ?? ""}
-                      type="tel"
-                      autoComplete="tel"
-                      maxLength={40}
-                    />
-                  </Field>
-                </div>
-              </fieldset>
-            )}
             {error && (
               <p role="alert" className="eco-error">
                 {error}
               </p>
             )}
-            <Button type="submit" disabled={busy}>
-              {busy
-                ? t("Enviando…", "Sending…")
-                : guest
-                  ? t("Enviar solicitud de presupuesto", "Submit quote request")
-                  : t("Publicar solicitud de prueba", "Post demo request")}
+            <Button type="submit">
+              {t("Publicar solicitud de prueba", "Post demo request")}
               <PiArrowRight />
             </Button>
             <p className="eco-note">
               {t(
-                "Solicitud de demostración guardada en el proyecto. Los profesionales y presupuestos son de prueba.",
-                "Demo request saved in the project. Professionals and quotes are sample data.",
+                "Recibe y compara las propuestas desde tu cuenta.",
+                "Receive and compare proposals from your account.",
               )}
             </p>
           </form>
         </Panel>
         <aside className="request-help">
-          {guest && (
-            <div className="eco-notice">
-              <p>
-                {t(
-                  "Puedes continuar como invitado. Si prefieres usar tu espacio, inicia sesión cuando quieras.",
-                  "You can continue as a guest. Sign in at any time to use your workspace.",
-                )}
-              </p>
-              <a className="underline" href={accountHref("/login")}>
-                {t("Iniciar sesión", "Sign in")}
-              </a>
-            </div>
-          )}
           <span className="request-help-icon">
             <PiArrowUpRight />
           </span>
@@ -471,12 +284,8 @@ export function RequestPage({
             </li>
             <li>
               {t(
-                guest
-                  ? "Deja tus datos para que el contratista pueda responderte."
-                  : "Recibe propuestas en tu espacio.",
-                guest
-                  ? "Leave your contact details so the contractor can respond."
-                  : "Receive proposals in your workspace.",
+                "Recibe propuestas en tu espacio.",
+                "Receive proposals in your workspace.",
               )}
             </li>
             <li>
@@ -488,12 +297,8 @@ export function RequestPage({
           </ol>
           <p>
             {t(
-              guest
-                ? "Puedes completar y enviar tu solicitud sin crear una cuenta."
-                : "Sigue las respuestas y los avances de tu proyecto desde el dashboard del consumidor.",
-              guest
-                ? "You can complete and submit your request without creating an account."
-                : "Follow responses and project progress from your consumer dashboard.",
+              "Sigue las respuestas desde tu dashboard.",
+              "Follow replies from your dashboard.",
             )}
           </p>
         </aside>

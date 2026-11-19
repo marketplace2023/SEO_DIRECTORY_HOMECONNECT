@@ -2,7 +2,6 @@
   PiArrowUpRight,
   PiGlobeHemisphereWest,
   PiUserCircle,
-  PiBell,
   PiHeart,
   PiShoppingCart,
   PiCaretDown,
@@ -16,7 +15,7 @@ import { SearchBar, type SearchBarProps } from "@/components/search-bar";
 import { categories } from "@/data/catalog";
 import { useStore } from "@/domain/store";
 import { useCart } from "@/domain/cart";
-import { consumerNotifications } from "@/domain/notifications";
+import { NotificationBell } from "./notification-bell";
 import "@/styles/customer-actions.css";
 
 export function SiteHeader({
@@ -37,7 +36,6 @@ export function SiteHeader({
   const { state } = useStore();
   const { items } = useCart();
   const [servicesOpen, setServicesOpen] = useState(false);
-  const notifications = user ? consumerNotifications(state, user.id).length : 0;
   const links = [
     ["/", es ? "Descubre" : "Discover"],
     ["/professionals", es ? "Profesionales" : "Professionals"],
@@ -139,13 +137,12 @@ export function SiteHeader({
             ))}
           </nav>
           <div className="header-actions">
+            <NotificationBell
+              key={path}
+              language={language}
+              onOpen={() => setServicesOpen(false)}
+            />
             {[
-              {
-                href: "/notifications",
-                label: es ? "Notificaciones" : "Notifications",
-                Icon: PiBell,
-                count: notifications,
-              },
               {
                 href: "/workspace/owner/favorites",
                 label: es ? "Favoritos" : "Favorites",

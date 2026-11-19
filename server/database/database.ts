@@ -60,6 +60,7 @@ export class Database {
       const metadata = {
         version: parsed.version,
         seedRevision: parsed.seedRevision,
+        estimating: parsed.estimating,
         favoriteOwners: Object.keys(favoritesByOwner || {}),
       };
       await tx.query(
@@ -166,6 +167,7 @@ export class Database {
       const state = {
         version: 1,
         seedRevision: dataset.data.seedRevision,
+        estimating: dataset.data.estimating,
         professionals: people.map((p) => ({
           ...p.data,
           credentials: credentials

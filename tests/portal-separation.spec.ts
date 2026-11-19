@@ -1,4 +1,4 @@
-import { test, expect, origins } from "./fixtures";
+import { test, expect, submitEstimate } from "./fixtures";
 
 test("entradas independientes y dashboard del consumidor dentro de la web", async ({
   page,
@@ -87,26 +87,60 @@ test("las aplicaciones comparten la demo y sincronizan propuestas entre pestaña
     .locator(".eco-record")
     .filter({ hasText: "Conectar tres aplicaciones" })
     .click();
-  await contractor
-    .getByRole("spinbutton", { name: "Importe total · USD" })
-    .fill("700");
-  await contractor
-    .getByRole("spinbutton", { name: "Plazo estimado · días" })
-    .fill("3");
-  await contractor
-    .getByRole("textbox", { name: "Alcance, materiales y condiciones" })
-    .fill("Trabajo de demostración con materiales incluidos.");
-  await contractor
-    .getByRole("button", { name: "Enviar propuesta de prueba" })
-    .click();
+  await submitEstimate(contractor, "350.25", "3");
   await expect(consumer.locator(".proposal-card")).toHaveCount(1);
   await expect(consumer.locator(".proposal-card")).toContainText(
     "Construcciones Ruiz",
   );
+  await contractor.goto("/contractor/#/workspace/contractor/profile");
+  await contractor
+    .locator('input[name="website"]')
+    .fill("https://example.com/pago");
+  const profileResponse = contractor.waitForResponse(
+    (response) =>
+      response.url().includes("/api/demo/commands") &&
+      response.request().postDataJSON()?.type === "profile",
+  );
+  await contractor.getByRole("button", { name: "Guardar ficha" }).click();
+  expect((await profileResponse).ok()).toBe(true);
   await consumer
     .getByRole("button", { name: "Aceptar propuesta de prueba" })
     .click();
   await expect(consumer).toHaveURL(/\/\#\/workspace\/owner\/projects\//);
+  await consumer
+    .getByRole("link", { name: "Ir al carrito para pagar" })
+    .click();
+  const payment = consumer
+    .locator(".eco-panel")
+    .filter({
+      has: consumer.getByRole("heading", {
+        name: "Conectar tres aplicaciones",
+        exact: true,
+      }),
+    })
+    .getByRole("link", { name: "Pagar en la web del contratista" });
+  await expect(payment).toHaveAttribute("href", "https://example.com/pago");
+  await expect(payment).toHaveAttribute("target", "_blank");
+  await contractor
+    .getByRole("navigation", { name: "Secciones del espacio" })
+    .getByRole("button", { name: "Propuestas", exact: true })
+    .click();
+  await contractor
+    .getByRole("combobox", { name: "Solicitud para medir y presupuestar" })
+    .selectOption({ label: "Conectar tres aplicaciones" });
+  await contractor.getByLabel("Avance acumulado (%)").fill("40");
+  const valuationResponse = contractor.waitForResponse(
+    (response) =>
+      response.url().includes("/api/demo/commands") &&
+      response.request().postDataJSON()?.type === "valuation",
+  );
+  await contractor.getByRole("button", { name: "Registrar valuación" }).click();
+  const valuationState = await (await valuationResponse).json();
+  expect(valuationState.estimating.valuations).toEqual([
+    expect.objectContaining({ progress: 40 }),
+  ]);
+  await contractor.reload();
+  await expect(contractor.getByText(/40% · Período/)).toBeVisible();
   await contractor
     .getByRole("navigation", { name: "Secciones del espacio" })
     .getByRole("button", { name: "Proyectos", exact: true })

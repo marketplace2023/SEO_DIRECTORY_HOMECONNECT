@@ -1,49 +1,148 @@
 import { test, expect, origins } from "./fixtures";
 
-test.describe("solicitud pública integrada con los permisos de la API", () => {
-  test.use({ autoLogin: false });
-  test("un invitado envía un presupuesto y recibe únicamente su solicitud", async ({
-    page,
-    context,
-  }) => {
-    await page.goto("/#/quote?professional=peachtree&service=roofing-1");
-    await page
-      .getByRole("button", { name: "Omitir y continuar como invitado" })
-      .click();
-    await page
-      .locator('input[name="title"]')
-      .fill("Reparación de techo sin cuenta");
-    await page
-      .locator('textarea[name="description"]')
-      .fill("Revisar y reparar una filtración del techo.");
-    await page.locator('input[name="contactName"]').fill("Cliente de prueba");
-    await page
-      .locator('input[name="contactEmail"]')
-      .fill("cliente@example.test");
-    const sending = page.waitForResponse((response) =>
-      response.url().includes("/api/demo/guest-requests"),
+test("cotizar y escribir como visitante abren un solo diálogo con el registro y enlaces públicos", async ({
+  page,
+  context,
+  demoSession,
+}) => {
+  await page.goto(origins.contractor + "/#/workspace/contractor/profile");
+  await page
+    .locator('input[name="website"]')
+    .fill("https://example.com/contratista");
+  await page
+    .locator('input[name="instagram"]')
+    .fill("https://www.instagram.com/contratista");
+  const saving = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/demo/commands") &&
+      response.request().postDataJSON()?.type === "profile",
+  );
+  await page
+    .getByRole("button", { name: "Guardar ficha", exact: true })
+    .click();
+  expect((await saving).ok()).toBe(true);
+
+  const guestContext = await context.browser()!.newContext();
+  try {
+    await guestContext.addInitScript(
+      (session) => localStorage.setItem("servinexo.demo-session", session),
+      demoSession,
     );
-    await page
-      .getByRole("button", {
-        name: "Enviar solicitud de presupuesto",
-        exact: true,
-      })
+    const guest = await guestContext.newPage();
+    const profile = origins.web + "/#/professionals/ruiz";
+    await guest.goto(profile);
+    for (const [action, title, next] of [
+      [
+        "Solicitar presupuesto",
+        "Solicita un presupuesto",
+        "/quote?professional=ruiz&service=remodeling-1",
+      ],
+      [
+        "Escribir un mensaje",
+        "Escribe al contratista",
+        "/workspace/owner/messages?professional=ruiz",
+      ],
+    ]) {
+      await guest.getByRole("button", { name: action, exact: true }).click();
+      const dialog = guest.getByRole("dialog", { name: title });
+      await expect(guest.getByRole("dialog")).toHaveCount(1);
+      await expect(
+        dialog.getByRole("heading", { name: "Continúa en HOME CONNECT" }),
+      ).toBeVisible();
+      await expect(
+        dialog.getByRole("heading", { name: "Enlaces de Construcciones Ruiz" }),
+      ).toBeVisible();
+      await expect(
+        dialog.getByRole("link", { name: "Página web" }),
+      ).toHaveAttribute("href", "https://example.com/contratista");
+      await expect(
+        dialog.getByRole("link", { name: "Instagram" }),
+      ).toHaveAttribute("href", "https://www.instagram.com/contratista");
+      await expect(dialog.getByRole("link", { name: "Facebook" })).toHaveCount(
+        0,
+      );
+      await expect(
+        dialog.getByRole("link", { name: "Crear cuenta" }),
+      ).toHaveAttribute("href", "#/register?" + new URLSearchParams({ next }));
+      await guest.keyboard.press("Escape");
+      await expect(guest).toHaveURL(profile);
+    }
+    await guest.goto(
+      origins.web + "/#/quote?professional=ruiz&service=remodeling-1",
+    );
+    await guest
+      .getByRole("dialog")
+      .getByRole("link", { name: "Iniciar sesión" })
       .click();
-    const response = await sending;
-    expect(response.status()).toBe(201);
-    const state = await response.json();
-    expect(state.requests).toHaveLength(1);
-    expect(state.requests[0].guestContact.email).toBe("cliente@example.test");
-    expect(state.proposals).toHaveLength(0);
-    expect(state.messages).toHaveLength(0);
+    await guest
+      .getByRole("textbox", { name: "Correo electrónico", exact: true })
+      .fill("carolina@example.test");
+    await guest.locator('input[name="password"]').fill("Servinexo2026!");
+    await guest
+      .getByRole("button", { name: "Iniciar sesión", exact: true })
+      .click();
+    await expect(guest.getByLabel("Título del proyecto")).toBeVisible();
+    await expect(guest.getByRole("dialog")).toHaveCount(0);
+
+    for (const action of ["create", "read", "message"]) {
+      const blocked = await guestContext.request.post(
+        "http://127.0.0.1:5197/api/demo/guest-quote/" +
+          action +
+          "?session=" +
+          demoSession,
+        { data: {} },
+      );
+      expect(blocked.status()).toBe(404);
+    }
+  } finally {
+    await guestContext.close();
+  }
+});
+
+test.describe("registro desde el contacto", () => {
+  test.use({ autoLogin: false });
+  test("vuelve a la cotización tras confirmar la cuenta", async ({
+    page,
+    demoSession,
+  }) => {
+    const quote = "/#/quote?professional=ruiz&service=remodeling-1";
+    await page.setViewportSize({ width: 390, height: 760 });
+    await page.goto(quote);
+    const dialog = page.getByRole("dialog");
     await expect(
-      page.getByRole("heading", { name: "Solicitud enviada", exact: true }),
+      dialog.getByText("Vista previa de los canales", { exact: false }),
     ).toBeVisible();
-    const retry = await context.request.post(response.url(), {
-      data: response.request().postDataJSON(),
-    });
-    expect(retry.status()).toBe(200);
-    expect((await retry.json()).requests).toHaveLength(1);
+    await expect(dialog.getByText("Instagram", { exact: true })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Instagram" })).toHaveCount(
+      0,
+    );
+    expect(
+      await dialog.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    ).toBe(true);
+    await dialog.getByRole("link", { name: "Crear cuenta" }).click();
+    await page.getByLabel("Nombre completo").fill("Cliente de prueba");
+    await page
+      .getByLabel("Correo electrónico", { exact: true })
+      .fill(`contacto-${demoSession}@example.test`);
+    await page.locator('input[name="password"]').fill("Prueba2026!");
+    await page.locator('input[name="confirmation"]').fill("Prueba2026!");
+    await page.getByRole("checkbox").check();
+    await page
+      .getByRole("button", { name: "Crear cuenta", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Ver buzón de pruebas local" })
+      .click();
+    await page
+      .getByRole("link", { name: "Abrir enlace de prueba" })
+      .first()
+      .click();
+    await page.getByRole("button", { name: "Confirmar mi correo" }).click();
+    await page.getByRole("link", { name: "Continuar a HOME CONNECT" }).click();
+    await expect(page).toHaveURL(origins.web + quote);
+    await expect(page.getByLabel("Título del proyecto")).toBeVisible();
   });
 });
 
@@ -55,6 +154,9 @@ test("la ficha guarda redes y ubicación, y su perfil permite conservar servicio
   await page
     .locator('input[name="website"]')
     .fill("https://example.com/contratista");
+  await page
+    .locator('input[name="googleBusiness"]')
+    .fill("https://maps.app.goo.gl/example");
   await page
     .locator('input[name="instagram"]')
     .fill("https://www.instagram.com/contratista");
@@ -81,6 +183,9 @@ test("la ficha guarda redes y ubicación, y su perfil permite conservar servicio
   await expect(
     publicPage.getByRole("link", { name: /Abrir Página web/ }),
   ).toHaveAttribute("href", "https://example.com/contratista");
+  await expect(
+    publicPage.getByRole("link", { name: /Abrir Perfil de Empresa en Google/ }),
+  ).toHaveAttribute("href", "https://maps.app.goo.gl/example");
   await publicPage
     .getByRole("button", { name: "Añadir al carrito", exact: true })
     .first()
@@ -94,8 +199,13 @@ test("la ficha guarda redes y ubicación, y su perfil permite conservar servicio
   await expect(publicPage.locator(".cart-services li")).toHaveCount(1);
   await expect(
     publicPage.getByRole("link", {
-      name: "Abrir web del contratista",
+      name: "Solicitar cotización",
       exact: true,
     }),
-  ).toHaveAttribute("href", "https://example.com/contratista");
+  ).toHaveAttribute("href", /#\/quote\?professional=ruiz&service=/);
+  await expect(
+    publicPage
+      .locator(".cart-services")
+      .getByRole("link", { name: "Pagar en la web del contratista" }),
+  ).toHaveCount(0);
 });

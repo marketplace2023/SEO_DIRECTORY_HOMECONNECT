@@ -75,6 +75,22 @@ export function visibleState(
     requests,
     proposals,
     projects,
+    estimating:
+      user?.role === "contractor" && state.estimating
+        ? {
+            parts: state.estimating.parts.filter(
+              (row) => row.professionalId === professionalId,
+            ),
+            measurements: state.estimating.measurements.filter(
+              (row) =>
+                row.professionalId === professionalId &&
+                requests.some((request) => request.id === row.requestId),
+            ),
+            valuations: state.estimating.valuations.filter((row) =>
+              proposals.some((proposal) => proposal.id === row.proposalId),
+            ),
+          }
+        : undefined,
     messages: state.messages.filter((m) =>
       user?.role === "owner"
         ? (m.ownerId || "demo-owner") === user.id

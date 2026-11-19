@@ -1,4 +1,5 @@
 import { useStore } from "@/domain/store";
+import { isGuestOwner } from "@/domain/guest-quotes";
 import type { Language } from "@/domain/types";
 import type { FormEvent } from "react";
 import { PiUserCircle, PiPaperPlaneTilt } from "react-icons/pi";
@@ -24,12 +25,26 @@ export function Messages({
           (p) => p.id === route.params.get("professional"),
         )?.id || state.professionals[0]?.id;
   const professional = state.professionals.find((p) => p.id === selected);
+  const guestRequests =
+    role === "contractor"
+      ? state.requests.filter(
+          (request) =>
+            isGuestOwner(request.ownerId) &&
+            (request.professionalId === selected ||
+              state.proposals.some(
+                (proposal) =>
+                  proposal.requestId === request.id &&
+                  proposal.professionalId === selected,
+              )),
+        )
+      : [];
   const owners = [
-    ...new Set(
-      state.messages
+    ...new Set([
+      ...guestRequests.map((request) => request.ownerId),
+      ...state.messages
         .filter((m) => m.professionalId === selected)
         .map((m) => m.ownerId || "demo-owner"),
-    ),
+    ]),
   ];
   const ownerId = route.params.get("owner") || owners[0] || "demo-owner";
   const messages = state.messages.filter(
@@ -37,11 +52,16 @@ export function Messages({
       m.professionalId === selected &&
       (role !== "contractor" || (m.ownerId || "demo-owner") === ownerId),
   );
+  const guest = role === "contractor" && isGuestOwner(ownerId);
+  const guestRequest = guestRequests.find(
+    (request) => request.ownerId === ownerId,
+  );
+  const canSend = !guest;
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const text = String(data.get("message")).trim();
-    if (!text || !selected) return;
+    if (!text || !selected || !canSend) return;
     send({ type: "message", professionalId: selected, text, ownerId });
     event.currentTarget.reset();
   };
@@ -68,7 +88,8 @@ export function Messages({
               <option key={id} value={id}>
                 {id === "demo-owner"
                   ? "Carolina Mendoza"
-                  : `Cliente ${id.slice(0, 6)}`}
+                  : (guestRequests.find((request) => request.ownerId === id)
+                      ?.title ?? `Cliente ${id.slice(0, 6)}`)}
               </option>
             ))}
           </select>
@@ -96,9 +117,11 @@ export function Messages({
       <div className="conversation-title">
         <PiUserCircle />
         <strong>
-          {role === "contractor"
-            ? t("Propietario de demostración", "Demo homeowner")
-            : professional?.name}
+          {guest
+            ? (guestRequest?.title ?? t("Cliente invitado", "Guest customer"))
+            : role === "contractor"
+              ? t("Propietario de demostración", "Demo homeowner")
+              : professional?.name}
         </strong>
       </div>
       <div className="message-history" aria-live="polite">
@@ -110,7 +133,9 @@ export function Messages({
             >
               <span>
                 {m.sender === "owner"
-                  ? t("Propietario", "Homeowner")
+                  ? guest
+                    ? t("Cliente invitado", "Guest customer")
+                    : t("Propietario", "Homeowner")
                   : professional?.name}
               </span>
               <p>{m.text}</p>
@@ -132,19 +157,29 @@ export function Messages({
           />
         )}
       </div>
-      <form className="message-compose" onSubmit={submit}>
-        <Input
-          name="message"
-          aria-label={t("Mensaje", "Message")}
-          required
-          maxLength={2000}
-          placeholder={t("Escribe tu mensaje…", "Write your message…")}
-        />
-        <Button type="submit">
-          {t("Enviar", "Send")}
-          <PiPaperPlaneTilt />
-        </Button>
-      </form>
+      {guest && (
+        <p className="eco-note">
+          {t(
+            "Esta conversación anterior está disponible para consulta.",
+            "This past conversation is available to read.",
+          )}
+        </p>
+      )}
+      {canSend && (
+        <form className="message-compose" onSubmit={submit}>
+          <Input
+            name="message"
+            aria-label={t("Mensaje", "Message")}
+            required
+            maxLength={2000}
+            placeholder={t("Escribe tu mensaje…", "Write your message…")}
+          />
+          <Button type="submit">
+            {t("Enviar", "Send")}
+            <PiPaperPlaneTilt />
+          </Button>
+        </form>
+      )}
     </Panel>
   );
 }

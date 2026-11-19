@@ -48,7 +48,7 @@ export function SiteFooter({
         ["#/workspace/owner/projects", es ? "Mis proyectos" : "My projects"],
         [
           "#/workspace/owner/favorites",
-          es ? "Profesionales guardados" : "Saved professionals",
+          es ? "Profesionales favoritos" : "Favorite professionals",
         ],
         ["#/register", es ? "Crear una cuenta" : "Create an account"],
       ],

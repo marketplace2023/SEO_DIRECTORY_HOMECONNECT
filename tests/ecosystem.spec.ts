@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { test, expect, submitEstimate } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 const section = (page: Page, name: string) =>
@@ -51,26 +51,7 @@ async function propose(page: Page, amount: string) {
     .locator(".eco-record")
     .filter({ hasText: "Renovar cocina familiar" })
     .click();
-  await page
-    .getByRole("spinbutton", { name: "Importe total · USD" })
-    .fill(amount);
-  await page
-    .getByRole("spinbutton", { name: "Plazo estimado · días" })
-    .fill("7");
-  await page
-    .getByRole("textbox", { name: "Alcance, materiales y condiciones" })
-    .fill(
-      "Incluye preparación, materiales y limpieza. Visita previa acordada.",
-    );
-  await page
-    .getByRole("button", { name: "Enviar propuesta de prueba" })
-    .click();
-  await expect(
-    page.getByRole("heading", { name: "Tu propuesta", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Enviar propuesta de prueba" }),
-  ).toHaveCount(0);
+  await submitEstimate(page, String(Number(amount) / 2), "7");
 }
 
 test("catálogo normalizado, servicio y enlace compartible con filtros", async ({
@@ -219,13 +200,15 @@ test("favoritos, mensajes entre roles y publicación", async ({ page }) => {
   });
   await page.goto("/#/professionals/ruiz");
   await expect(
-    page.getByRole("button", { name: "Guardado", exact: true }),
+    page.getByRole("button", { name: "En favoritos", exact: true }),
   ).toBeDisabled();
   restoreSession();
-  await page.getByRole("button", { name: "Guardado", exact: true }).click();
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await page.getByRole("button", { name: "En favoritos", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Añadir a favoritos", exact: true })
+    .click();
   await expect(
-    page.getByRole("button", { name: "Guardado", exact: true }),
+    page.getByRole("button", { name: "En favoritos", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.goto("/#/workspace/owner/favorites");
   await expect(
@@ -245,8 +228,21 @@ test("favoritos, mensajes entre roles y publicación", async ({ page }) => {
     .getByRole("textbox", { name: "Mensaje", exact: true })
     .fill("Sí, coordinamos una visita antes de empezar.");
   await page.getByRole("button", { name: "Enviar", exact: true }).click();
-  await role(page, "owner");
-  await section(page, "Mensajes").click();
+  await page.goto("/#/");
+  const bell = page.getByRole("button", { name: /^Notificaciones/ });
+  await bell.click();
+  await expect(page).toHaveURL(/\/#\/$/);
+  const panel = page.getByRole("region", { name: "Notificaciones" });
+  await expect(panel).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+  await expect(bell).toBeFocused();
+  await bell.click();
+  await panel
+    .getByRole("link", { name: /Sí, coordinamos una visita antes de empezar/ })
+    .click();
+  await expect(page).toHaveURL(/workspace\/owner\/messages\?professional=ruiz/);
+  await expect(panel).toHaveCount(0);
   await expect(
     page.getByText("Sí, coordinamos una visita antes de empezar.", {
       exact: true,

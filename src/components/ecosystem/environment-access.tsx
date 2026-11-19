@@ -94,7 +94,7 @@ export function EnvironmentCards({ language }: { language: Language }) {
             Icon: PiHouseLine,
             text: t(
               "Tus solicitudes, presupuestos, favoritos y proyectos en un solo lugar.",
-              "Your requests, quotes, saved profiles and projects in one place.",
+              "Your requests, quotes, favorites and projects in one place.",
             ),
             metric: `${state.requests.length} ${t("solicitudes de muestra", "sample requests")}`,
           },

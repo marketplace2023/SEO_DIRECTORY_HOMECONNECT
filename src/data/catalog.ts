@@ -401,6 +401,10 @@ export const categories: Category[] = rows.map(([id, es, en], i) => ({
     .slice(3)
     .map((text) => bilingual(text)),
 }));
+export const homeCategories = categories.filter(
+  ({ reference }) => reference <= 32,
+);
+
 export const subcategories: Subcategory[] = rows.flatMap(([id]) => [
   {
     id: `${id}-installation`,

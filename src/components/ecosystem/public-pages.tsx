@@ -1,3 +1,5 @@
+import { socialIcons } from "./contact-account-dialog";
+import { ProfessionalFilters } from "./professional-filters";
 import { PublicReviews } from "./pilot-panels";
 import { useEffect, useState } from "react";
 import {
@@ -10,14 +12,6 @@ import {
   PiSealCheckFill,
   PiCheck,
   PiBuildings,
-  PiGlobe,
-  PiInstagramLogo,
-  PiFacebookLogo,
-  PiLinkedinLogo,
-  PiYoutubeLogo,
-  PiTiktokLogo,
-  PiXLogo,
-  PiLinkSimple,
 } from "react-icons/pi";
 import {
   categories,
@@ -27,7 +21,11 @@ import {
   serviceName,
 } from "@/data/catalog";
 import { useStore } from "@/domain/store";
-import { findProfessionals, filtersFromParams } from "@/domain/queries";
+import {
+  findProfessionals,
+  filtersFromParams,
+  orderProfessionals,
+} from "@/domain/queries";
 import {
   cityLabel,
   countyById,
@@ -46,6 +44,7 @@ import { SearchBar } from "@/components/search-bar";
 import { searchParams } from "@/domain/search";
 import { useCart } from "@/domain/cart";
 import { ProfessionalCard } from "@/components/professional-card";
+import { serviceIcon } from "@/components/category-icons";
 
 import { CategoryScope } from "./category-scope";
 
@@ -59,17 +58,6 @@ import {
   copy,
 } from "./primitives";
 
-const socialIcons = {
-  website: PiGlobe,
-  instagram: PiInstagramLogo,
-  facebook: PiFacebookLogo,
-  linkedin: PiLinkedinLogo,
-  youtube: PiYoutubeLogo,
-  tiktok: PiTiktokLogo,
-  x: PiXLogo,
-  other: PiLinkSimple,
-};
-
 export { CatalogPage } from "./catalog-page";
 
 export function ServiceTile({
@@ -81,12 +69,16 @@ export function ServiceTile({
 }) {
   const service = services.find((s) => s.id === serviceId);
   if (!service) return null;
+  const Icon = serviceIcon(service);
   return (
     <button
       className="service-tile"
       onClick={() => navigate(`/services/${service.id}`)}
     >
-      <span>{categoryName(service.categoryId, language)}</span>
+      <span className="inline-flex items-center gap-2">
+        <Icon aria-hidden="true" />
+        {categoryName(service.categoryId, language)}
+      </span>
       <h3>{service.name[language]}</h3>
       <PiArrowUpRight />
     </button>
@@ -254,6 +246,10 @@ export function DirectoryPage({
   if (category) mapParams.set("category", category);
   const mapQuery = route.params.get("q");
   if (mapQuery) mapParams.set("q", mapQuery);
+  for (const key of ["initials", "sort"]) {
+    const value = route.params.get(key);
+    if (value) mapParams.set(key, value);
+  }
   const update = (key: string, value: string) => {
     const params = new URLSearchParams(route.params);
     value ? params.set(key, value) : params.delete(key);
@@ -264,10 +260,11 @@ export function DirectoryPage({
     ...filtersFromParams(route.params),
     usArea: area,
   });
-  const results =
-    route.params.get("sort") === "name"
-      ? [...matched].sort((a, b) => a.name.localeCompare(b.name))
-      : matched;
+  const results = orderProfessionals(
+    matched,
+    route.params.get("sort"),
+    language,
+  );
   return (
     <>
       <PageTitle
@@ -369,6 +366,11 @@ export function DirectoryPage({
               ))}
           </select>
         </Field>
+        <ProfessionalFilters
+          language={language}
+          params={route.params}
+          update={update}
+        />
         <label className="verified-filter">
           <input
             type="checkbox"
@@ -500,6 +502,17 @@ export function ProfilePage({
               {t("Solicitar presupuesto", "Request a quote")}
               <PiArrowUpRight />
             </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate(
+                  "/workspace/owner/messages",
+                  new URLSearchParams({ professional: id }),
+                )
+              }
+            >
+              {t("Escribir un mensaje", "Send a message")}
+            </Button>
             {role === "owner" && (
               <Button
                 variant="outline"
@@ -508,7 +521,9 @@ export function ProfilePage({
                 onClick={() => send({ type: "favorite", professionalId: id })}
               >
                 {favorite ? <PiHeartFill /> : <PiHeart />}
-                {favorite ? t("Guardado", "Saved") : t("Guardar", "Save")}
+                {favorite
+                  ? t("En favoritos", "In favorites")
+                  : t("Añadir a favoritos", "Add to favorites")}
               </Button>
             )}
           </div>
@@ -662,20 +677,6 @@ export function ProfilePage({
               )}
             </p>
           </Panel>
-          {role === "owner" && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() =>
-                navigate(
-                  "/workspace/owner/messages",
-                  new URLSearchParams({ professional: id }),
-                )
-              }
-            >
-              {t("Escribir un mensaje", "Send a message")}
-            </Button>
-          )}
         </aside>
       </div>
     </>

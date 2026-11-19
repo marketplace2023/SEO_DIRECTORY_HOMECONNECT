@@ -1,6 +1,8 @@
 import { AttachmentsPanel } from "./attachments-panel";
 import { ProjectFeedback } from "./pilot-panels";
-import { useRef, useState, type FormEvent } from "react";
+import { useRef } from "react";
+import { lineCents } from "@/domain/estimating";
+import { isGuestOwner } from "@/domain/guest-quotes";
 import {
   PiArrowRight,
   PiCheck,
@@ -8,8 +10,6 @@ import {
   PiChatCircleDots,
 } from "react-icons/pi";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useStore, allowedRequests } from "@/domain/store";
 import {
   money,
@@ -19,7 +19,7 @@ import {
 } from "@/domain/types";
 import { categoryName, serviceName } from "@/data/catalog";
 import { navigate } from "@/lib/navigation";
-import { Field, Panel, Empty, copy } from "./primitives";
+import { Panel, Empty, copy } from "./primitives";
 import { Missing } from "./public-pages";
 
 export function RequestList({
@@ -161,7 +161,6 @@ export function RequestDetail({
   const { state, professionalId, send } = useStore();
   const t = copy(language);
   const request = state.requests.find((r) => r.id === id);
-  const [error, setError] = useState("");
   const accepting = useRef(false);
   const canView =
     request &&
@@ -177,33 +176,6 @@ export function RequestDetail({
       (!contractor || p.professionalId === professionalId),
   );
   const own = proposals.find((p) => p.professionalId === professionalId);
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const amount = Number(data.get("amount"));
-    const days = Number(data.get("days"));
-    const description = String(data.get("description")).trim();
-    if (
-      !Number.isFinite(amount) ||
-      amount <= 0 ||
-      !Number.isInteger(days) ||
-      days <= 0 ||
-      !description
-    ) {
-      setError(
-        t(
-          "Revisa el importe, el plazo y el alcance.",
-          "Check the amount, timeframe and scope.",
-        ),
-      );
-      return;
-    }
-    send({
-      type: "proposal",
-      value: { requestId: id, amount, days, description },
-    });
-    setError("");
-  };
   return (
     <div className="detail-columns">
       <div>
@@ -267,6 +239,20 @@ export function RequestDetail({
               )}
             </div>
           )}
+          {contractor &&
+            isGuestOwner(request.ownerId) &&
+            (request.professionalId === professionalId || own) && (
+              <Button asChild variant="outline">
+                <a
+                  href={`#/workspace/contractor/messages?${new URLSearchParams({ owner: request.ownerId })}`}
+                >
+                  {t(
+                    "Consultar conversación anterior",
+                    "Read past conversation",
+                  )}
+                </a>
+              </Button>
+            )}
           {!contractor && request.status === "open" && (
             <Button
               variant="outline"
@@ -300,7 +286,7 @@ export function RequestDetail({
                     </span>
                     <h3>{professional?.name}</h3>
                     <strong className="proposal-amount">
-                      {money(proposal.amount, language)}
+                      {money(proposal.amount, language, 2)}
                     </strong>
                     <p className="eco-note">
                       {proposal.days}{" "}
@@ -309,6 +295,17 @@ export function RequestDetail({
                     <p className="eco-body whitespace-pre-wrap">
                       {proposal.description}
                     </p>
+                    {proposal.lines && (
+                      <ul className="space-y-1">
+                        {proposal.lines.map((line) => (
+                          <li key={line.partId}>
+                            {line.name} · {line.quantity} {line.unit} ×{" "}
+                            {money(line.unitCents / 100, language, 2)} ={" "}
+                            {money(lineCents(line) / 100, language, 2)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     {!contractor &&
                       proposal.status === "submitted" &&
                       request.status === "open" && (
@@ -364,49 +361,22 @@ export function RequestDetail({
       <aside>
         {contractor && !own && request.status === "open" ? (
           <Panel title={t("Prepara tu propuesta", "Prepare your proposal")}>
-            <form className="eco-form" onSubmit={submit}>
-              <Field label={t("Importe total · USD", "Total amount · USD")}>
-                <Input
-                  name="amount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  required
-                />
-              </Field>
-              <Field
-                label={t("Plazo estimado · días", "Estimated timeframe · days")}
-              >
-                <Input name="days" type="number" min="1" step="1" required />
-              </Field>
-              <Field
-                label={t(
-                  "Alcance, materiales y condiciones",
-                  "Scope, materials and terms",
-                )}
-              >
-                <Textarea
-                  name="description"
-                  rows={5}
-                  required
-                  maxLength={3000}
-                />
-              </Field>
-              {error && (
-                <p role="alert" className="eco-error">
-                  {error}
-                </p>
+            <p className="eco-body">
+              {t(
+                "Carga tus partidas y registra las mediciones para calcular el presupuesto de esta solicitud.",
+                "Add your line items and record measurements to calculate the estimate for this request.",
               )}
-              <Button type="submit">
-                {t("Enviar propuesta de prueba", "Send demo proposal")}
-              </Button>
-              <p className="eco-note">
-                {t(
-                  "No se contacta a personas reales. El propietario podrá comparar tu propuesta en su espacio.",
-                  "No real people are contacted. The homeowner can compare your proposal in their workspace.",
-                )}
-              </p>
-            </form>
+            </p>
+            <Button
+              onClick={() =>
+                navigate(
+                  "/workspace/contractor/proposals",
+                  new URLSearchParams({ request: request.id }),
+                )
+              }
+            >
+              {t("Preparar presupuesto", "Prepare estimate")}
+            </Button>
           </Panel>
         ) : (
           <Panel title={t("El siguiente paso", "The next step")}>
@@ -467,7 +437,7 @@ export function Projects({
               : t("En marcha", "In progress")}
           </span>
           <p className="eco-body">
-            {professional?.name} · {money(project.amount, language)}
+            {professional?.name} · {money(project.amount, language, 2)}
           </p>
           <div className="project-progress">
             <progress value={progress} max={100} />
@@ -517,12 +487,18 @@ export function Projects({
               </div>
               <div>
                 <dt>{t("Importe · USD", "Amount · USD")}</dt>
-                <dd>{money(project.amount, language)}</dd>
+                <dd>{money(project.amount, language, 2)}</dd>
               </div>
               <div>
                 <dt>{t("Pago", "Payment")}</dt>
                 <dd>
-                  {t("Sin cobro · demostración", "No charge · demonstration")}
+                  {contractor ? (
+                    t("En la web del contratista", "On the contractor website")
+                  ) : (
+                    <a className="text-link" href="#/cart">
+                      {t("Ir al carrito para pagar", "Go to cart to pay")}
+                    </a>
+                  )}
                 </dd>
               </div>
             </dl>
@@ -610,7 +586,7 @@ function ProjectCard({
           : t("En marcha", "In progress")}
       </span>
       <h3>{project.title}</h3>
-      <p>{money(project.amount, language)}</p>
+      <p>{money(project.amount, language, 2)}</p>
       <div className="project-progress">
         <progress value={progress} max={100} />
         <strong>{progress}%</strong>
