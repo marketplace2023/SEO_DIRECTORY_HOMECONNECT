@@ -10,12 +10,17 @@ export function RequireAccount({
   children: ReactNode;
 }) {
   const { user, checking } = useAuth();
+  const requested = window.location.hash.slice(1) || "/";
   useEffect(() => {
-    if (!checking && (!user || user.role !== role)) {
-      const next = window.location.hash.slice(1) || "/";
-      window.location.replace("#/login?next=" + encodeURIComponent(next));
+    if (
+      !checking &&
+      (!user || user.role !== role) &&
+      !/^\/(login|register)(\?|$)/.test(requested) &&
+      window.location.hash.slice(1) === requested
+    ) {
+      window.location.replace("#/login?next=" + encodeURIComponent(requested));
     }
-  }, [checking, user, role]);
+  }, [checking, user, role, requested]);
   if (checking)
     return (
       <p className="account-loading" role="status">

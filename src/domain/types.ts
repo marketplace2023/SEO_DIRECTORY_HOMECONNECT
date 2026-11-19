@@ -1,3 +1,5 @@
+import type { SocialLinks } from "./social-links";
+
 export type Language = "es" | "en";
 export type Localized = { es: string; en: string };
 export type Role =
@@ -58,6 +60,7 @@ export type Professional = {
   rating: number;
   img: string;
   bio: Localized;
+  socialLinks?: SocialLinks;
   publication: PublicationState;
   credentials: {
     id: string;
@@ -71,6 +74,7 @@ export type Professional = {
 export type QuoteRequest = {
   id: string;
   ownerId: string;
+  guestContact?: { name: string; email: string; phone?: string };
   title: string;
   categoryId: string;
   serviceId: string;

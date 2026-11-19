@@ -31,6 +31,7 @@ export function useRoute() {
   const [route, setRoute] = useState(readRoute);
   const lastPath = useRef(route.path);
   useEffect(() => {
+    let currentPath = readRoute().path;
     const onChange = () => {
       const next = readRoute();
       setRoute(next);

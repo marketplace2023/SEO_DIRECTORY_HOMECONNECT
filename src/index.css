@@ -410,6 +410,38 @@
   justify-content: space-between;
   background: #f7f7f7;
 }
+.home-category-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 12px;
+}
+.home-category-grid .category-tile {
+  padding: 18px 12px;
+  min-width: 0;
+  height: auto;
+  min-height: 220px;
+  gap: 12px;
+}
+.home-category-photo {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.home-category-grid .category-tile > span {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1099px) {
+  .home-category-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 599px) {
+  .home-category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .category-icon {
   font-size: 2rem;
   color: #535353;
@@ -481,8 +513,48 @@
 .text-link:hover svg {
   transform: translate(2px, -2px);
 }
-.professional-swiper {
-  overflow: visible;
+.home-professional-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.home-featured-contractor {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+}
+.home-featured-contractor .professional-card {
+  flex: 1;
+}
+.home-featured-contractor .professional-category,
+.home-featured-contractor .professional-location,
+.home-featured-contractor .professional-card-bottom > span {
+  font-size: 12px;
+}
+.home-featured-contractor .professional-content h3 {
+  font-size: 18px;
+}
+.home-contractor-demand {
+  margin-inline: 21px;
+  padding-block: 12px;
+  border-top: 1px solid #eee;
+  font-size: 12px;
+  color: #616161;
+}
+@media (max-width: 899px) {
+  .home-professional-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+@media (max-width: 599px) {
+  .home-professional-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .professional-bottom {
   display: flex;
@@ -994,9 +1066,6 @@
   }
   .categories-section .section-heading {
     align-items: start;
-  }
-  .categories-section .slider-controls {
-    padding-top: 38px;
   }
   .category-tile {
     height: 140px;

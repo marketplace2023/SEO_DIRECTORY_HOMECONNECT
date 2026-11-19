@@ -562,3 +562,50 @@ h3 {
     font-size: 0.56rem;
   }
 }
+.profile-social-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.profile-social-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 11px 9px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #b80606;
+  background: white;
+  font-size: 12px;
+  font-weight: 650;
+}
+.profile-social-item > svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.profile-social-item small {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 400;
+}
+.profile-social-item .profile-social-arrow {
+  width: 13px;
+  height: 13px;
+  margin-left: auto;
+}
+a.profile-social-item:hover {
+  border-color: #b80606;
+  background: #fff5f5;
+}
+a.profile-social-item:focus-visible {
+  outline: 2px solid #b80606;
+  outline-offset: 3px;
+}
+.profile-social-item.is-unlinked {
+  color: #737b85;
+  background: #f8f9fa;
+}

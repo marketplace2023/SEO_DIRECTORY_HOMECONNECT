@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  isPublicWebUrl,
+  socialPlatforms,
+  type SocialLinks,
+} from "@/domain/social-links";
+import {
   Field,
   Panel,
   EvidenceBadge,
@@ -35,6 +40,9 @@ export function ProfileEditor({ language }: { language: Language }) {
       ),
     ];
     if (!name || !city || !bio || !coverage.length) return;
+    const socialLinks: SocialLinks = Object.fromEntries(
+      socialPlatforms.map(([key]) => [key, String(data.get(key) ?? "").trim()]),
+    );
     const manual = data.get("mapMode") === "public";
     const latitude = Number(data.get("latitude")),
       longitude = Number(data.get("longitude"));
@@ -63,7 +71,16 @@ export function ProfileEditor({ language }: { language: Language }) {
         : manual
           ? { latitude, longitude, precision: "public" as const }
           : cityLocation(city, person.region, person.country);
-    send({ type: "profile", name, city, bio, coverage, language, location });
+    send({
+      type: "profile",
+      name,
+      city,
+      bio,
+      coverage,
+      language,
+      location,
+      socialLinks,
+    });
     setSaved(true);
   };
   return (
@@ -122,6 +139,42 @@ export function ProfileEditor({ language }: { language: Language }) {
             {categoryName(person.categoryId, language)} · {person.region} ·{" "}
             {person.country}
           </p>
+          <fieldset>
+            <legend className="font-semibold">
+              {t("Redes sociales y página web", "Social media and website")}
+            </legend>
+            <p className="eco-note">
+              {t(
+                "Estos enlaces aparecerán en tu perfil público. Introduce la dirección completa con https://. Deja el campo vacío para eliminar un enlace.",
+                "These links will appear on your public profile. Enter the full address starting with https://. Leave a field empty to remove a link.",
+              )}
+            </p>
+            <div className="eco-form-grid">
+              {socialPlatforms.map(([key, es, en]) => (
+                <Field key={key} label={t(es, en)}>
+                  <Input
+                    name={key}
+                    type="url"
+                    maxLength={2048}
+                    placeholder="https://"
+                    defaultValue={person.socialLinks?.[key] ?? ""}
+                    onChange={(event) => {
+                      const input = event.currentTarget;
+                      input.setCustomValidity(
+                        !input.value.trim() ||
+                          isPublicWebUrl(input.value.trim())
+                          ? ""
+                          : t(
+                              "Introduce un enlace completo con https://.",
+                              "Enter a full URL starting with https://.",
+                            ),
+                      );
+                    }}
+                  />
+                </Field>
+              ))}
+            </div>
+          </fieldset>
           <fieldset className="map-profile-fields">
             <legend>
               {t("Ubicación en el mapa público", "Public map location")}

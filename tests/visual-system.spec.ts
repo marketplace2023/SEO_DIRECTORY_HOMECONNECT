@@ -9,12 +9,14 @@ test("portada: familias shadcn filtran Swiper y la galería permite explorar la 
   await expect(
     trades.getByRole("tab", { name: "Exterior", exact: true }),
   ).toHaveAttribute("data-state", "active");
-  await expect(page.locator(".category-swiper")).toContainText(
+  await expect(page.locator(".home-category-grid")).toContainText(
     "Techos y cubiertas",
   );
-  await expect(page.locator(".category-swiper")).not.toContainText("Plomería");
+  await expect(page.locator(".home-category-grid")).not.toContainText(
+    "Plomería",
+  );
   await trades.getByRole("tab", { name: "Instalaciones", exact: true }).click();
-  await expect(page.locator(".category-swiper")).toContainText("Plomería");
+  await expect(page.locator(".home-category-grid")).toContainText("Plomería");
   const gallery = page.getByLabel("Inspiración para tu hogar", { exact: true });
   await gallery.locator(".swiper-pagination-bullet").nth(1).click();
   await expect(gallery.locator(".swiper-slide-active")).toContainText(

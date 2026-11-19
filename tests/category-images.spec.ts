@@ -37,7 +37,7 @@ test("home: fotografías de categoría y subcategorías conectadas con la búsqu
   page,
 }) => {
   await page.goto("/");
-  const firstCategory = page.locator(".category-swiper img").first();
+  const firstCategory = page.locator(".home-category-grid img").first();
   await expect(firstCategory).toHaveAttribute(
     "src",
     "/CATEGORY_PICS/compatible/roofing.jpg",

@@ -1,6 +1,8 @@
 import { test, expect } from "./fixtures";
 
-test("portada y carruseles navegan sin errores", async ({ page }) => {
+test("portada y cuadrículas de categorías y profesionales navegan sin errores", async ({
+  page,
+}) => {
   const errors: string[] = [];
   await page.emulateMedia({ reducedMotion: "no-preference" });
   page.on("pageerror", (error) => errors.push(error.message));
@@ -8,17 +10,10 @@ test("portada y carruseles navegan sin errores", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Grandes ideas.",
   );
-  await expect(
-    page.getByRole("button", { name: "Categorías anteriores" }),
-  ).toBeDisabled();
-  await page.getByRole("button", { name: "Siguientes categorías" }).click();
-  await expect(
-    page.getByRole("button", { name: "Categorías anteriores" }),
-  ).toBeEnabled();
-  await page.getByRole("button", { name: "Siguientes profesionales" }).click();
-  await expect(
-    page.getByRole("button", { name: "Profesionales anteriores" }),
-  ).toBeEnabled();
+  await expect(page.locator(".home-category-grid .category-tile")).toHaveCount(
+    48,
+  );
+  await expect(page.locator(".home-professional-grid article")).toHaveCount(12);
   await page.locator(".category-footnote").scrollIntoViewIfNeeded();
   await expect(page.locator(".category-footnote")).toContainText(
     "48 especialidades",
@@ -54,9 +49,11 @@ test("buscador, filtros y perfil conservan su comportamiento", async ({
 }) => {
   await page.goto("/");
   await page
-    .getByPlaceholder("Pintar, remodelar, reparar…")
+    .getByRole("combobox", { name: "¿Qué necesitas?", exact: true })
     .fill("electricidad");
-  await page.getByRole("button", { name: "Encontrar", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Buscar profesionales", exact: true })
+    .click();
   await expect(page.getByRole("status")).toContainText("2 perfiles");
   await page
     .getByRole("button", { name: "BrightSpark Electric", exact: true })
@@ -68,9 +65,15 @@ test("buscador, filtros y perfil conservan su comportamiento", async ({
     .getByRole("button", { name: "Volver a profesionales", exact: true })
     .click();
   await page
-    .getByRole("combobox", { name: "País", exact: true })
-    .selectOption("Venezuela");
-  await page.getByRole("button", { name: "Encontrar", exact: true }).click();
+    .getByRole("combobox", { name: "¿Dónde?", exact: true })
+    .fill("Venezuela");
+  await page
+    .getByRole("listbox", { name: "Ubicaciones sugeridas" })
+    .getByRole("option", { name: "Venezuela", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Buscar profesionales", exact: true })
+    .click();
   await expect(
     page.getByText("No hay perfiles publicados con estos filtros."),
   ).toBeVisible();
@@ -105,6 +108,8 @@ test("móvil sin desbordamiento y cambio de idioma", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Big ideas.",
   );
-  await page.getByRole("button", { name: "Find a pro", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Find professionals", exact: true })
+    .click();
   await expect(page.getByRole("status")).toContainText("12 published profiles");
 });

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { socialLinksSchema } from "./social-links";
+import { guestContactSchema } from "./quote-input";
 import type { DemoState } from "./types";
 import { categories, services } from "@/data/catalog";
 const text = z.string();
@@ -91,6 +93,7 @@ export const stateSchema: z.ZodType<DemoState> = z.object({
       fur: text,
       name: text,
       categoryId: text,
+      socialLinks: socialLinksSchema.optional(),
       serviceIds: z.array(text),
       city: text,
       region: text,
@@ -117,6 +120,7 @@ export const stateSchema: z.ZodType<DemoState> = z.object({
     z.object({
       id: text,
       ownerId: text,
+      guestContact: guestContactSchema.optional(),
       title: text,
       categoryId: text,
       serviceId: text,

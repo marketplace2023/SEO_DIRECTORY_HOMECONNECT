@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures";
 
-test("un módulo de mapa fallido no borra la portada y permite recuperarla", async ({
+test("un módulo de mapa fallido conserva la navegación y permite recuperar la vista", async ({
   page,
 }) => {
   await page.route("**/src/components/ecosystem/coverage-map.tsx*", (route) =>
@@ -10,6 +10,10 @@ test("un módulo de mapa fallido no borra la portada y permite recuperarla", asy
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Grandes ideas.",
   );
+  await page
+    .getByRole("navigation", { name: "Entornos del ecosistema" })
+    .getByRole("link", { name: "Mapa de profesionales", exact: true })
+    .click();
   await expect(page.getByRole("alert")).toContainText(
     "No pudimos cargar el mapa.",
   );

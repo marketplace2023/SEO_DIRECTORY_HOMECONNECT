@@ -281,6 +281,14 @@ export function CoverageMap({
             "Busca un servicio, compara fichas y explora dónde trabajan. Lista y mapa comparten los mismos filtros.",
             "Search a service, compare listings and explore service areas. List and map share the same filters.",
           )}
+          action={
+            <Button asChild variant="outline">
+              <a href="#/areas">
+                <PiGlobeHemisphereWest />
+                {t("Mapa de zonas de EE. UU.", "U.S. area map")}
+              </a>
+            </Button>
+          }
         />
       )}
       <form className="map-search-form" onSubmit={search}>

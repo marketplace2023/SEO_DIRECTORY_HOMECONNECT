@@ -17,10 +17,12 @@ export function DiscoveryHero({
   search,
   onCategory,
   onQuote,
+  showSearch = true,
 }: {
   search: SearchBarProps;
   onCategory: (id: string) => void;
   onQuote: () => void;
+  showSearch?: boolean;
 }) {
   const es = search.language === "es";
   const projects = [
@@ -158,9 +160,11 @@ export function DiscoveryHero({
           </Badge>
         </div>
       </div>
-      <div className="mt-7">
-        <SearchBar {...search} />
-      </div>
+      {showSearch && (
+        <div className="mt-7">
+          <SearchBar {...search} />
+        </div>
+      )}
     </section>
   );
 }

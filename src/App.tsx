@@ -33,9 +33,23 @@ import "@/styles/ecosystem.css";
 import "@/styles/yelp-theme.css";
 import "@/styles/portals.css";
 import "@/styles/discovery.css";
+import "@/styles/us-area.css";
+import "@/styles/search.css";
+import { searchParams } from "@/domain/search";
+import { mostRequestedProfessionals } from "@/domain/queries";
+import { CartProvider } from "@/domain/cart";
+import {
+  CartPage,
+  NotificationsPage,
+} from "@/components/ecosystem/customer-pages";
 const HomePage = lazy(() =>
   import("@/components/home-page").then((module) => ({
     default: module.HomePage,
+  })),
+);
+const AreaExplorer = lazy(() =>
+  import("@/components/ecosystem/area-explorer").then((module) => ({
+    default: module.AreaExplorer,
   })),
 );
 const Workspace = lazy(() =>
@@ -64,7 +78,9 @@ export default function App() {
   return (
     <AuthProvider application="web">
       <StoreProvider>
-        <Ecosystem />
+        <CartProvider>
+          <Ecosystem />
+        </CartProvider>
       </StoreProvider>
     </AuthProvider>
   );
@@ -130,16 +146,14 @@ function Ecosystem() {
     onCity: setCity,
     onCountry: setCountry,
     onSearch: () => {
-      const params = new URLSearchParams();
-      for (const [key, value] of Object.entries({ q: query, city, country }))
-        if (value) params.set(key, value);
-      navigate("/professionals", params);
+      navigate("/professionals", searchParams(query, city, country));
     },
   };
-  const people = state.professionals.filter(
-    (p) => p.publication === "published",
-  );
+  const people = mostRequestedProfessionals(state);
   const content = () => {
+    if (route.path === "/cart") return <CartPage language={language} />;
+    if (route.path === "/notifications")
+      return <NotificationsPage language={language} />;
     if (route.path === "/")
       return (
         <HomePage
@@ -162,16 +176,12 @@ function Ecosystem() {
     if (parts[0] === "services" && parts.length === 2)
       return <ServicePage id={parts[1]} language={language} />;
     if (route.path === "/quote")
-      return role === "owner" ? (
-        <RequireAccount role="owner">
-          <RequestPage
-            key={route.params.toString()}
-            route={route}
-            language={language}
-          />
-        </RequireAccount>
-      ) : (
-        <Loading />
+      return (
+        <RequestPage
+          key={route.params.toString()}
+          route={route}
+          language={language}
+        />
       );
     if (parts[0] === "workspace")
       return workspaceRole &&
@@ -185,6 +195,8 @@ function Ecosystem() {
     if (parts[0] === "resources" && parts.length <= 2)
       return <Resources id={parts[1]} language={language} />;
     if (route.path === "/coverage") return <CoveragePage language={language} />;
+    if (route.path === "/areas")
+      return <AreaExplorer route={route} language={language} />;
     return <Missing language={language} />;
   };
   if (route.path === "/login") return <LoginPage />;
@@ -214,6 +226,7 @@ function Ecosystem() {
         {t("Saltar al contenido", "Skip to content")}
       </a>
       <SiteHeader
+        search={route.path === "/" ? search : undefined}
         language={language}
         onLanguage={setLanguage}
         path={route.path}
@@ -228,6 +241,10 @@ function Ecosystem() {
         <button onClick={() => navigate("/coverage")}>
           <PiGlobeHemisphereWest />
           {t("Cobertura", "Coverage")}
+        </button>
+        <button onClick={() => navigate("/areas")}>
+          <PiGlobeHemisphereWest />
+          {t("Mapa de zonas", "Area map")}
         </button>
         <button onClick={() => navigate("/resources")}>
           <PiBookOpen />
@@ -287,7 +304,11 @@ function Ecosystem() {
           </Suspense>
         </LoadBoundary>
       </main>
-      <SiteFooter language={language} onNavigate={navigate} />
+      <SiteFooter
+        language={language}
+        onLanguage={setLanguage}
+        onNavigate={navigate}
+      />
     </>
   );
 }

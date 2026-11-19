@@ -17,6 +17,11 @@ import { Accounts } from "../server/auth/accounts";
 import { categories, services } from "../src/data/catalog";
 import { cityLocation } from "../src/domain/geography";
 import { randomUUID } from "node:crypto";
+import { socialLinksSchema } from "../src/domain/social-links";
+import {
+  guestContactSchema,
+  quoteInputSchema,
+} from "../src/domain/quote-input";
 import { visibleState } from "../server/security/visibility";
 import { RateLimit } from "../server/security/rate-limit";
 import type { AuthUser } from "../src/auth/types";
@@ -140,6 +145,7 @@ const fields: Record<string, z.ZodType> = {
   }),
   publication: z.object({ professionalId: text }),
   profile: z.object({
+    socialLinks: socialLinksSchema.optional(),
     name: text,
     city: text,
     coverage: z.array(text),
@@ -176,6 +182,7 @@ function publish(session: string, state: DemoState) {
       `data: ${JSON.stringify(visibleState(state, viewUser(accounts.user(session, stream.token), stream.professional)))}\n\n`,
     );
 }
+let mutationTail = Promise.resolve();
 async function handle(req: IncomingMessage, res: ServerResponse) {
   const origin = req.headers.origin;
   if (origin && !origins.has(origin)) {
@@ -363,6 +370,12 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     send(404, { error: "Not found" });
     return;
   }
+  const previousMutation = mutationTail;
+  let releaseMutation!: () => void;
+  mutationTail = new Promise<void>((resolve) => {
+    releaseMutation = resolve;
+  });
+  await previousMutation;
   try {
     let body = "";
     for await (const chunk of req) {
@@ -375,6 +388,50 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
     }
     const data = body ? JSON.parse(body) : {};
+    if (url.pathname === "/api/demo/guest-requests") {
+      const input = z
+        .object({
+          id: z.string().uuid(),
+          value: quoteInputSchema,
+          contact: guestContactSchema,
+        })
+        .parse(data);
+      const state = states.get(session) || createSeed();
+      const existing = state.requests.find(
+        (request) => request.id === input.id,
+      );
+      if (existing) {
+        if (existing.ownerId !== "guest-" + input.id) {
+          send(409, { error: "Request identifier already used" });
+          return;
+        }
+        send(200, { ...visibleState(state, null), requests: [existing] });
+        return;
+      }
+      const next = reducer(state, {
+        type: "request",
+        actor: "owner",
+        actorId: "guest-" + input.id,
+        actingProfessional: "",
+        id: input.id,
+        at: new Date().toISOString(),
+        value: { ...input.value, guestContact: input.contact },
+      });
+      if (next === state || !hasValidRelations(next)) {
+        send(400, { error: "Invalid request" });
+        return;
+      }
+      // Persist before acknowledging a submission so a failed write can be retried.
+      await database.saveState(session, next);
+      states.set(session, next);
+      publish(session, next);
+      send(201, {
+        ...visibleState(next, null),
+        requests: next.requests.filter((request) => request.id === input.id),
+      });
+      return;
+    }
+
     if (
       await attachments.route(
         url.pathname,
@@ -683,6 +740,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
               ? error.message
               : "No se pudo completar la operación.",
     });
+  } finally {
+    releaseMutation();
   }
 }
 const server = createServer((req, res) => {

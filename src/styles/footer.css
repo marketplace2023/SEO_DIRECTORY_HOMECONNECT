@@ -1,0 +1,106 @@
+.site-footer.footer-directory {
+  margin-top: 36px;
+  padding-block: 54px 24px;
+  background: #f6f6f6;
+  border-top: 1px solid #e6e6e6;
+}
+.footer-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(170px, 1.1fr);
+  gap: 30px;
+  padding-bottom: 48px;
+}
+.footer-directory-column h2 {
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.4;
+  margin-bottom: 17px;
+  color: #292929;
+}
+.footer-directory-column ul {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.footer-directory-column a {
+  display: inline-block;
+  font-size: 12px;
+  color: #555e68;
+  line-height: 1.6;
+}
+.footer-directory-column a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.footer-directory-column a:focus-visible,
+.footer-preferences select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+.footer-preferences label {
+  display: block;
+  margin-bottom: 22px;
+}
+.footer-preferences label > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+.footer-preferences select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 6px;
+  background: white;
+  border: 1px solid #d9dce1;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #424b56;
+}
+.footer-directory-bottom {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  border-top: 1px solid #dedede;
+  padding-top: 24px;
+}
+.footer-directory-bottom .brand {
+  font-size: 18px;
+}
+.footer-directory-bottom .brand-symbol {
+  width: 28px;
+  height: 28px;
+}
+.footer-directory-bottom p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #636b74;
+}
+@media (max-width: 1000px) {
+  .footer-directory-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  .footer-directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 30px 20px;
+    padding-bottom: 30px;
+  }
+  .footer-directory-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
+@media (max-width: 360px) {
+  .footer-directory-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

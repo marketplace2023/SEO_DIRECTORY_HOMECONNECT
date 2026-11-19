@@ -10,6 +10,14 @@ import {
   PiSealCheckFill,
   PiCheck,
   PiBuildings,
+  PiGlobe,
+  PiInstagramLogo,
+  PiFacebookLogo,
+  PiLinkedinLogo,
+  PiYoutubeLogo,
+  PiTiktokLogo,
+  PiXLogo,
+  PiLinkSimple,
 } from "react-icons/pi";
 import {
   categories,
@@ -19,13 +27,24 @@ import {
   serviceName,
 } from "@/data/catalog";
 import { useStore } from "@/domain/store";
-import { useAuth } from "@/auth/auth-provider";
 import { findProfessionals, filtersFromParams } from "@/domain/queries";
-import { type Language, type Professional } from "@/domain/types";
+import {
+  cityLabel,
+  countyById,
+  parseAreaQuery,
+  readUsArea,
+  stateLabel,
+  usAreaParams,
+} from "@/domain/us-area";
+import { normalize, type Language, type Professional } from "@/domain/types";
+import { isPublicWebUrl, socialPlatforms } from "@/domain/social-links";
+import { useAuth } from "@/auth/auth-provider";
 import { navigate, type Route } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 
 import { SearchBar } from "@/components/search-bar";
+import { searchParams } from "@/domain/search";
+import { useCart } from "@/domain/cart";
 import { ProfessionalCard } from "@/components/professional-card";
 
 import { CategoryScope } from "./category-scope";
@@ -39,6 +58,17 @@ import {
   EvidenceBadge,
   copy,
 } from "./primitives";
+
+const socialIcons = {
+  website: PiGlobe,
+  instagram: PiInstagramLogo,
+  facebook: PiFacebookLogo,
+  linkedin: PiLinkedinLogo,
+  youtube: PiYoutubeLogo,
+  tiktok: PiTiktokLogo,
+  x: PiXLogo,
+  other: PiLinkSimple,
+};
 
 export { CatalogPage } from "./catalog-page";
 
@@ -189,23 +219,51 @@ export function DirectoryPage({
   const t = copy(language);
   const [query, setQuery] = useState(route.params.get("q") || "");
   const [country, setCountry] = useState(route.params.get("country") || "");
-  const [city, setCity] = useState(route.params.get("city") || "");
+  const routeLocation =
+    route.params.get("city") ||
+    (route.params.get("us") === "1"
+      ? route.params.get("areaCity")
+        ? cityLabel(route.params.get("areaCity")!, language).split(",")[0]
+        : route.params.get("county")
+          ? (countyById.get(route.params.get("county")!) ?? "")
+          : route.params.get("state")
+            ? stateLabel(route.params.get("state")!, language)
+            : ""
+      : "");
+  const [city, setCity] = useState(routeLocation);
   useEffect(() => {
     setQuery(route.params.get("q") || "");
     setCountry(route.params.get("country") || "");
-    setCity(route.params.get("city") || "");
+    setCity(routeLocation);
   }, [route.params.toString()]);
   const category = route.params.get("category") || "";
   const subcategory = route.params.get("subcategory") || "";
   const verified = route.params.get("verified") === "1";
   const min = Number(route.params.get("rating")) || 0;
+  const area =
+    route.params.get("us") === "1" ? readUsArea(route.params) : undefined;
+  const areaLabel = area?.city
+    ? cityLabel(area.city, language)
+    : area?.county
+      ? countyById.get(area.county)
+      : area?.state
+        ? stateLabel(area.state, language)
+        : t("Estados Unidos", "United States");
+  const mapArea = area ?? parseAreaQuery(route.params.get("city") || "").area;
+  const mapParams = mapArea ? usAreaParams(mapArea) : new URLSearchParams();
+  if (category) mapParams.set("category", category);
+  const mapQuery = route.params.get("q");
+  if (mapQuery) mapParams.set("q", mapQuery);
   const update = (key: string, value: string) => {
     const params = new URLSearchParams(route.params);
     value ? params.set(key, value) : params.delete(key);
     if (key === "category") params.delete("subcategory");
     navigate("/professionals", params);
   };
-  const matched = findProfessionals(state, filtersFromParams(route.params));
+  const matched = findProfessionals(state, {
+    ...filtersFromParams(route.params),
+    usArea: area,
+  });
   const results =
     route.params.get("sort") === "name"
       ? [...matched].sort((a, b) => a.name.localeCompare(b.name))
@@ -225,7 +283,32 @@ export function DirectoryPage({
           "Busca por especialidad y por área de cobertura, más allá de la ciudad de la sede.",
           "Search by specialty and service area, beyond the city of the main office.",
         )}
+        action={
+          <Button asChild variant="outline">
+            <a href={mapParams.size ? `#/areas?${mapParams}` : "#/areas"}>
+              <PiMapPin />
+              {t("Mapa de zonas", "Area map")}
+            </a>
+          </Button>
+        }
       />
+      {area && (
+        <div className="us-directory-scope">
+          <PiMapPin aria-hidden="true" />
+          <strong>{areaLabel}</strong>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              const params = new URLSearchParams(route.params);
+              for (const name of ["us", "state", "county", "areaCity"])
+                params.delete(name);
+              navigate("/professionals", params);
+            }}
+          >
+            {t("Quitar filtro de zona", "Remove area filter")}
+          </Button>
+        </div>
+      )}
       <SearchBar
         language={language}
         query={query}
@@ -236,12 +319,22 @@ export function DirectoryPage({
         onCountry={setCountry}
         onSearch={() => {
           const params = new URLSearchParams(route.params);
-          for (const [key, value] of Object.entries({
-            q: query,
-            city,
-            country,
-          }))
-            value ? params.set(key, value) : params.delete(key);
+          if (query !== (route.params.get("q") || "")) {
+            params.delete("category");
+            params.delete("subcategory");
+          }
+          for (const key of [
+            "q",
+            "city",
+            "country",
+            "us",
+            "state",
+            "county",
+            "areaCity",
+          ])
+            params.delete(key);
+          for (const [key, value] of searchParams(query, city, country))
+            params.set(key, value);
           navigate("/professionals", params);
         }}
       />
@@ -341,6 +434,7 @@ export function ProfilePage({
   language: Language;
 }) {
   const { state, role, send } = useStore();
+  const cart = useCart();
   const { checking } = useAuth();
   const t = copy(language);
   const person = state.professionals.find(
@@ -348,6 +442,14 @@ export function ProfilePage({
   );
   if (!person) return <Missing language={language} />;
   const favorite = state.favorites.includes(id);
+  const socialLinks = socialPlatforms.map(([key, es, en]) => {
+    const url = person.socialLinks?.[key];
+    return {
+      key,
+      label: t(es, en),
+      url: url && isPublicWebUrl(url) ? url : undefined,
+    };
+  });
   return (
     <>
       <button
@@ -433,16 +535,97 @@ export function ProfilePage({
           <Panel title={t("Nuestros servicios", "Our services")}>
             <div className="service-grid">
               {person.serviceIds.map((service) => (
-                <ServiceTile
-                  key={service}
-                  serviceId={service}
-                  language={language}
-                />
+                <div key={service} className="profile-service-choice">
+                  <ServiceTile serviceId={service} language={language} />
+                  <Button
+                    variant="outline"
+                    disabled={cart.items.some(
+                      (item) =>
+                        item.professionalId === person.id &&
+                        item.serviceId === service,
+                    )}
+                    onClick={() =>
+                      cart.add({
+                        professionalId: person.id,
+                        serviceId: service,
+                      })
+                    }
+                  >
+                    {cart.items.some(
+                      (item) =>
+                        item.professionalId === person.id &&
+                        item.serviceId === service,
+                    )
+                      ? t("En el carrito", "In your cart")
+                      : t("Añadir al carrito", "Add to cart")}
+                  </Button>
+                </div>
               ))}
             </div>
           </Panel>
         </div>
         <aside>
+          <Panel
+            title={t("Redes sociales y página web", "Social media and website")}
+          >
+            <div className="profile-social-grid">
+              {socialLinks.map(({ key, label, url }) => {
+                const Icon = socialIcons[key];
+                const content = (
+                  <>
+                    <Icon aria-hidden="true" />
+                    <span>
+                      {label}
+                      <small>
+                        {url
+                          ? t("Visitar", "Visit")
+                          : t("Por agregar", "Not added yet")}
+                      </small>
+                    </span>
+                    {url && (
+                      <PiArrowUpRight
+                        className="profile-social-arrow"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </>
+                );
+                return url ? (
+                  <a
+                    key={key}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="profile-social-item"
+                    aria-label={t(
+                      `Abrir ${label} de ${person.name} (nueva pestaña)`,
+                      `Open ${person.name}'s ${label} (new tab)`,
+                    )}
+                  >
+                    {content}
+                  </a>
+                ) : (
+                  <span
+                    key={key}
+                    className="profile-social-item is-unlinked"
+                    aria-disabled="true"
+                    title={t(
+                      `${label}: el contratista puede agregar su enlace desde Mi ficha.`,
+                      `${label}: the contractor can add a link in My profile.`,
+                    )}
+                  >
+                    {content}
+                  </span>
+                );
+              })}
+            </div>
+            <p className="eco-note">
+              {t(
+                "El contratista puede añadir sus enlaces desde Mi ficha.",
+                "The contractor can add links in My profile.",
+              )}
+            </p>
+          </Panel>
           <Panel title={t("Credenciales y confianza", "Credentials and trust")}>
             <p className="eco-note">
               {t(
