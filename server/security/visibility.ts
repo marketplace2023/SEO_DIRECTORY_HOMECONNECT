@@ -56,6 +56,9 @@ export function visibleState(
         ? structuredClone(p)
         : ({
             ...p,
+            address: p.serviceAreaBusiness ? undefined : p.address,
+            phone: undefined,
+            postalCode: p.serviceAreaBusiness ? undefined : p.postalCode,
             credentials: p.credentials.map((c) => ({
               ...c,
               reference: "",

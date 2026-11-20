@@ -30,6 +30,7 @@ import {
   googleConfiguration,
 } from "../server/google/business-profile";
 import { seoRoutes } from "../server/seo/routes";
+import { localSeoRoutes } from "../server/local-seo/routes";
 
 const port = Number(process.env.SERVINEXO_API_PORT || 5190);
 const file = resolve(
@@ -47,6 +48,14 @@ const origins = new Set([
   process.env.SERVINEXO_ADMIN_ORIGIN || "http://127.0.0.1:5181",
 ]);
 const states = await database.loadStates();
+async function seoState(namespace: string) {
+  if (!states.has(namespace)) {
+    const state = createSeed();
+    states.set(namespace, state);
+    await database.saveState(namespace, state);
+  }
+  return states.get(namespace)!;
+}
 const attachments = new Attachments(
   database,
   resolve(process.env.UPLOAD_DIR || resolve(dirname(file), "uploads")),
@@ -223,6 +232,30 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     send(400, { error: "Invalid demo session" });
     return;
   }
+  if (req.method === "GET" && url.pathname === "/api/local-seo/users") {
+    if (user?.role !== "admin") {
+      send(403, { error: "Acceso administrativo requerido." });
+      return;
+    }
+    send(200, accounts.seoUsers(session));
+    return;
+  }
+  if (
+    req.method === "GET" &&
+    url.pathname.startsWith("/api/local-seo/") &&
+    (await localSeoRoutes(
+      url.pathname,
+      "GET",
+      url.searchParams,
+      undefined,
+      database,
+      user,
+      session,
+      await seoState(session),
+      send,
+    ))
+  )
+    return;
   if (
     req.method === "GET" &&
     (await pilotRoutes(
@@ -328,7 +361,18 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       send(404, { error: "Buzón local no disponible." });
       return;
     }
-    send(200, { messages: await accounts.email.localInbox(session, user.id) });
+    const invited = url.searchParams.get("user");
+    if (
+      invited &&
+      (user.role !== "admin" ||
+        !accounts.seoUsers(session).some((account) => account.id === invited))
+    ) {
+      send(403, { error: "Invitación no disponible." });
+      return;
+    }
+    send(200, {
+      messages: await accounts.email.localInbox(session, invited || user.id),
+    });
     return;
   }
   if (req.method === "GET" && url.pathname === "/api/demo/events") {
@@ -388,6 +432,96 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
     }
     const data = body ? JSON.parse(body) : {};
+    if (url.pathname === "/api/local-seo/event") {
+      const input = z
+        .object({
+          id: z.string().uuid(),
+          professionalId: z.string().max(100),
+          kind: z.enum(["profile_view", "website_click"]),
+        })
+        .parse(data);
+      const person = (states.get(session) || createSeed()).professionals.find(
+        (person) =>
+          person.id === input.professionalId &&
+          person.publication === "published",
+      );
+      if (!person) {
+        send(404, { error: "Perfil no disponible." });
+        return;
+      }
+      if (
+        !rateLimit.allow(
+          `seo-events:${session}:${req.socket.remoteAddress}:${person.id}:${input.kind}`,
+          120,
+        )
+      ) {
+        send(429, { error: "Demasiados eventos." });
+        return;
+      }
+      await database.sql.query(
+        "INSERT INTO local_seo_event(namespace,id,professional_id,kind,created_at) VALUES($1,$2,$3,$4,now()) ON CONFLICT DO NOTHING",
+        [session, input.id, person.id, input.kind],
+      );
+      send(200, { ok: true });
+      return;
+    }
+    if (url.pathname === "/api/local-seo/users") {
+      if (user?.role !== "admin") {
+        send(403, { error: "Acceso administrativo requerido." });
+        return;
+      }
+      const input = z
+        .object({
+          id: z.string().uuid().optional(),
+          name: z.string().trim().min(2).max(200),
+          email: z.email(),
+          seoAccess: z.object({
+            professionalIds: z.array(z.string()).max(2000),
+            manageDirectories: z.boolean(),
+            exportReports: z.boolean(),
+          }),
+        })
+        .parse(data);
+      const current = states.get(session) || createSeed();
+      if (
+        !input.id &&
+        process.env.NODE_ENV === "production" &&
+        (!process.env.SMTP_HOST || !process.env.SMTP_FROM)
+      ) {
+        send(503, {
+          error: "Configura el correo SMTP antes de invitar al equipo SEO.",
+        });
+        return;
+      }
+      if (
+        input.seoAccess.professionalIds.some(
+          (id) => !current.professionals.some((p) => p.id === id),
+        )
+      ) {
+        send(400, { error: "Hay contratistas inexistentes en la asignación." });
+        return;
+      }
+      try {
+        send(200, await accounts.saveSeoUser(session, input, user.id));
+      } catch (error) {
+        send(400, { error: (error as Error).message });
+      }
+      return;
+    }
+    if (
+      await localSeoRoutes(
+        url.pathname,
+        "POST",
+        url.searchParams,
+        data,
+        database,
+        user,
+        session,
+        await seoState(session),
+        send,
+      )
+    )
+      return;
     if (url.pathname === "/api/demo/guest-requests") {
       const input = z
         .object({

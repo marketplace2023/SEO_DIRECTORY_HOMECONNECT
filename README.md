@@ -4,6 +4,8 @@ Tres aplicaciones React + TypeScript en un monorepo, con servidores, rutas, mód
 
 El prototipo dispone de infraestructura propia en AWS. Las URLs de los tres portales, publicación, accesos privados y respaldos se documentan en [despliegue AWS](docs/despliegue-aws.md).
 
+El [Centro SEO local](docs/centro-seo-local.md) incorpora NAP desde la ficha maestra, hasta 25 keywords activas por negocio, posts/reseñas/noticias, catálogo de directorios y listados, auditorías, tareas, cuadrículas con observaciones documentadas e informes. Administración y usuarios SEO asignados gestionan la estrategia; el contratista consulta en solo lectura. La medición automática externa requiere un proveedor todavía no conectado.
+
 El mercado inicial confirmado es **Georgia, Estados Unidos**. El [alcance realista para Georgia](docs/alcance-realista-georgia.md) contrasta Yelp y BuildZoom, documenta lo que existe, los bloqueantes del lanzamiento y las etapas propuestas. Las referencias históricas de SEO_GALLERY no sustituyen ese diagnóstico del estado actual.
 
 La implementación de **SEO local, confirmación de email y Google Business Profile** se describe en [seo-email-google.md](docs/seo-email-google.md). Incluye páginas HTML `/georgia`, gestión SEO en administración, buzón local de pruebas sin SMTP y conexión OAuth pendiente de credenciales/aprobación externas. No hay dominio ni proveedor de correo real configurados.

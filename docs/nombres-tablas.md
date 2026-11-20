@@ -2,6 +2,10 @@
 
 La referencia de nombres nativos es Odoo 18. Se conservan los nombres originales cuando existe una correspondencia de dominio; no se usa el prefijo de la marca.
 
+La migración `003_local_seo.sql` incorpora las tablas propias `local_seo_project`, `local_seo_audit`, `local_seo_rank_run`, `local_seo_activity` y `local_seo_event`. Representan el espacio SEO, diagnósticos inmutables, mediciones documentadas, cambios y eventos internos. No se incluyen en las tablas que se reemplazan al guardar el directorio.
+
+La migración `004_seo_management.sql` añade `local_seo_keyword`, `local_seo_content`, `local_seo_directory` y `local_seo_listing`, con unicidad por keyword normalizada y por asociación negocio/directorio. Son nombres propios sin prefijo de marca. El NAP maestro continúa en `res_partner` y las cuentas del equipo SEO en `res_users`.
+
 | Entidad del prototipo | Tabla SQL | Procedencia del nombre |
 |---|---|---|
 | Cuentas | `res_users` | Odoo: `res.users` |

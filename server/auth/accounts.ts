@@ -30,13 +30,14 @@ export class Accounts {
     await this.database.saveAccounts(accounts);
   }
   private safe(account: Account): AuthUser {
-    const { id, name, email, role, professionalId, demo } = account;
+    const { id, name, email, role, professionalId, demo, seoAccess } = account;
     return {
       id,
       name,
       email,
       role,
       professionalId,
+      seoAccess,
       demo,
       emailVerified: account.demo || account.emailVerified === true,
     };
@@ -129,7 +130,10 @@ export class Accounts {
     )
       throw Error("Correo o contraseña incorrectos.");
     const expected = application === "web" ? "owner" : application;
-    if (account.role !== expected)
+    if (
+      account.role !== expected &&
+      !(application === "admin" && account.role === "seo")
+    )
       throw Error(
         "Esta cuenta pertenece a otro portal. Usa el acceso correspondiente.",
       );
@@ -162,7 +166,8 @@ export class Accounts {
       (a) =>
         a.namespace === namespace &&
         a.email === email.trim().toLowerCase() &&
-        a.role === (application === "web" ? "owner" : application),
+        (a.role === (application === "web" ? "owner" : application) ||
+          (application === "admin" && a.role === "seo")),
     );
     if (account) await this.email.issue(account, "reset", application);
   }
@@ -175,12 +180,110 @@ export class Accounts {
     account.emailVerified = true;
     await this.persist([account]);
   }
+  seoUsers(namespace: string) {
+    return this.accounts
+      .filter((a) => a.namespace === namespace && a.role === "seo")
+      .map((a) => this.safe(a));
+  }
+  async saveSeoUser(
+    namespace: string,
+    input: {
+      id?: string;
+      name: string;
+      email: string;
+      seoAccess: NonNullable<AuthUser["seoAccess"]>;
+    },
+    actorId: string,
+  ) {
+    let account = input.id
+      ? this.accounts.find(
+          (a) =>
+            a.namespace === namespace && a.id === input.id && a.role === "seo",
+        )
+      : undefined;
+    if (input.id && !account) throw Error("Usuario SEO no disponible.");
+    if (account && account.email !== input.email.toLowerCase())
+      throw Error(
+        "El correo de una cuenta SEO existente se conserva. Crea otra invitación para un nuevo titular.",
+      );
+    const before = account ? this.safe(account) : null;
+    if (account) account = structuredClone(account);
+    if (
+      this.accounts.some(
+        (a) =>
+          a.namespace === namespace &&
+          a.email === input.email.toLowerCase() &&
+          a.id !== account?.id,
+      )
+    )
+      throw Error("El correo ya está registrado.");
+    const created = !account;
+    if (!account) {
+      const salt = randomBytes(16).toString("hex");
+      account = {
+        id: randomUUID(),
+        namespace,
+        name: input.name,
+        email: input.email.toLowerCase(),
+        role: "seo",
+        demo: false,
+        emailVerified: false,
+        salt,
+        hash: scryptSync(randomBytes(32).toString("hex"), salt, 64).toString(
+          "hex",
+        ),
+      };
+    }
+    Object.assign(account, {
+      name: input.name,
+      email: input.email.toLowerCase(),
+      seoAccess: input.seoAccess,
+    });
+    const saved = account;
+    await this.database.sql.transaction(async (tx) => {
+      await tx.query(
+        "INSERT INTO prototype_dataset(namespace,data) VALUES($1,'{}') ON CONFLICT DO NOTHING",
+        [namespace],
+      );
+      await tx.query(
+        "INSERT INTO res_users(namespace,id,position,data) VALUES($1,$2,0,$3) ON CONFLICT(namespace,kind,id) DO UPDATE SET data=excluded.data",
+        [namespace, saved.id, JSON.stringify(saved)],
+      );
+      await tx.query(
+        "INSERT INTO local_seo_activity(namespace,id,professional_id,data) VALUES($1,$2,$3,$4)",
+        [
+          namespace,
+          randomUUID(),
+          "__accounts__",
+          JSON.stringify({
+            id: randomUUID(),
+            at: new Date().toISOString(),
+            actorId,
+            action: "seo-access",
+            detail: created
+              ? "Usuario SEO invitado"
+              : "Asignaciones SEO actualizadas",
+            before,
+            after: this.safe(saved),
+          }),
+        ],
+      );
+    });
+    if (created) this.accounts.push(account);
+    else
+      this.accounts = this.accounts.map((a) =>
+        a.id === saved.id && a.namespace === namespace ? saved : a,
+      );
+    if (created) await this.email.issue(account, "reset", "admin");
+    return this.safe(account);
+  }
   async reset(token: string, password: string) {
     const target = await this.email.consume(token, "reset");
     const account = this.accounts.find(
       (a) => a.namespace === target.namespace && a.id === target.user_id,
     );
     if (!account) throw Error("La cuenta no existe.");
+    if (account.role === "seo") account.emailVerified = true;
     account.salt = randomBytes(16).toString("hex");
     account.hash = scryptSync(password, account.salt, 64).toString("hex");
     await this.persist([account]);

@@ -1,5 +1,6 @@
 import { PublicReviews } from "./pilot-panels";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { trackSeoEvent } from "@/lib/seo-events";
 import {
   PiArrowUpRight,
   PiArrowLeft,
@@ -435,11 +436,24 @@ export function ProfilePage({
 }) {
   const { state, role, send } = useStore();
   const cart = useCart();
-  const { checking } = useAuth();
+  const { checking, user: profileUser } = useAuth();
   const t = copy(language);
   const person = state.professionals.find(
     (p) => p.id === id && p.publication === "published",
   );
+  const viewed = useRef("");
+  useEffect(() => {
+    if (
+      !checking &&
+      person &&
+      profileUser?.role !== "admin" &&
+      profileUser?.professionalId !== person.id &&
+      viewed.current !== person.id
+    ) {
+      viewed.current = person.id;
+      trackSeoEvent(person.id, "profile_view");
+    }
+  }, [checking, person?.id, profileUser?.role, profileUser?.professionalId]);
   if (!person) return <Missing language={language} />;
   const favorite = state.favorites.includes(id);
   const socialLinks = socialPlatforms.map(([key, es, en]) => {
@@ -594,6 +608,10 @@ export function ProfilePage({
                   <a
                     key={key}
                     href={url}
+                    onClick={() => {
+                      if (key === "website")
+                        trackSeoEvent(person.id, "website_click");
+                    }}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="profile-social-item"

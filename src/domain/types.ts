@@ -45,6 +45,10 @@ export type Professional = {
   id: string;
   fur: string;
   name: string;
+  address?: string;
+  phone?: string;
+  postalCode?: string;
+  serviceAreaBusiness?: boolean;
   categoryId: string;
   serviceIds: string[];
   city: string;

@@ -1,0 +1,12 @@
+BEGIN;
+CREATE TABLE IF NOT EXISTS local_seo_project (namespace TEXT NOT NULL, id TEXT NOT NULL, data JSONB NOT NULL, PRIMARY KEY(namespace,id));
+CREATE TABLE IF NOT EXISTS local_seo_audit (namespace TEXT NOT NULL, id TEXT NOT NULL, professional_id TEXT NOT NULL, data JSONB NOT NULL, PRIMARY KEY(namespace,id));
+CREATE INDEX IF NOT EXISTS local_seo_audit_business ON local_seo_audit(namespace,professional_id);
+CREATE TABLE IF NOT EXISTS local_seo_rank_run (namespace TEXT NOT NULL, id TEXT NOT NULL, professional_id TEXT NOT NULL, data JSONB NOT NULL, PRIMARY KEY(namespace,id));
+CREATE INDEX IF NOT EXISTS local_seo_run_business ON local_seo_rank_run(namespace,professional_id);
+CREATE TABLE IF NOT EXISTS local_seo_activity (namespace TEXT NOT NULL, id TEXT NOT NULL, professional_id TEXT NOT NULL, data JSONB NOT NULL, PRIMARY KEY(namespace,id));
+CREATE INDEX IF NOT EXISTS local_seo_activity_business ON local_seo_activity(namespace,professional_id);
+CREATE TABLE IF NOT EXISTS local_seo_event (namespace TEXT NOT NULL, id TEXT NOT NULL, professional_id TEXT NOT NULL, kind TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL, PRIMARY KEY(namespace,id));
+CREATE INDEX IF NOT EXISTS local_seo_event_business ON local_seo_event(namespace,professional_id);
+INSERT INTO schema_migration(id) VALUES('003_local_seo') ON CONFLICT DO NOTHING;
+COMMIT;

@@ -47,7 +47,13 @@ export function AuthForm({
       ? requested
       : home;
   useEffect(() => {
-    if (!checking && user?.role === role) window.location.replace("#" + next);
+    if (
+      !checking &&
+      (user?.role === role || (application === "admin" && user?.role === "seo"))
+    )
+      window.location.replace(
+        "#" + (user?.role === "seo" ? "/workspace/admin/local-seo" : next),
+      );
   }, [user, checking, next, role]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

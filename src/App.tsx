@@ -10,7 +10,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { StoreProvider, useStore } from "@/domain/store";
 import { roleNames, type Language, type Role } from "@/domain/types";
 import { rolePortal, workspaceHref } from "@/lib/portals";
-import { categories } from "@/data/catalog";
+import { categories, subcategories } from "@/data/catalog";
+import { CategoryPages } from "@/components/ecosystem/category-pages";
 import { navigate, useRoute } from "@/lib/navigation";
 import {
   CatalogPage,
@@ -136,6 +137,13 @@ function Ecosystem() {
       route.path === "/"
         ? "HOME CONNECT — Grandes ideas. Las manos correctas."
         : `HOME CONNECT · ${route.path.startsWith("/workspace") ? t("Mi espacio", "My workspace") : route.path.startsWith("/catalog") ? t("Catálogo", "Catalog") : t("Conecta con profesionales", "Connect with professionals")}`;
+    if (parts[0] === "categories") {
+      const category = categories.find((category) => category.id === parts[1]);
+      const area = subcategories.find(
+        (area) => area.id === parts[2] && area.categoryId === category?.id,
+      );
+      document.title = `${area?.name[language] || category?.name[language] || t("Categorías y subcategorías", "Categories and subcategories")} · HOME CONNECT`;
+    }
   }, [language, route.path]);
   const search = {
     language,
@@ -159,9 +167,7 @@ function Ecosystem() {
         <HomePage
           search={search}
           professionals={people}
-          onCategory={(id) =>
-            navigate("/catalog", new URLSearchParams({ category: id }))
-          }
+          onCategory={(id) => navigate(`/categories/${id}`)}
           onProfile={(id) => navigate(`/professionals/${id}`)}
           onExplore={() => navigate("/professionals")}
           onQuote={() => navigate("/quote")}
@@ -169,6 +175,10 @@ function Ecosystem() {
       );
     if (route.path === "/catalog")
       return <CatalogPage route={route} language={language} />;
+    if (parts[0] === "categories")
+      return (
+        <CategoryPages key={route.path} route={route} language={language} />
+      );
     if (route.path === "/professionals")
       return <DirectoryPage route={route} language={language} />;
     if (parts[0] === "professionals" && parts.length === 2)
@@ -280,7 +290,11 @@ function Ecosystem() {
               content()
             ) : (
               <div className="inner-page site-container">
-                <div className="page-breadcrumb">
+                <div
+                  className={
+                    parts[0] === "categories" ? "hidden" : "page-breadcrumb"
+                  }
+                >
                   <button onClick={() => navigate("/")}>
                     <PiArrowLeft />
                     {t("Inicio", "Home")}

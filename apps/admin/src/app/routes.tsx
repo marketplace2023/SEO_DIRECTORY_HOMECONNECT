@@ -22,6 +22,11 @@ const Overview = lazy(() =>
     default: m.OverviewPage,
   })),
 );
+const LocalSeoPage = lazy(() =>
+  import("@/modules/local-seo/local-seo-page").then((module) => ({
+    default: module.LocalSeoPage,
+  })),
+);
 const Verifications = lazy(() =>
   import("../modules/verifications/verifications-page").then((m) => ({
     default: m.ReviewQueue,
@@ -67,6 +72,12 @@ const Team = lazy(() =>
 );
 export const adminModules = [
   {
+    key: "local-seo",
+    es: "Centro SEO local",
+    en: "Local SEO center",
+    icon: PiGlobeHemisphereWest,
+  },
+  {
     key: "integrations",
     es: "Integraciones",
     en: "Integrations",
@@ -98,6 +109,7 @@ export const adminModules = [
 ];
 export const managementSections: Partial<Record<Role, string[]>> = {
   admin: [
+    "local-seo",
     "integrations",
     "support",
     "reviews",
@@ -131,7 +143,9 @@ export function AdminRoutes({
     return <Missing language={language} />;
   return (
     <Suspense fallback={<p role="status">Cargando módulo…</p>}>
-      {tab === "integrations" ? (
+      {tab === "local-seo" ? (
+        <LocalSeoPage admin />
+      ) : tab === "integrations" ? (
         <IntegrationsPage />
       ) : tab === "support" ? (
         <SupportPanel admin />
