@@ -22,6 +22,6 @@ test("un módulo de mapa fallido conserva la navegación y permite recuperar la 
   ).toBeVisible();
   await page.unroute("**/src/components/ecosystem/coverage-map.tsx*");
   await page.getByRole("button", { name: "Recargar página" }).click();
-  await expect(page.locator(".contractor-marker")).toHaveCount(4);
+  await expect(page.locator(".contractor-marker")).toHaveCount(9);
   await expect(page.getByRole("alert")).toHaveCount(0);
 });

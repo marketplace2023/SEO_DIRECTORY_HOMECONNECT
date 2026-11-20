@@ -203,11 +203,12 @@ export function HomePage({
               </button>
             </div>
           </div>
-          <div className="home-professional-grid">
+          <div className="home-professional-grid professional-grid">
             {professionals.map(({ person, requests }) => (
-              <article className="home-featured-contractor" key={person.id}>
+              <div className="home-featured-contractor" key={person.id}>
                 <ProfessionalCard
                   person={person}
+                  language={search.language}
                   category={categoryName(person.categoryId, search.language)}
                   experience={t.experience}
                   details={t.details}
@@ -224,7 +225,7 @@ export function HomePage({
                       ? "solicitudes de presupuesto"
                       : "quote requests"}
                 </p>
-              </article>
+              </div>
             ))}
           </div>
         </div>

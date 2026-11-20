@@ -17,7 +17,11 @@ import { professionalLocations } from "@/data/locations";
 import { locationOf } from "@/domain/geography";
 import { usCities, usCounties } from "@/data/us-areas";
 import { normalize, type Language, type Professional } from "@/domain/types";
-import type { UsArea } from "@/domain/us-area";
+import {
+  matchesUsArea,
+  professionalState,
+  type UsArea,
+} from "@/domain/us-area";
 import { navigate } from "@/lib/navigation";
 import { Empty, copy } from "./primitives";
 import "leaflet/dist/leaflet.css";
@@ -90,7 +94,7 @@ function ContractorPin({
       : undefined;
   useEffect(() => {
     if (!requested) return;
-    map.panInside(pin.position, { padding: [48, 48] });
+    map.setView(pin.position, Math.max(map.getZoom(), 8), { animate: false });
     marker.current?.openPopup();
   }, [map, pin.position, requested]);
 
@@ -158,7 +162,7 @@ export default function AreaResults({
     for (const person of people) {
       const city = usCities.find(
         ([, en, es, state]) =>
-          state === area.state &&
+          state === professionalState(person) &&
           [en, es].some((name) => normalize(name) === normalize(person.city)),
       );
       const declared = locationOf(person);
@@ -199,9 +203,13 @@ export default function AreaResults({
     setFocus({ id });
     setActive(id);
     const panel = mapPanel.current;
-    if (panel && panel.getBoundingClientRect().bottom < 120)
-      panel.scrollIntoView({ block: "start" });
+    const rect = panel?.getBoundingClientRect();
+    if (rect && (rect.bottom < 120 || rect.top > window.innerHeight - 120))
+      panel?.scrollIntoView({ block: "start" });
   };
+  const inArea = people.filter((person) => matchesUsArea(person, area));
+  const localIds = new Set(inArea.map((person) => person.id));
+  const outsideArea = people.filter((person) => !localIds.has(person.id));
 
   return (
     <div className="us-area-detail">
@@ -219,37 +227,63 @@ export default function AreaResults({
               : t(`${people.length} perfiles`, `${people.length} profiles`)}
           </p>
         </div>
+        {outsideArea.length > 0 && (
+          <p className="eco-note">
+            {t(
+              `${inArea.length} en la zona seleccionada. También puedes explorar profesionales de otras zonas.`,
+              `${inArea.length} in the selected area. You can also explore contractors from other areas.`,
+            )}
+          </p>
+        )}
         {people.length ? (
           <div className="us-area-contractor-grid">
-            {people.map((person) => (
-              <article
+            {[...inArea, ...outsideArea].map((person) => (
+              <div
                 key={person.id}
                 className="us-area-contractor"
                 data-active={active === person.id || undefined}
               >
                 <ProfessionalCard
+                  horizontal
+                  selected={active === person.id}
                   person={person}
+                  language={language}
                   category={categoryName(person.categoryId, language)}
                   experience={t("años de experiencia", "years of experience")}
                   details={t("Ver perfil", "View profile")}
                   verifiedLabel={t("Verificado · demo", "Verified · demo")}
                   onOpen={() => navigate(`/professionals/${person.id}`)}
-                />
-                {mapped.has(person.id) && (
-                  <button
-                    type="button"
-                    className="us-area-locate"
-                    aria-label={t(
-                      `Localizar a ${person.name} en el mapa`,
-                      `Locate ${person.name} on the map`,
+                >
+                  <div className="map-result-actions">
+                    {mapped.has(person.id) ? (
+                      <button
+                        type="button"
+                        className="us-area-locate"
+                        aria-label={t(
+                          `Localizar a ${person.name} en el mapa`,
+                          `Locate ${person.name} on the map`,
+                        )}
+                        onClick={() => locate(person.id)}
+                      >
+                        <PiMapPin />
+                        {t("Ver en el mapa", "Show on map")}
+                      </button>
+                    ) : (
+                      <small>
+                        {t("Sin ubicación pública", "No public location")}
+                      </small>
                     )}
-                    onClick={() => locate(person.id)}
-                  >
-                    <PiMapPin />
-                    {t("Ver en el mapa", "Show on map")}
-                  </button>
-                )}
-              </article>
+                    {!localIds.has(person.id) && (
+                      <small>
+                        {t(
+                          "Fuera de la zona seleccionada",
+                          "Outside the selected area",
+                        )}
+                      </small>
+                    )}
+                  </div>
+                </ProfessionalCard>
+              </div>
             ))}
           </div>
         ) : (

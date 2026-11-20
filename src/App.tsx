@@ -1,4 +1,5 @@
-﻿import { lazy, Suspense, useEffect, useState } from "react";
+import { isUsProfessional } from "@/domain/us-area";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   PiArrowLeft,
   PiArrowUpRight,
@@ -173,7 +174,13 @@ function Ecosystem() {
     if (route.path === "/professionals")
       return <DirectoryPage route={route} language={language} />;
     if (parts[0] === "professionals" && parts.length === 2)
-      return <ProfilePage id={parts[1]} language={language} />;
+      return (
+        <ProfilePage
+          id={parts[1]}
+          language={language}
+          resumeReview={route.params.get("review") === "1"}
+        />
+      );
     if (parts[0] === "services" && parts.length === 2)
       return <ServicePage id={parts[1]} language={language} />;
     const quote = route.path === "/quote";
@@ -185,7 +192,8 @@ function Ecosystem() {
       const professional = state.professionals.find(
         (person) =>
           person.id === params.get("professional") &&
-          person.publication === "published",
+          person.publication === "published" &&
+          isUsProfessional(person),
       );
       const next = route.path + (params.size ? "?" + params : "");
       return (

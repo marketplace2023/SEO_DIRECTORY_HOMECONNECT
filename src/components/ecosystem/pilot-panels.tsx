@@ -1,10 +1,13 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Panel, Field } from "./primitives";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Panel, Field, copy } from "./primitives";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/http";
 import { useAuth } from "@/auth/auth-provider";
+import { useStore } from "@/domain/store";
+import type { Language } from "@/domain/types";
+import { ContactAccountDialog } from "./contact-account-dialog";
 export function ProjectFeedback({ projectId }: { projectId: string }) {
   const [message, setMessage] = useState(""),
     [error, setError] = useState("");
@@ -68,8 +71,36 @@ export function ProjectFeedback({ projectId }: { projectId: string }) {
     </Panel>
   );
 }
-export function PublicReviews({ professionalId }: { professionalId: string }) {
-  const { user } = useAuth();
+export function PublicReviews({
+  professionalId,
+  language = "es",
+  resumeReview = false,
+}: {
+  professionalId: string;
+  language?: Language;
+  resumeReview?: boolean;
+}) {
+  const { user, checking } = useAuth();
+  const { state } = useStore();
+  const t = copy(language);
+  const [reviewIntent, setReviewIntent] = useState(false);
+  const [accountPrompt, setAccountPrompt] = useState(false);
+  const reviewSection = useRef<HTMLElement>(null);
+  const completed =
+    user?.role === "owner"
+      ? state.projects.filter(
+          (project) =>
+            project.professionalId === professionalId &&
+            project.status === "completed" &&
+            state.requests.some(
+              (request) =>
+                request.id === project.requestId && request.ownerId === user.id,
+            ),
+        )
+      : [];
+  useEffect(() => {
+    if (resumeReview) reviewSection.current?.scrollIntoView({ block: "start" });
+  }, [resumeReview]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -88,65 +119,128 @@ export function PublicReviews({ professionalId }: { professionalId: string }) {
     };
   }, [professionalId]);
   return (
-    <Panel title="Reseñas de clientes">
-      {reviews.length ? (
-        reviews.map((review) => (
-          <article className="eco-record" key={review.id}>
-            <div>
-              <strong>{review.rating}/5 · Interacción documentada</strong>
-              <p>{review.text}</p>
-              {review.reply && (
+    <section
+      ref={reviewSection}
+      className="scroll-mt-48"
+      aria-label={t("Reseñas de clientes", "Customer reviews")}
+    >
+      <Panel
+        title={t("Reseñas de clientes", "Customer reviews")}
+        action={
+          (!user || user.role === "owner") && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={checking}
+              onClick={() =>
+                user ? setReviewIntent(true) : setAccountPrompt(true)
+              }
+            >
+              {t("Dejar una reseña", "Leave a review")}
+            </Button>
+          )
+        }
+      >
+        {accountPrompt && !user && (
+          <ContactAccountDialog
+            review
+            language={language}
+            next={`/professionals/${professionalId}?review=1`}
+            onDismiss={() => setAccountPrompt(false)}
+          />
+        )}
+        {user?.role === "owner" && (reviewIntent || resumeReview) && (
+          <div className="eco-notice">
+            {completed.length ? (
+              <>
                 <p>
-                  <strong>Respuesta del negocio: </strong>
-                  {review.reply}
+                  {t(
+                    "Elige un proyecto completado para confirmar la entrega y dejar tu reseña.",
+                    "Choose a completed project to confirm delivery and leave your review.",
+                  )}
                 </p>
-              )}
-              {user?.role === "contractor" &&
-                user.professionalId === professionalId && (
-                  <form
-                    className="eco-form"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      const reply = String(
-                        new FormData(event.currentTarget).get("reply"),
-                      );
-                      void apiRequest("/api/reviews/reply", {
-                        id: review.id,
-                        reply,
-                      })
-                        .then(() =>
-                          setReviews((current) =>
-                            current.map((row) =>
-                              row.id === review.id ? { ...row, reply } : row,
-                            ),
-                          ),
-                        )
-                        .catch((e) => setError(e.message));
-                    }}
-                  >
-                    <Field label="Respuesta del negocio">
-                      <Textarea
-                        name="reply"
-                        defaultValue={review.reply}
-                        required
-                        minLength={5}
-                        maxLength={1500}
-                      />
-                    </Field>
-                    <Button>Guardar respuesta</Button>
-                  </form>
+                <ul>
+                  {completed.map((project) => (
+                    <li key={project.id}>
+                      <a
+                        className="text-link"
+                        href={`#/workspace/owner/projects/${project.id}`}
+                      >
+                        {project.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p role="status">
+                {t(
+                  "Para dejar una reseña, debes tener un proyecto completado con este contratista.",
+                  "You need a completed project with this contractor to leave a review.",
                 )}
-            </div>
-          </article>
-        ))
-      ) : !error ? (
-        <p>
-          Todavía no hay reseñas reales publicadas en HOME CONNECT para este
-          profesional.
-        </p>
-      ) : null}
-      {error && <p role="alert">{error}</p>}
-    </Panel>
+              </p>
+            )}
+          </div>
+        )}
+        {reviews.length ? (
+          reviews.map((review) => (
+            <article className="eco-record" key={review.id}>
+              <div>
+                <strong>{review.rating}/5 · Interacción documentada</strong>
+                <p>{review.text}</p>
+                {review.reply && (
+                  <p>
+                    <strong>Respuesta del negocio: </strong>
+                    {review.reply}
+                  </p>
+                )}
+                {user?.role === "contractor" &&
+                  user.professionalId === professionalId && (
+                    <form
+                      className="eco-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const reply = String(
+                          new FormData(event.currentTarget).get("reply"),
+                        );
+                        void apiRequest("/api/reviews/reply", {
+                          id: review.id,
+                          reply,
+                        })
+                          .then(() =>
+                            setReviews((current) =>
+                              current.map((row) =>
+                                row.id === review.id ? { ...row, reply } : row,
+                              ),
+                            ),
+                          )
+                          .catch((e) => setError(e.message));
+                      }}
+                    >
+                      <Field label="Respuesta del negocio">
+                        <Textarea
+                          name="reply"
+                          defaultValue={review.reply}
+                          required
+                          minLength={5}
+                          maxLength={1500}
+                        />
+                      </Field>
+                      <Button>Guardar respuesta</Button>
+                    </form>
+                  )}
+              </div>
+            </article>
+          ))
+        ) : !error ? (
+          <p>
+            Todavía no hay reseñas reales publicadas en HOME CONNECT para este
+            profesional.
+          </p>
+        ) : null}
+        {error && <p role="alert">{error}</p>}
+      </Panel>
+    </section>
   );
 }
 export function SupportPanel({ admin = false }: { admin?: boolean }) {

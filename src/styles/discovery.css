@@ -229,16 +229,6 @@
   scrollbar-width: thin;
   display: block;
 }
-.discovery-map .map-results > article {
-  padding: 22px;
-  transition: background 0.2s;
-}
-.map-result-top {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 15px;
-}
 .discovery-map .contractor-marker > span {
   transform: none;
   background: #fff;
@@ -294,68 +284,56 @@
 }
 .discovery-map .map-results {
   position: relative;
+  padding: 10px;
 }
-.map-result-top img {
-  width: 76px;
-  height: 76px;
-  object-fit: cover;
-  border-radius: 10px;
-  background: #f5f5f5;
+.discovery-map .map-results > .professional-card + .professional-card {
+  margin-top: 8px;
 }
-.map-result-top .eco-badge {
-  font-size: 10px;
-  white-space: normal;
+.discovery-map .map-results > .professional-card.selected {
+  border-color: var(--primary);
+  background: #fff7f7;
 }
-.discovery-map .map-result-focus {
-  text-align: left;
-  width: 100%;
-  border: 0;
-  background: none;
-  padding: 0;
+.map-result-description {
+  margin-top: 2px;
+  color: #514b48;
 }
-.discovery-map .map-result-focus h3 {
-  font-size: 17px;
-  line-height: 1.4;
-  margin: 0 0 5px;
+.map-result-description summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
-.discovery-map .map-result-focus p {
-  font-size: 12px;
-  margin: 0 0 7px;
-  color: #e00707;
+.map-result-description summary::before {
+  content: "▸";
+  flex-shrink: 0;
 }
-.discovery-map .map-result-focus span {
-  font-size: 12px;
+.map-result-description[open] summary::before {
+  content: "▾";
 }
-.discovery-map .map-result-focus:disabled {
-  cursor: default;
-  opacity: 1;
-}
-.map-result-bio {
-  font-size: 12px;
-  line-height: 1.75;
-  margin: 14px 0;
-  color: #6b6b6b;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+.map-result-description summary span {
+  min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.map-result-areas {
-  font-size: 11px;
-  line-height: 1.7;
-  margin: 9px 0;
-  color: #555;
+.map-result-description p {
+  margin-top: 5px;
 }
-.map-results article > small {
-  display: block;
+.map-result-actions {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  margin-top: 3px;
+}
+.map-result-actions small {
+  color: #665b58;
   font-size: 10px;
-  color: #777;
-  line-height: 1.6;
 }
-.discovery-map .map-results article > button:last-child {
-  font-size: 12px;
-  margin: 10px 0 0;
-  padding-left: 0;
+.map-result-actions > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .map-search-area {
   position: absolute;
@@ -396,7 +374,104 @@
 .discovery-map.compact .map-results {
   max-height: 570px;
 }
-.map-result-focus:focus-visible,
+.catalog-coverage {
+  margin-block: 24px;
+}
+.catalog-coverage-title {
+  margin-bottom: 16px;
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-weight: 750;
+}
+.catalog-project-cta {
+  margin-block: clamp(24px, 3.5vw, 42px);
+  padding-bottom: 0;
+}
+.catalog-project-cta .project-cta-inner {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  padding: clamp(18px, 1.8vw, 26px) clamp(24px, 5vw, 64px);
+}
+.catalog-project-cta-copy {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+}
+.catalog-project-cta .catalog-project-cta-copy h2 {
+  margin-top: 0;
+  font-size: clamp(1.85rem, 3.2vw, 2.8rem);
+  text-wrap: balance;
+}
+.catalog-project-cta h2 > span {
+  display: block;
+}
+.catalog-project-cta .cta-description {
+  margin-block: 10px 13px;
+  max-width: 52ch;
+  line-height: 1.5;
+}
+.catalog-project-cta .cta-button {
+  height: 42px;
+}
+.catalog-project-cta .project-cta-inner > .cta-art {
+  position: absolute;
+  inset: 0 0 0 50%;
+  width: auto;
+  height: auto;
+  opacity: 1;
+  pointer-events: none;
+}
+.catalog-project-cta .cta-art > svg {
+  width: clamp(4rem, 8vw, 7rem);
+  height: clamp(4rem, 8vw, 7rem);
+}
+.catalog-project-cta .cta-orbit {
+  width: clamp(155px, 21vw, 280px);
+  height: auto;
+  aspect-ratio: 1;
+}
+.catalog-project-cta .orbit-two {
+  width: clamp(215px, 29vw, 380px);
+}
+.catalog-project-cta .orbit-three {
+  width: clamp(275px, 37vw, 480px);
+}
+@media (max-width: 760px) {
+  .catalog-project-cta .project-cta-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .catalog-project-cta-copy {
+    text-align: center;
+  }
+  .catalog-project-cta .cta-description {
+    margin-inline: auto;
+  }
+  .catalog-project-cta .project-cta-inner > .cta-art {
+    inset: 0;
+    opacity: 0.08;
+  }
+}
+.catalog-map-alternative {
+  grid-column: 1 / -1;
+  padding: 14px;
+}
+.catalog-map-alternative h3 {
+  font-weight: 700;
+}
+.catalog-map-alternative .professional-card {
+  margin-top: 10px;
+}
+.discovery-map.catalog-coverage .real-map {
+  height: clamp(400px, 58vh, 540px);
+}
+@media (max-width: 800px) {
+  .discovery-map.catalog-coverage .map-results {
+    max-height: none;
+  }
+  .discovery-map.catalog-coverage .geoportal-layout[data-mobile-view="map"] > .map-results {
+    display: none;
+  }
+}
 .catalog-category:focus-visible {
   outline: 3px solid #e00707;
   outline-offset: 3px;

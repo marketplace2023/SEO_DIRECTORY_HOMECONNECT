@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import type { Language } from "@/domain/types";
 import { LoadBoundary } from "@/components/load-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { CatalogMapScope } from "./coverage-map";
 
 const CoverageMap = lazy(() =>
   import("./coverage-map").then((module) => ({ default: module.CoverageMap })),
@@ -9,9 +10,11 @@ const CoverageMap = lazy(() =>
 export function MapSurface({
   language,
   compact = false,
+  scope,
 }: {
   language: Language;
   compact?: boolean;
+  scope?: CatalogMapScope;
 }) {
   return (
     <LoadBoundary language={language} scope="map">
@@ -35,7 +38,12 @@ export function MapSurface({
           </div>
         }
       >
-        <CoverageMap language={language} compact={compact} />
+        <CoverageMap
+          key={scope?.serviceId ?? scope?.categoryId}
+          language={language}
+          compact={compact}
+          scope={scope}
+        />
       </Suspense>
     </LoadBoundary>
   );

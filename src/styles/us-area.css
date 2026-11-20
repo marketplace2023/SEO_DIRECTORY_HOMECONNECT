@@ -335,15 +335,14 @@ a.us-state[aria-current] path {
 }
 .us-area-contractor-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px 14px;
+  grid-auto-rows: 1fr;
+  gap: 10px;
+  margin-top: 10px;
 }
 .us-area-contractor {
   min-width: 0;
   border-radius: 13px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: grid;
 }
 .us-area-contractor[data-active] {
   outline: 2px solid var(--primary);
@@ -351,36 +350,9 @@ a.us-state[aria-current] path {
 }
 .us-area-contractor .professional-card {
   width: 100%;
-  overflow: visible;
-  flex: 1;
-}
-.us-area-contractor .professional-image {
-  height: auto;
-  aspect-ratio: 4 / 3;
-  border-radius: 12px;
-}
-.us-area-contractor .professional-content {
-  padding: 10px 3px 0 !important;
-}
-.us-area-contractor .professional-category,
-.us-area-contractor .professional-location,
-.us-area-contractor .professional-card-bottom > span {
-  font-size: 12px;
-}
-.us-area-contractor .professional-category > span:first-child {
-  text-transform: none;
-  letter-spacing: normal;
-}
-.us-area-contractor .professional-content h3,
-.us-area-contractor .professional-location {
-  margin-top: 5px;
-}
-.us-area-contractor .professional-card-bottom {
-  margin-top: 6px;
-  padding-top: 3px;
-  border-top: 0;
 }
 .us-area-locate {
+  justify-self: start;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -465,11 +437,6 @@ a.us-state[aria-current] path {
 .us-area-county-links a[aria-current] {
   border-color: var(--zone);
 }
-@media (min-width: 1200px) {
-  .us-area-contractor-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
 @media (max-width: 780px) {
   .us-area-map-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -505,7 +472,4 @@ a.us-state[aria-current] path {
   }
 }
 @media (max-width: 380px) {
-  .us-area-contractor-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }

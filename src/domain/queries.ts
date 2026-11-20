@@ -5,7 +5,7 @@ import {
   type Language,
   type Professional,
 } from "./types";
-import { matchesUsArea, type UsArea } from "./us-area";
+import { isUsProfessional, matchesUsArea, type UsArea } from "./us-area";
 import { displayedLocation, parseBounds, type MapBounds } from "./geography";
 import { matchesSearch } from "./search";
 
@@ -55,7 +55,10 @@ export function mostRequestedProfessionals(state: DemoState) {
       );
   }
   return state.professionals
-    .filter((person) => person.publication === "published")
+    .filter(
+      (person) =>
+        person.publication === "published" && isUsProfessional(person),
+    )
     .map((person) => ({ person, requests: counts.get(person.id) ?? 0 }))
     .sort(
       (a, b) =>
@@ -97,6 +100,7 @@ export function findProfessionals(
     );
     return (
       person.publication === "published" &&
+      isUsProfessional(person) &&
       matchesInitial(person.name, filters.initials) &&
       (!filters.usArea || matchesUsArea(person, filters.usArea)) &&
       (!filters.categoryId || person.categoryId === filters.categoryId) &&

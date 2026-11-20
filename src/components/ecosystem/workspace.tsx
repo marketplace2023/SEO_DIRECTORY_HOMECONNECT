@@ -1,3 +1,4 @@
+import { isUsProfessional } from "@/domain/us-area";
 import { SupportPanel } from "./pilot-panels";
 import {
   PiSquaresFour,
@@ -161,14 +162,16 @@ export function Workspace({
               {state.professionals.some(
                 (p) =>
                   state.favorites.includes(p.id) &&
-                  p.publication === "published",
+                  p.publication === "published" &&
+                  isUsProfessional(p),
               ) ? (
-                <div className="eco-people-grid">
+                <div className="eco-people-grid professional-grid">
                   {state.professionals
                     .filter(
                       (p) =>
                         state.favorites.includes(p.id) &&
-                        p.publication === "published",
+                        p.publication === "published" &&
+                        isUsProfessional(p),
                     )
                     .map((p) => (
                       <PersonCard key={p.id} person={p} language={language} />

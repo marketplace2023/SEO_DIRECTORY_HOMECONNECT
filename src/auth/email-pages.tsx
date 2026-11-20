@@ -90,7 +90,8 @@ export function EmailPage({
     try {
       const next = sessionStorage.getItem("homeconnect.contact-return");
       return next &&
-        /^\/(?:quote|workspace\/owner\/messages)(?:\?|$)/.test(next)
+        (/^\/(?:quote|workspace\/owner\/messages)(?:\?|$)/.test(next) ||
+          /^\/professionals\/[\w-]+\?review=1$/.test(next))
         ? next
         : "";
     } catch {

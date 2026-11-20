@@ -41,9 +41,15 @@ export function ProfileEditor({ language }: { language: Language }) {
       ),
     ];
     if (!name || !city || !bio || !coverage.length) return;
-    const socialLinks: SocialLinks = Object.fromEntries(
-      socialPlatforms.map(([key]) => [key, String(data.get(key) ?? "").trim()]),
-    );
+    const socialLinks: SocialLinks = {
+      ...person.socialLinks,
+      ...Object.fromEntries(
+        socialPlatforms.map(([key]) => [
+          key,
+          String(data.get(key) ?? "").trim(),
+        ]),
+      ),
+    };
     const manual = data.get("mapMode") === "public";
     const latitude = Number(data.get("latitude")),
       longitude = Number(data.get("longitude"));
@@ -146,8 +152,8 @@ export function ProfileEditor({ language }: { language: Language }) {
             </legend>
             <p className="eco-note">
               {t(
-                "Estos enlaces aparecerán en tu perfil público. Introduce la dirección completa con https://. Deja el campo vacío para eliminar un enlace.",
-                "These links will appear on your public profile. Enter the full address starting with https://. Leave a field empty to remove a link.",
+                "Los contactos aparecerán en tu perfil público. Usa el prefijo internacional para WhatsApp y una dirección completa para los enlaces. Deja el campo vacío para quitar un contacto.",
+                "Contacts appear on your public profile. Use the international dialing code for WhatsApp and a full URL for links. Leave a field empty to remove a contact.",
               )}
             </p>
             <div className="eco-form-grid">
@@ -155,21 +161,23 @@ export function ProfileEditor({ language }: { language: Language }) {
                 <Field key={key} label={t(es, en)}>
                   <Input
                     name={key}
-                    type="url"
-                    maxLength={2048}
-                    placeholder="https://"
+                    type={key === "whatsapp" ? "tel" : "url"}
+                    maxLength={key === "whatsapp" ? 40 : 2048}
+                    placeholder={
+                      key === "whatsapp" ? "+1 404 555 0123" : "https://"
+                    }
                     defaultValue={person.socialLinks?.[key] ?? ""}
                     onChange={(event) => {
                       const input = event.currentTarget;
                       input.setCustomValidity(
-                        key === "googleBusiness"
-                          ? socialLinksSchema.shape.googleBusiness.safeParse(
+                        key === "whatsapp"
+                          ? socialLinksSchema.shape.whatsapp.safeParse(
                               input.value.trim(),
                             ).success
                             ? ""
                             : t(
-                                "Introduce un enlace público de Google Maps o del Perfil de Empresa.",
-                                "Enter a public Google Maps or Business Profile link.",
+                                "Introduce el número con + y el código del país.",
+                                "Enter the number with + and the country code.",
                               )
                           : !input.value.trim() ||
                               isPublicWebUrl(input.value.trim())

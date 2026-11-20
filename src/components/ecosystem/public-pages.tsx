@@ -1,3 +1,6 @@
+import { isUsProfessional } from "@/domain/us-area";
+import { MapSurface } from "./map-surface";
+import { CatalogProjectCta } from "./catalog-project-cta";
 import { socialIcons } from "./contact-account-dialog";
 import { ProfessionalFilters } from "./professional-filters";
 import { PublicReviews } from "./pilot-panels";
@@ -35,7 +38,7 @@ import {
   usAreaParams,
 } from "@/domain/us-area";
 import { normalize, type Language, type Professional } from "@/domain/types";
-import { isPublicWebUrl, socialPlatforms } from "@/domain/social-links";
+import { socialContactUrl, socialPlatforms } from "@/domain/social-links";
 import { useAuth } from "@/auth/auth-provider";
 import { navigate, type Route } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
@@ -91,13 +94,9 @@ export function ServicePage({
   id: string;
   language: Language;
 }) {
-  const { state } = useStore();
   const t = copy(language);
   const service = services.find((s) => s.id === id);
   if (!service) return <Missing language={language} />;
-  const people = state.professionals.filter(
-    (p) => p.publication === "published" && p.serviceIds.includes(id),
-  );
   return (
     <>
       <PageTitle
@@ -118,7 +117,16 @@ export function ServicePage({
           </Button>
         }
       />
-      <div className="service-detail">
+      <MapSurface
+        language={language}
+        scope={{ categoryId: service.categoryId, serviceId: id }}
+      />
+      <CatalogProjectCta
+        language={language}
+        categoryId={service.categoryId}
+        serviceId={id}
+      />
+      <div className="mt-6">
         <Panel title={t("Antes de empezar", "Before you start")}>
           <ul className="eco-checklist">
             {[
@@ -148,31 +156,6 @@ export function ServicePage({
             )}
           </p>
         </Panel>
-        <Panel
-          title={t(
-            "Profesionales para este servicio",
-            "Professionals for this service",
-          )}
-        >
-          {people.length ? (
-            <div className="eco-people-grid">
-              {people.map((p) => (
-                <PersonCard key={p.id} person={p} language={language} />
-              ))}
-            </div>
-          ) : (
-            <Empty
-              title={t(
-                "Aún no hay perfiles de muestra en esta especialidad",
-                "No sample professionals in this specialty yet",
-              )}
-              description={t(
-                "Puedes publicar tu solicitud para explorar el flujo de proyectos.",
-                "You can post a request to explore the project workflow.",
-              )}
-            />
-          )}
-        </Panel>
       </div>
       <CategoryScope
         category={categories.find((c) => c.id === service.categoryId)!}
@@ -192,6 +175,7 @@ export function PersonCard({
   return (
     <ProfessionalCard
       person={person}
+      language={language}
       category={categoryName(person.categoryId, language)}
       experience={t("años de experiencia", "years of experience")}
       details={t("Ver perfil", "View profile")}
@@ -408,7 +392,7 @@ export function DirectoryPage({
         </Button>
       </div>
       {results.length ? (
-        <div className="eco-people-grid directory-grid">
+        <div className="eco-people-grid professional-grid directory-grid">
           {results.map((p) => (
             <PersonCard key={p.id} person={p} language={language} />
           ))}
@@ -431,16 +415,18 @@ export function DirectoryPage({
 export function ProfilePage({
   id,
   language,
+  resumeReview = false,
 }: {
   id: string;
   language: Language;
+  resumeReview?: boolean;
 }) {
   const { state, role, send } = useStore();
   const cart = useCart();
   const { checking } = useAuth();
   const t = copy(language);
   const person = state.professionals.find(
-    (p) => p.id === id && p.publication === "published",
+    (p) => p.id === id && p.publication === "published" && isUsProfessional(p),
   );
   if (!person) return <Missing language={language} />;
   const favorite = state.favorites.includes(id);
@@ -448,8 +434,8 @@ export function ProfilePage({
     const url = person.socialLinks?.[key];
     return {
       key,
-      label: t(es, en),
-      url: url && isPublicWebUrl(url) ? url : undefined,
+      label: key === "whatsapp" ? "WhatsApp" : t(es, en),
+      url: socialContactUrl(key, url),
     };
   });
   return (
@@ -546,7 +532,12 @@ export function ProfilePage({
               ))}
             </div>
           </Panel>
-          <PublicReviews professionalId={id} />
+          <PublicReviews
+            key={id}
+            professionalId={id}
+            language={language}
+            resumeReview={resumeReview}
+          />
           <Panel title={t("Nuestros servicios", "Our services")}>
             <div className="service-grid">
               {person.serviceIds.map((service) => (
@@ -588,7 +579,12 @@ export function ProfilePage({
                 const Icon = socialIcons[key];
                 const content = (
                   <>
-                    <Icon aria-hidden="true" />
+                    <span
+                      className="social-brand-icon profile-social-icon"
+                      data-platform={key}
+                    >
+                      <Icon aria-hidden="true" />
+                    </span>
                     <span>
                       {label}
                       <small>

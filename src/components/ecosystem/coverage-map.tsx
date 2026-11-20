@@ -1,4 +1,6 @@
+import { isUsProfessional } from "@/domain/us-area";
 import { ProfessionalFilters } from "./professional-filters";
+import { ProfessionalCard } from "@/components/professional-card";
 import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
@@ -87,19 +89,31 @@ function MapBehavior({
   selected?: [number, number];
   fitKey: string;
   applied?: MapBounds;
-  onMove: (bounds: MapBounds) => void;
+  onMove: (bounds: MapBounds, source: "user" | "layout" | "selection") => void;
 }) {
+  const source = useRef<"user" | "layout" | "selection">("user");
+  const popupPan = useRef(false);
   const map = useMapEvents({
+    autopanstart() {
+      popupPan.current = true;
+    },
     moveend() {
       const b = map.getBounds();
-      onMove([b.getSouth(), b.getWest(), b.getNorth(), b.getEast()]);
+      onMove(
+        [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()],
+        popupPan.current ? "layout" : source.current,
+      );
+      popupPan.current = false;
     },
   });
   const fitted = useRef<string | null>(null);
   useEffect(() => {
     if (!map.getContainer().clientWidth) return;
-    map.invalidateSize();
+    source.current = "layout";
+    map.invalidateSize({ pan: false });
+    source.current = "user";
     if (fitted.current === fitKey) return;
+    source.current = "layout";
     if (applied)
       map.fitBounds(
         [
@@ -117,34 +131,62 @@ function MapBehavior({
         animate: false,
       });
     if (applied || positions.length) fitted.current = fitKey;
+    source.current = "user";
   }, [map, fitKey, positions.length]);
   useEffect(() => {
-    if (selected) map.panTo(selected, { animate: false });
+    if (!selected) return;
+    source.current = "selection";
+    map.panTo(selected, { animate: false });
+    source.current = "user";
   }, [map, selected?.[0], selected?.[1]]);
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      if (!map.getContainer().clientWidth) return;
+      source.current = "layout";
+      map.invalidateSize({ pan: false });
+      source.current = "user";
+    });
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
   return null;
 }
+
+export type CatalogMapScope = { categoryId: string; serviceId?: string };
 
 export function CoverageMap({
   language,
   compact = false,
+  scope,
 }: {
   language: Language;
   compact?: boolean;
+  scope?: CatalogMapScope;
 }) {
   const { state } = useStore();
   const route = useRoute(),
     t = copy(language);
+  const local = compact || Boolean(scope);
   const [localParams, setLocalParams] = useState(
-    new URLSearchParams({ region: "Georgia" }),
+    () => new URLSearchParams({ region: scope ? "all" : "Georgia" }),
   );
-  const params = compact ? localParams : route.params;
-  const filters = filtersFromParams(params, params.size ? "" : "Georgia");
+  const params = new URLSearchParams(local ? localParams : route.params);
+  if (scope) {
+    params.set("category", scope.categoryId);
+    if (scope.serviceId) params.set("service", scope.serviceId);
+  }
+  const filters = filtersFromParams(params);
   const [query, setQuery] = useState(params.get("q") || "");
   const [city, setCity] = useState(params.get("city") || "");
   const [selected, setSelected] = useState(params.get("selected") || "");
   const [mobileView, setMobileView] = useState("map");
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [viewport, setViewport] = useState<MapBounds>();
+  const [searchedArea, setSearchedArea] = useState<{
+    key: string;
+    bounds: MapBounds;
+  }>();
+  const [fitVersion, setFitVersion] = useState(0);
   const [countries, setCountries] = useState<GeoJsonObject | null>(null);
   const [counties, setCounties] = useState<GeoJsonObject | null>(null);
   const [streets, setStreets] = useState(true);
@@ -185,7 +227,12 @@ export function CoverageMap({
   }, []);
   const commit = (next: URLSearchParams) => {
     if (!next.has("region")) next.set("region", filters.region || "all");
-    compact ? setLocalParams(next) : navigate("/coverage", next);
+    const changed = new Set([...params.keys(), ...next.keys()]);
+    changed.delete("selected");
+    changed.delete("sort");
+    if ([...changed].some((key) => params.get(key) !== next.get(key)))
+      setSearchedArea(undefined);
+    local ? setLocalParams(next) : navigate("/coverage", next);
   };
   const update = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -207,25 +254,88 @@ export function CoverageMap({
     next.delete("selected");
     commit(next);
   };
-  const results = findProfessionals(state, filters);
-  const visible = orderProfessionals(results, params.get("sort"), language);
-  const located = visible
-    .map((p) => ({ person: p, point: displayedLocation(p, filters.bounds) }))
-    .filter((row) => row.point !== null);
-  const positions = located.map(
-    ({ point }) => [point!.latitude, point!.longitude] as [number, number],
-  );
-  const focused = located.find(({ person }) => person.id === selected);
-  const regions = [
-    ...new Set(
-      state.professionals
-        .filter((p) => p.publication === "published")
-        .map((p) => p.region),
-    ),
-  ];
   const fitParams = new URLSearchParams(params);
   fitParams.delete("selected");
   fitParams.delete("sort");
+  const fitKey = fitParams.toString();
+  const area =
+    searchedArea?.key === fitKey ? searchedArea.bounds : filters.bounds;
+  const baseResults = findProfessionals(state, {
+    ...filters,
+    bounds: undefined,
+  });
+  const visible = orderProfessionals(baseResults, params.get("sort"), language);
+  const compatible = !visible.length
+    ? findProfessionals(state, {
+        categoryId: filters.categoryId,
+        serviceId: filters.serviceId,
+        subcategoryId: filters.subcategoryId,
+      })
+    : [];
+  const alternatives = visible.length
+    ? []
+    : ([
+        compatible,
+        filters.categoryId
+          ? findProfessionals(state, { categoryId: filters.categoryId })
+          : [],
+        findProfessionals(state),
+      ].find((people) => people.length) ?? []);
+  const center = area
+    ? L.latLng((area[0] + area[2]) / 2, (area[1] + area[3]) / 2).wrap()
+    : undefined;
+  const distance = (person: (typeof alternatives)[number]) => {
+    const point = displayedLocation(person);
+    return center && point
+      ? center.distanceTo([point.latitude, point.longitude])
+      : Infinity;
+  };
+  const alternative = orderProfessionals(alternatives, "best", language).reduce<
+    (typeof alternatives)[number] | undefined
+  >(
+    (best, person) =>
+      !best || distance(person) < distance(best) ? person : best,
+    undefined,
+  );
+  const located = visible
+    .map((p) => {
+      const point = displayedLocation(p, area);
+      if (point && area)
+        return {
+          person: p,
+          point: {
+            ...point,
+            longitude:
+              point.longitude +
+              360 * Math.ceil((area[1] - point.longitude) / 360),
+          },
+        };
+      return { person: p, point };
+    })
+    .filter((row) => row.point !== null);
+  const positions = baseResults.flatMap((person): [number, number][] => {
+    const point = displayedLocation(person);
+    return point ? [[point.latitude, point.longitude]] : [];
+  });
+  const selectedPerson = visible.find((person) => person.id === selected);
+  const focused =
+    located.find(({ person }) => person.id === selected)?.point ??
+    (selectedPerson && displayedLocation(selectedPerson));
+  const viewportLongitude = viewport ? (viewport[1] + viewport[3]) / 2 : 0;
+  const focusedPosition: [number, number] | undefined = focused
+    ? [
+        focused.latitude,
+        focused.longitude +
+          360 * Math.round((viewportLongitude - focused.longitude) / 360),
+      ]
+    : undefined;
+  const regions = [
+    ...new Set(
+      state.professionals
+        .filter((p) => p.publication === "published" && isUsProfessional(p))
+        .map((p) => p.region),
+    ),
+  ];
   const locateMe = () => {
     if (!navigator.geolocation) {
       setGeoMessage(
@@ -270,9 +380,25 @@ export function CoverageMap({
   };
   return (
     <section
-      className={`coverage-map-section discovery-map ${compact ? "compact" : ""}`}
+      className={`coverage-map-section discovery-map ${compact ? "compact" : ""} ${scope ? "catalog-coverage" : ""}`}
+      aria-label={
+        scope
+          ? t(
+              "Profesionales y mapa de cobertura",
+              "Professionals and coverage map",
+            )
+          : undefined
+      }
     >
-      {!compact && (
+      {scope && (
+        <h2 className="catalog-coverage-title">
+          {t(
+            "Profesionales y mapa de cobertura",
+            "Professionals and coverage map",
+          )}
+        </h2>
+      )}
+      {!local && (
         <PageTitle
           eyebrow={t("EXPLORA TU VECINDARIO", "EXPLORE YOUR NEIGHBORHOOD")}
           title={t(
@@ -354,57 +480,65 @@ export function CoverageMap({
             ))}
           </select>
         </Field>
-        <Field label={t("Especialidad en el mapa", "Map specialty")}>
-          <select
-            value={filters.categoryId}
-            onChange={(e) => update("category", e.target.value)}
-          >
-            <option value="">
-              {t("Todas las especialidades", "All specialties")}
-            </option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name[language]}
+        {!scope && (
+          <Field label={t("Especialidad en el mapa", "Map specialty")}>
+            <select
+              value={filters.categoryId}
+              onChange={(e) => update("category", e.target.value)}
+            >
+              <option value="">
+                {t("Todas las especialidades", "All specialties")}
               </option>
-            ))}
-          </select>
-        </Field>
-        <Field label={t("Servicio específico", "Specific service")}>
-          <select
-            value={filters.serviceId}
-            onChange={(e) => update("service", e.target.value)}
-          >
-            <option value="">{t("Todos los servicios", "All services")}</option>
-            {services
-              .filter(
-                (s) =>
-                  !filters.categoryId || s.categoryId === filters.categoryId,
-              )
-              .map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name[language]}
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name[language]}
                 </option>
               ))}
-          </select>
-        </Field>
-        <Field label={t("Subcategoría", "Subcategory")}>
-          <select
-            value={filters.subcategoryId}
-            onChange={(e) => update("subcategory", e.target.value)}
-          >
-            <option value="">{t("Todas las áreas", "All areas")}</option>
-            {subcategories
-              .filter(
-                (s) =>
-                  !filters.categoryId || s.categoryId === filters.categoryId,
-              )
-              .map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name[language]}
-                </option>
-              ))}
-          </select>
-        </Field>
+            </select>
+          </Field>
+        )}
+        {!scope?.serviceId && (
+          <Field label={t("Servicio específico", "Specific service")}>
+            <select
+              value={filters.serviceId}
+              onChange={(e) => update("service", e.target.value)}
+            >
+              <option value="">
+                {t("Todos los servicios", "All services")}
+              </option>
+              {services
+                .filter(
+                  (s) =>
+                    !filters.categoryId || s.categoryId === filters.categoryId,
+                )
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name[language]}
+                  </option>
+                ))}
+            </select>
+          </Field>
+        )}
+        {!scope?.serviceId && (
+          <Field label={t("Subcategoría", "Subcategory")}>
+            <select
+              value={filters.subcategoryId}
+              onChange={(e) => update("subcategory", e.target.value)}
+            >
+              <option value="">{t("Todas las áreas", "All areas")}</option>
+              {subcategories
+                .filter(
+                  (s) =>
+                    !filters.categoryId || s.categoryId === filters.categoryId,
+                )
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name[language]}
+                  </option>
+                ))}
+            </select>
+          </Field>
+        )}
         <Field label={t("Calificación mínima", "Minimum rating")}>
           <select
             value={filters.minimumRating || 0}
@@ -430,29 +564,42 @@ export function CoverageMap({
         </label>
         <Button
           variant="outline"
-          onClick={() => commit(new URLSearchParams({ region: "all" }))}
+          onClick={() => {
+            setSearchedArea(undefined);
+            setFitVersion((version) => version + 1);
+            commit(new URLSearchParams({ region: "all" }));
+          }}
         >
           <PiGlobeHemisphereWest />
-          {t("Ver todos", "Show all")}
+          {scope
+            ? t("Limpiar filtros", "Clear filters")
+            : t("Ver todos", "Show all")}
         </Button>
       </div>
       <div className="discovery-summary">
         <p role="status">
-          {visible.length}{" "}
+          {located.length}{" "}
           {t("contratistas en el mapa", "contractors on the map")}
         </p>
         {located.length !== visible.length && (
           <span>
-            {visible.length - located.length}{" "}
-            {t("sin marcador público", "without a public marker")}
+            {visible.length}{" "}
+            {t("contratistas en la lista", "contractors in the list")}
           </span>
         )}
-        {filters.bounds && (
-          <Button variant="ghost" onClick={() => update("bounds", "")}>
+        {area && (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSearchedArea(undefined);
+              setFitVersion((version) => version + 1);
+              update("bounds", "");
+            }}
+          >
             {t("Quitar límite del mapa", "Clear map boundary")}
           </Button>
         )}
-        {!compact && (
+        {!local && (
           <Button
             variant="outline"
             onClick={() =>
@@ -542,14 +689,16 @@ export function CoverageMap({
             )}
             <MapBehavior
               positions={positions}
-              selected={
-                focused
-                  ? [focused.point!.latitude, focused.point!.longitude]
-                  : undefined
-              }
+              selected={focusedPosition}
               applied={filters.bounds}
-              fitKey={fitParams.toString() + mobileView}
-              onMove={setViewport}
+              fitKey={fitKey + "#" + fitVersion}
+              onMove={(bounds, source) => {
+                setViewport(bounds);
+                if (source !== "layout") {
+                  if (source === "user") setSelected("");
+                  setSearchedArea({ key: fitKey, bounds });
+                }
+              }}
             />
             {located.map(({ person: p, point }) => (
               <Marker
@@ -651,87 +800,115 @@ export function CoverageMap({
           aria-label={t("Contratistas del mapa", "Map contractors")}
         >
           {visible.length ? (
-            visible.map((p, index) => {
-              const point = displayedLocation(p, filters.bounds);
+            visible.map((p) => {
+              const point =
+                located.find(({ person }) => person.id === p.id)?.point ??
+                displayedLocation(p);
               return (
-                <article
-                  data-professional={p.id}
-                  aria-current={selected === p.id ? "true" : undefined}
-                  className={selected === p.id ? "selected" : ""}
+                <ProfessionalCard
                   key={p.id}
+                  horizontal
+                  selected={selected === p.id}
+                  person={p}
+                  language={language}
+                  category={categoryName(p.categoryId, language)}
+                  experience={t("años de experiencia", "years of experience")}
+                  details={t("Ver ficha", "View profile")}
+                  verifiedLabel={t("Verificado · demo", "Verified · demo")}
+                  onOpen={() => navigate(`/professionals/${p.id}`)}
                 >
-                  <div className="map-result-top">
-                    <img
-                      src={p.img}
-                      alt=""
-                      width={76}
-                      height={76}
-                      loading="lazy"
-                    />
-                    <span className="eco-badge">
-                      {p.id.startsWith("pro-")
-                        ? t("Negocio registrado", "Registered business")
-                        : t("Perfil de muestra", "Sample profile")}
-                    </span>
+                  {!scope && (
+                    <details className="map-result-description">
+                      <summary>
+                        <span>
+                          {p.bio[language] ||
+                            t("Áreas de servicio", "Service areas")}
+                        </span>
+                      </summary>
+                      <p>{p.bio[language]}</p>
+                      <p>
+                        <strong>{t("Atiende", "Serves")}</strong>{" "}
+                        {p.coverage.join(", ")}
+                      </p>
+                    </details>
+                  )}
+                  <div className="map-result-actions">
+                    {point ? (
+                      <button
+                        type="button"
+                        className="text-link"
+                        aria-label={`${t("Localizar", "Locate")} ${p.name}`}
+                        onClick={() => {
+                          update("selected", p.id);
+                          setMobileView("map");
+                        }}
+                      >
+                        <PiMapPin aria-hidden="true" />{" "}
+                        {t("Ver en el mapa", "Show on map")}
+                      </button>
+                    ) : (
+                      <small>
+                        {t("Sin marcador público", "No public marker")}
+                      </small>
+                    )}
+                    {point && !scope && (
+                      <small>
+                        {point.serviceArea
+                          ? t("Área atendida", "Service area")
+                          : point.precision === "city"
+                            ? t("Ubicación aproximada", "Approximate location")
+                            : t(
+                                "Punto público declarado",
+                                "Declared public point",
+                              )}
+                      </small>
+                    )}
                   </div>
-                  <button
-                    className="map-result-focus"
-                    onClick={() => {
-                      update("selected", p.id);
-                      setMobileView("map");
-                    }}
-                    aria-label={`${t("Localizar", "Locate")} ${p.name}`}
-                    disabled={!point}
-                  >
-                    <span>{index + 1}</span>
-                    <div>
-                      <h3>{p.name}</h3>
-                      <p>{categoryName(p.categoryId, language)}</p>
-                      <span>
-                        <PiMapPin />
-                        {p.city}, {p.region}
-                      </span>
-                    </div>
-                  </button>
-                  <p className="map-result-bio">{p.bio[language]}</p>
-                  <p className="map-result-areas">
-                    {t("Atiende", "Serves")}: {p.coverage.join(", ")}
-                  </p>
-                  <small>
-                    {!point
-                      ? t("Sin marcador público", "No public marker")
-                      : point.serviceArea
-                        ? t("Marcador de área atendida", "Service-area marker")
-                        : point.precision === "city"
-                          ? t(
-                              "Centro de ciudad aproximado",
-                              "Approximate city center",
-                            )
-                          : t(
-                              "Punto público declarado",
-                              "Declared public point",
-                            )}
-                  </small>
-                  <Button
-                    variant="ghost"
-                    onClick={() => navigate(`/professionals/${p.id}`)}
-                  >
-                    {t("Ver ficha", "View profile")}
-                    <PiArrowUpRight />
-                  </Button>
-                </article>
+                </ProfessionalCard>
               );
             })
+          ) : alternative ? (
+            <div className="catalog-map-alternative">
+              <h3>
+                {t(
+                  "Sin coincidencias en esta búsqueda",
+                  "No matches for this search",
+                )}
+              </h3>
+              <p className="eco-note">
+                {t(
+                  "Alternativa del directorio fuera de los filtros seleccionados.",
+                  "Directory alternative outside the selected filters.",
+                )}
+              </p>
+              <ProfessionalCard
+                horizontal
+                person={alternative}
+                language={language}
+                category={categoryName(alternative.categoryId, language)}
+                experience={t("años de experiencia", "years of experience")}
+                details={t("Ver ficha", "View profile")}
+                verifiedLabel={t("Verificado · demo", "Verified · demo")}
+                onOpen={() => navigate(`/professionals/${alternative.id}`)}
+              />
+            </div>
           ) : (
             <Empty
               title={t(
                 "No hay contratistas con estos filtros",
                 "No contractors match these filters",
               )}
-              description={t(
-                "Amplía el área o prueba otra especialidad. No se añaden negocios ficticios para completar resultados.",
-                "Expand the area or try another trade. No listings are invented to fill results.",
-              )}
+              description={
+                scope
+                  ? t(
+                      "Puedes cambiar la ubicación o limpiar los filtros.",
+                      "Change the location or clear your filters.",
+                    )
+                  : t(
+                      "Amplía el área o prueba otra especialidad. No se añaden negocios ficticios para completar resultados.",
+                      "Expand the area or try another trade. No listings are invented to fill results.",
+                    )
+              }
             />
           )}
         </aside>

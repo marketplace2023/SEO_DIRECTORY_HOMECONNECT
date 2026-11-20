@@ -13,7 +13,7 @@ test("portada y cuadrículas de categorías y profesionales navegan sin errores"
   await expect(page.locator(".home-category-grid .category-tile")).toHaveCount(
     48,
   );
-  await expect(page.locator(".home-professional-grid article")).toHaveCount(12);
+  await expect(page.locator(".home-professional-grid article")).toHaveCount(9);
   await page.locator(".category-footnote").scrollIntoViewIfNeeded();
   await expect(page.locator(".category-footnote")).toContainText(
     "48 especialidades",

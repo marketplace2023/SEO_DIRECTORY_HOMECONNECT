@@ -1,6 +1,7 @@
 import type { DemoState, Professional } from "../../src/domain/types";
 import type { AuthUser } from "../../src/auth/types";
 import { allowedRequests } from "../../src/domain/store";
+import { isUsProfessional } from "../../src/domain/us-area";
 export function visibleState(
   state: DemoState,
   user: AuthUser | null,
@@ -39,15 +40,23 @@ export function visibleState(
         ? state.favorites
         : state.favoritesByOwner?.[user.id] || []
       : [];
+  const messages = state.messages.filter((m) =>
+    user?.role === "owner"
+      ? (m.ownerId || "demo-owner") === user.id
+      : user?.role === "contractor"
+        ? m.professionalId === professionalId
+        : false,
+  );
   const required = new Set([
     ...ownedFavorites,
     ...proposals.map((p) => p.professionalId),
     ...requests.map((r) => r.professionalId).filter(Boolean),
+    ...messages.map((message) => message.professionalId),
   ]);
   const professionals = state.professionals
     .filter(
       (p) =>
-        p.publication === "published" ||
+        (p.publication === "published" && isUsProfessional(p)) ||
         p.id === professionalId ||
         required.has(p.id),
     )
@@ -91,13 +100,7 @@ export function visibleState(
             ),
           }
         : undefined,
-    messages: state.messages.filter((m) =>
-      user?.role === "owner"
-        ? (m.ownerId || "demo-owner") === user.id
-        : user?.role === "contractor"
-          ? m.professionalId === professionalId
-          : false,
-    ),
+    messages,
     favorites,
     favoritesByOwner:
       user?.role === "owner" && user.id !== "demo-owner"

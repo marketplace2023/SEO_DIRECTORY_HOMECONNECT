@@ -311,52 +311,6 @@ h3 {
   overflow: auto;
   border-left: 1px solid #e5e5e5;
 }
-.map-results > article {
-  padding: 20px 18px;
-  border-bottom: 1px solid #eee;
-}
-.map-results > article.selected {
-  background: #fff1f1;
-}
-.map-result-focus {
-  display: flex;
-  align-items: start;
-  gap: 12px;
-  width: 100%;
-  text-align: left;
-}
-.map-result-focus > span {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #e00707;
-  color: #fff;
-  font-size: 0.65rem;
-  font-weight: 700;
-}
-.map-result-focus h3 {
-  font-size: 0.82rem;
-  font-weight: 650;
-}
-.map-result-focus p {
-  font-size: 0.68rem;
-  color: #888;
-  margin-block: 8px;
-}
-.map-result-focus div > span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #888;
-  font-size: 0.63rem;
-}
-.map-results article > button:last-child {
-  font-size: 0.65rem;
-  margin: 10px 0 0 28px;
-}
 .contractor-marker {
   background: transparent;
   border: 0;
@@ -584,6 +538,15 @@ h3 {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
+}
+.profile-social-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  font-size: 19px;
 }
 .profile-social-item small {
   display: block;

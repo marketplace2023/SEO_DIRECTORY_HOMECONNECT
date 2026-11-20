@@ -1,3 +1,4 @@
+import { isUsProfessional } from "@/domain/us-area";
 import {
   createContext,
   useContext,
@@ -246,6 +247,7 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
         (action.value.professionalId &&
           (!recipient ||
             recipient.publication !== "published" ||
+            !isUsProfessional(recipient) ||
             !recipient.serviceIds.includes(service.id)))
       )
         return state;

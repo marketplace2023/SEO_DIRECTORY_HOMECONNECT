@@ -149,6 +149,42 @@ const records = [
     "Roswell|Alpharetta|Atlanta",
     1,
   ],
+  [
+    "demo-gwinnett",
+    "Gwinnett Home Demo",
+    "roofing",
+    "Dacula",
+    "Georgia",
+    "Estados Unidos",
+    8,
+    4.7,
+    "Dacula|Gwinnett County",
+    5,
+  ],
+  [
+    "demo-fulton",
+    "Fulton Home Demo",
+    "electrical",
+    "Alpharetta",
+    "Georgia",
+    "Estados Unidos",
+    7,
+    4.6,
+    "Alpharetta|Fulton County",
+    1,
+  ],
+  [
+    "demo-dekalb",
+    "DeKalb Home Demo",
+    "plumbing",
+    "Chamblee",
+    "Georgia",
+    "Estados Unidos",
+    6,
+    4.7,
+    "Chamblee|DeKalb County",
+    2,
+  ],
 ] as const;
 export function createSeed(): DemoState {
   const sample = structuredClone(scenarios);
@@ -230,7 +266,7 @@ export function createSeed(): DemoState {
   );
   return {
     version: 1,
-    seedRevision: 2,
+    seedRevision: 4,
     professionals,
     requests: sample.requests as DemoState["requests"],
     proposals: sample.proposals as DemoState["proposals"],

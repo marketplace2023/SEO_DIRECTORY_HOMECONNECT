@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const socialPlatforms = [
   ["website", "Página web", "Website"],
-  ["googleBusiness", "Perfil de Empresa en Google", "Google Business Profile"],
+  ["whatsapp", "Número de WhatsApp", "WhatsApp number"],
   ["instagram", "Instagram", "Instagram"],
   ["facebook", "Facebook", "Facebook"],
   ["linkedin", "LinkedIn", "LinkedIn"],
@@ -11,6 +11,23 @@ export const socialPlatforms = [
   ["x", "X", "X"],
   ["other", "Otro enlace", "Other link"],
 ] as const;
+
+type SocialPlatform = (typeof socialPlatforms)[number][0];
+
+function whatsappDigits(value: string) {
+  if (!/^\+[0-9 .()-]+$/.test(value)) return;
+  const digits = value.replace(/\D/g, "");
+  if (/^[1-9]\d{6,14}$/.test(digits)) return digits;
+}
+
+export function socialContactUrl(platform: SocialPlatform, value?: string) {
+  if (!value) return;
+  if (platform === "whatsapp") {
+    const digits = whatsappDigits(value);
+    return digits ? `https://wa.me/${digits}` : undefined;
+  }
+  return isPublicWebUrl(value) ? value : undefined;
+}
 
 export function isPublicWebUrl(value: string) {
   try {
@@ -36,6 +53,13 @@ const webUrl = z
   );
 export const socialLinksSchema = z.object({
   website: webUrl.optional(),
+  whatsapp: z
+    .string()
+    .trim()
+    .max(40)
+    .refine((value) => !value || Boolean(whatsappDigits(value)))
+    .transform((value) => (value ? "+" + whatsappDigits(value) : ""))
+    .optional(),
   googleBusiness: webUrl
     .refine((value) => {
       if (!value) return true;

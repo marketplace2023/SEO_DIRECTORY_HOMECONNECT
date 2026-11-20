@@ -40,6 +40,9 @@ export function professionalState(person: Professional) {
     ? (stateCodes.get(words(person.region)) ?? "")
     : "";
 }
+export function isUsProfessional(person: Professional) {
+  return usNames.has(words(person.country));
+}
 export function matchesUsArea(person: Professional, area: UsArea) {
   if (!usNames.has(words(person.country))) return false;
   if (area.state && professionalState(person) !== area.state) return false;

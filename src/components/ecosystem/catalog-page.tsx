@@ -22,6 +22,8 @@ import { MagicCard } from "@/components/ui/magic-card";
 import { NativeSelect } from "@/components/ui/native-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Empty, copy } from "./primitives";
+import { MapSurface } from "./map-surface";
+import { CatalogProjectCta } from "./catalog-project-cta";
 
 export function CatalogPage({
   route,
@@ -217,6 +219,12 @@ export function CatalogPage({
         </header>
       )}
 
+      {selected && (
+        <>
+          <MapSurface language={language} scope={{ categoryId: selected.id }} />
+          <CatalogProjectCta language={language} categoryId={selected.id} />
+        </>
+      )}
       <div className="grid items-start gap-8 lg:grid-cols-[240px_minmax(0,1fr)] xl:gap-12">
         <aside
           className="min-w-0 lg:sticky lg:top-28"

@@ -10,6 +10,7 @@ const localities: [string, string, string, number, number][] = [
   ["Atlanta", "Georgia", "US", 33.749, -84.388],
   ["Roswell", "Georgia", "US", 34.023, -84.361],
   ["Alpharetta", "Georgia", "US", 34.075, -84.294],
+  ["Chamblee", "Georgia", "US", 33.881134, -84.301654],
   ["Buford", "Georgia", "US", 34.12, -84.004],
   ["Dacula", "Georgia", "US", 33.989, -83.897],
   ["Miami", "Florida", "US", 25.774, -80.194],
@@ -76,11 +77,12 @@ export function contains(
   bounds: MapBounds,
   point: NonNullable<Professional["location"]>,
 ) {
+  const longitude =
+    point.longitude + 360 * Math.ceil((bounds[1] - point.longitude) / 360);
   return (
     point.latitude >= bounds[0] &&
     point.latitude <= bounds[2] &&
-    point.longitude >= bounds[1] &&
-    point.longitude <= bounds[3]
+    longitude <= bounds[3]
   );
 }
 export function displayedLocation(p: Professional, bounds?: MapBounds) {

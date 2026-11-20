@@ -12,6 +12,7 @@ test("cotizar y escribir como visitante abren un solo diálogo con el registro y
   await page
     .locator('input[name="instagram"]')
     .fill("https://www.instagram.com/contratista");
+  await page.getByLabel("Número de WhatsApp").fill("+1 (404) 555-0123");
   const saving = page.waitForResponse(
     (response) =>
       response.url().includes("/api/demo/commands") &&
@@ -58,6 +59,9 @@ test("cotizar y escribir como visitante abren un solo diálogo con el registro y
       await expect(
         dialog.getByRole("link", { name: "Instagram" }),
       ).toHaveAttribute("href", "https://www.instagram.com/contratista");
+      await expect(
+        dialog.getByRole("link", { name: "WhatsApp" }),
+      ).toHaveAttribute("href", "https://wa.me/14045550123");
       await expect(dialog.getByRole("link", { name: "Facebook" })).toHaveCount(
         0,
       );
@@ -67,6 +71,28 @@ test("cotizar y escribir como visitante abren un solo diálogo con el registro y
       await guest.keyboard.press("Escape");
       await expect(guest).toHaveURL(profile);
     }
+    await guest.getByRole("button", { name: "Dejar una reseña" }).click();
+    const reviewDialog = guest.getByRole("dialog", { name: "Deja una reseña" });
+    await expect(
+      reviewDialog.getByRole("link", { name: "Crear cuenta" }),
+    ).toBeVisible();
+    await expect(
+      reviewDialog.getByRole("link", { name: "Iniciar sesión" }),
+    ).toBeVisible();
+    await expect(reviewDialog.getByRole("link")).toHaveCount(2);
+    await expect(reviewDialog.getByRole("textbox")).toHaveCount(0);
+    await guest.keyboard.press("Escape");
+    const anonymousReview = await guestContext.request.post(
+      "http://127.0.0.1:5197/api/reviews?session=" + demoSession,
+      {
+        data: {
+          projectId: "any",
+          rating: 5,
+          text: "Reseña de prueba sin cuenta.",
+        },
+      },
+    );
+    expect(anonymousReview.status()).toBe(401);
     await guest.goto(
       origins.web + "/#/quote?professional=ruiz&service=remodeling-1",
     );
@@ -154,9 +180,15 @@ test("la ficha guarda redes y ubicación, y su perfil permite conservar servicio
   await page
     .locator('input[name="website"]')
     .fill("https://example.com/contratista");
-  await page
-    .locator('input[name="googleBusiness"]')
-    .fill("https://maps.app.goo.gl/example");
+  await expect(
+    page.getByLabel("Perfil de Empresa en Google", { exact: true }),
+  ).toHaveCount(0);
+  const whatsapp = page.getByLabel("Número de WhatsApp");
+  await whatsapp.fill("4045550123");
+  expect(
+    await whatsapp.evaluate((input: HTMLInputElement) => input.checkValidity()),
+  ).toBe(false);
+  await whatsapp.fill("+1 (404) 555-0123");
   await page
     .locator('input[name="instagram"]')
     .fill("https://www.instagram.com/contratista");
@@ -178,14 +210,15 @@ test("la ficha guarda redes y ubicación, y su perfil permite conservar servicio
     "https://example.com/contratista",
   );
   await expect(page.locator('select[name="mapMode"]')).toHaveValue("public");
+  await expect(whatsapp).toHaveValue("+14045550123");
   const publicPage = await context.newPage();
   await publicPage.goto("/#/professionals/ruiz");
   await expect(
     publicPage.getByRole("link", { name: /Abrir Página web/ }),
   ).toHaveAttribute("href", "https://example.com/contratista");
   await expect(
-    publicPage.getByRole("link", { name: /Abrir Perfil de Empresa en Google/ }),
-  ).toHaveAttribute("href", "https://maps.app.goo.gl/example");
+    publicPage.getByRole("link", { name: /Abrir WhatsApp/ }),
+  ).toHaveAttribute("href", "https://wa.me/14045550123");
   await publicPage
     .getByRole("button", { name: "Añadir al carrito", exact: true })
     .first()

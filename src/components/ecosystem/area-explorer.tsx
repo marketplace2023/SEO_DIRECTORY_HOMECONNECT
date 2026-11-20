@@ -103,7 +103,7 @@ export function AreaExplorer({
       initials: route.params.get("initials") ?? undefined,
       query: parsed.service,
       categoryId: category,
-      usArea: area,
+      usArea: area.state ? undefined : area,
     }),
     route.params.get("sort"),
     language,

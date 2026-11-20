@@ -153,9 +153,39 @@
   grid-row: 1 / span 2;
   height: 26px;
   border-radius: 7px;
-  background: #f6edef;
-  color: #745b61;
   font-size: 17px;
+}
+.social-brand-icon {
+  background: var(--social-brand-bg, #f3eff0);
+  color: var(--social-brand-fg, #55464b);
+}
+.social-brand-icon[data-platform="whatsapp"] {
+  --social-brand-bg: #e4f8ec;
+  --social-brand-fg: #117a43;
+}
+.social-brand-icon[data-platform="facebook"] {
+  --social-brand-bg: #eaf2ff;
+  --social-brand-fg: #0866ff;
+}
+.social-brand-icon[data-platform="instagram"] {
+  --social-brand-bg: linear-gradient(145deg, #6d32c9, #c31e66 65%, #b84322);
+  --social-brand-fg: #fff;
+}
+.social-brand-icon[data-platform="linkedin"] {
+  --social-brand-bg: #e9f3fb;
+  --social-brand-fg: #0a66c2;
+}
+.social-brand-icon[data-platform="youtube"] {
+  --social-brand-bg: #ffeeef;
+  --social-brand-fg: #e20014;
+}
+.social-brand-icon[data-platform="tiktok"],
+.social-brand-icon[data-platform="x"] {
+  --social-brand-bg: #151515;
+  --social-brand-fg: #fff;
+}
+.social-brand-icon[data-platform="tiktok"] svg {
+  filter: drop-shadow(-1px 0 #25f4ee) drop-shadow(1px 1px #fe2c55);
 }
 .contact-account-channel-preview {
   color: #54434a;
@@ -177,7 +207,6 @@
   border-color: #b2203d;
   background: #fff1f4;
 }
-.contact-account-channel-live .contact-account-channel-icon,
 .contact-account-external {
   color: #931831;
 }

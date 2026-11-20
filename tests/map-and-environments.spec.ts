@@ -6,7 +6,7 @@ import { hasValidRelations } from "../src/domain/schema";
 test("seeder completo y actualización de la demo sin perder cambios previos", () => {
   const seed = createSeed();
   expect(hasValidRelations(seed)).toBeTruthy();
-  expect(seed.professionals).toHaveLength(12);
+  expect(seed.professionals).toHaveLength(15);
   expect(seed.requests).toHaveLength(6);
   expect(seed.proposals).toHaveLength(6);
   expect(seed.projects).toHaveLength(2);
@@ -78,7 +78,7 @@ test("accesos principales abren los tres entornos y muestran datos desde el inic
     "Centro de administración",
   );
   await expect(page.locator(".seed-overview")).toContainText(
-    "12 contratistas · 6 solicitudes · 6 propuestas · 2 proyectos",
+    "15 contratistas · 6 solicitudes · 6 propuestas · 2 proyectos",
   );
   await page
     .getByRole("navigation", { name: "Secciones del espacio" })
@@ -108,16 +108,16 @@ test("mapa real: filtros, marcadores, fichas y respaldo geográfico sin calles e
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/#/coverage");
   await expect(page.getByRole("status")).toHaveText(
-    "4 contratistas en el mapa",
+    "9 contratistas en el mapa",
   );
-  await expect(page.locator(".contractor-marker")).toHaveCount(4);
+  await expect(page.locator(".contractor-marker")).toHaveCount(9);
   const profileMarker = page.locator(
     '.contractor-marker[title="Peachtree Roof Studio"]',
   );
   const cardImage = page
     .locator(".map-results article")
     .filter({ hasText: "Peachtree Roof Studio" })
-    .locator(".map-result-top img");
+    .locator(".professional-card-photo img");
   const imagePath = await cardImage.getAttribute("src");
   await expect(profileMarker.locator("img")).toHaveAttribute(
     "src",
@@ -147,15 +147,21 @@ test("mapa real: filtros, marcadores, fichas y respaldo geográfico sin calles e
   await page
     .getByRole("combobox", { name: "Especialidad en el mapa" })
     .selectOption("roofing");
-  await expect(page.locator(".contractor-marker")).toHaveCount(1);
+  await expect(page.locator(".contractor-marker")).toHaveCount(2);
   await page.getByRole("button", { name: "Ver todos", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText(
-    "12 contratistas en el mapa",
+    "9 contratistas en el mapa",
   );
-  await expect(page.locator(".contractor-marker")).toHaveCount(12);
+  await expect(page.locator(".contractor-marker")).toHaveCount(9);
   await page
     .getByRole("combobox", { name: "Región del mapa" })
     .selectOption("Georgia");
+  await page
+    .getByRole("button", {
+      name: "Localizar Peachtree Roof Studio",
+      exact: true,
+    })
+    .click();
   await page
     .locator('.leaflet-marker-icon[title="Peachtree Roof Studio"]')
     .click();
@@ -180,7 +186,7 @@ test("mapa y accesos utilizables en móvil", async ({ page }) => {
     route.abort(),
   );
   await page.goto("/#/coverage");
-  await expect(page.locator(".contractor-marker")).toHaveCount(4);
+  await expect(page.locator(".contractor-marker")).toHaveCount(9);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

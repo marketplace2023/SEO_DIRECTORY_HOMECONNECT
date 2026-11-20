@@ -210,6 +210,16 @@ test("favoritos, mensajes entre roles y publicación", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "En favoritos", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
+  await page.goto("/#/professionals?region=all");
+  const heart = page.getByRole("button", {
+    name: "Favorito: Construcciones Ruiz",
+    exact: true,
+  });
+  await expect(heart).toHaveAttribute("aria-pressed", "true");
+  await heart.click();
+  await expect(heart).toHaveAttribute("aria-pressed", "false");
+  await heart.click();
+  await expect(heart).toHaveAttribute("aria-pressed", "true");
   await page.goto("/#/workspace/owner/favorites");
   await expect(
     page.getByRole("button", { name: "Construcciones Ruiz", exact: true }),

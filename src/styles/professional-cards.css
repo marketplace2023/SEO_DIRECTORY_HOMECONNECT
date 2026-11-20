@@ -1,0 +1,178 @@
+.professional-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 172px), 1fr));
+  grid-auto-rows: 1fr;
+  gap: 22px 14px;
+}
+.professional-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e8e0de;
+  border-radius: 15px;
+  box-shadow: 0 2px 6px #30201b0d;
+}
+.professional-card-photo {
+  position: relative;
+}
+.professional-card-photo > button:first-child {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.14;
+  overflow: hidden;
+  border-radius: 14px 14px 0 0;
+  background: #f2ecea;
+}
+.professional-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 180ms ease;
+}
+.professional-card-photo > button:first-child:hover img {
+  transform: scale(1.04);
+}
+.professional-card-badge,
+.professional-card-favorite {
+  position: absolute;
+  top: 8px;
+}
+.professional-card-badge {
+  left: 8px;
+  max-width: calc(100% - 56px);
+  background: #fff;
+  color: #312925;
+  font-size: 9px;
+  pointer-events: none;
+}
+.professional-card-favorite {
+  right: 8px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: #231c20b8;
+  color: white;
+  font-size: 22px;
+}
+.professional-card-favorite:hover,
+.professional-card-favorite[aria-pressed="true"] {
+  background: white;
+  color: #bd1733;
+}
+.professional-card button:focus-visible {
+  outline: 2px solid #bd1733;
+  outline-offset: 2px;
+}
+.professional-card-info {
+  display: grid;
+  flex: 1;
+  grid-template-rows: minmax(2lh, auto) minmax(2lh, auto) minmax(2lh, auto) 1fr minmax(22px, auto);
+  align-items: start;
+  gap: 4px;
+  padding: 8px 8px 9px;
+  color: #514b48;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.professional-card-info h3 {
+  font-size: 14px;
+  line-height: 1.15;
+  font-weight: 750;
+  color: #251e1c;
+}
+.professional-card-info h3 button {
+  text-align: left;
+}
+.professional-card-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+.professional-card-summary:has(.professional-card-detail) {
+  align-self: end;
+}
+.professional-card-rating,
+.professional-card-location {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.professional-card-rating {
+  align-items: center;
+  font-weight: 650;
+  flex-shrink: 0;
+}
+.professional-card-rating svg,
+.professional-card-detail {
+  color: #a51f39;
+}
+.professional-card-location svg {
+  flex-shrink: 0;
+}
+.professional-card-detail {
+  display: grid;
+  min-width: 26px;
+  height: 24px;
+  place-items: center;
+}
+.professional-card-verified {
+  width: fit-content;
+  max-width: 100%;
+  font-size: 10px;
+  white-space: normal;
+}
+.professional-card.professional-card-horizontal {
+  display: grid;
+  grid-template-columns: clamp(86px, 24%, 132px) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 10px;
+}
+.professional-card-horizontal .professional-card-photo > button:first-child {
+  aspect-ratio: 1;
+  border-radius: 10px;
+}
+.professional-card-horizontal .professional-card-info {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: none;
+  gap: 3px;
+  padding: 0;
+}
+.professional-card-horizontal .professional-card-info > *,
+.professional-card-horizontal .professional-card-summary > :first-child {
+  min-width: 0;
+}
+.professional-card-horizontal .professional-card-info h3 button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.professional-card-horizontal .professional-card-badge {
+  top: auto;
+  bottom: 5px;
+  left: 5px;
+  max-width: calc(100% - 10px);
+}
+.professional-card-horizontal .professional-card-favorite {
+  top: 5px;
+  right: 5px;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+}
+@media (max-width: 560px) {
+  .professional-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 132px), 1fr));
+    column-gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .professional-card-photo img {
+    transition: none;
+  }
+}

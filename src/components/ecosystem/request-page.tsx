@@ -1,3 +1,4 @@
+import { isUsProfessional } from "@/domain/us-area";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/auth/auth-provider";
 import { PiArrowRight, PiArrowUpRight } from "react-icons/pi";
@@ -41,7 +42,8 @@ export function RequestPage({
   const recipient = state.professionals.find(
     (p) =>
       p.id === route.params.get("professional") &&
-      p.publication === "published",
+      p.publication === "published" &&
+      isUsProfessional(p),
   );
   const initial =
     services.find(

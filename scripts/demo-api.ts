@@ -9,6 +9,7 @@ import {
 import { resolve, dirname } from "node:path";
 import { z } from "zod";
 import { createSeed } from "../src/data/seed";
+import { upgradeSeed } from "../src/data/seed-migration";
 import { reducer } from "../src/domain/store";
 import { stateSchema, hasValidRelations } from "../src/domain/schema";
 import type { DemoState } from "../src/domain/types";
@@ -50,6 +51,13 @@ const origins = new Set([
   process.env.SERVINEXO_ADMIN_ORIGIN || "http://127.0.0.1:5181",
 ]);
 const states = await database.loadStates();
+for (const [session, state] of states) {
+  const upgraded = upgradeSeed(state);
+  if (upgraded !== state) {
+    await database.saveState(session, upgraded);
+    states.set(session, upgraded);
+  }
+}
 const attachments = new Attachments(
   database,
   resolve(process.env.UPLOAD_DIR || resolve(dirname(file), "uploads")),

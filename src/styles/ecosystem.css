@@ -373,15 +373,6 @@
   margin-top: 5px;
   color: var(--primary);
 }
-.eco-people-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-}
-.directory-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
-}
 .eco-results-summary {
   display: flex;
   justify-content: space-between;
@@ -1174,9 +1165,6 @@
     grid-template-columns: 1.4fr 1fr;
     gap: 22px;
   }
-  .service-detail .eco-people-grid {
-    grid-template-columns: 1fr;
-  }
   .fur-hero {
     gap: 30px;
   }
@@ -1221,9 +1209,6 @@
   .request-layout,
   .detail-columns {
     grid-template-columns: 1fr;
-  }
-  .service-detail .eco-people-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .eco-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1333,11 +1318,6 @@
     font-size: 0.75rem;
   }
   .service-grid,
-  .eco-people-grid,
-  .directory-grid,
-  .service-detail .eco-people-grid {
-    grid-template-columns: 1fr;
-  }
   .filter-toolbar {
     gap: 15px;
   }

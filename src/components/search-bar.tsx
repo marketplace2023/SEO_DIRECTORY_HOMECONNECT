@@ -1,3 +1,4 @@
+import { isUsProfessional } from "@/domain/us-area";
 import {
   useEffect,
   useId,
@@ -89,7 +90,10 @@ export function SearchBar({
         categoryId: service.categoryId,
       })),
       ...state.professionals
-        .filter((person) => person.publication === "published")
+        .filter(
+          (person) =>
+            person.publication === "published" && isUsProfessional(person),
+        )
         .map((person) => ({
           label: person.name,
           categoryId: person.categoryId,
@@ -183,6 +187,7 @@ export function SearchBar({
           .filter(
             (person) =>
               person.publication === "published" &&
+              isUsProfessional(person) &&
               professionalLocations[person.id],
           )
           .map((person) => ({

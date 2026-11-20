@@ -1,3 +1,4 @@
+import { isUsProfessional } from "@/domain/us-area";
 import { PiArrowUpRight, PiTrash } from "react-icons/pi";
 import { useAuth } from "@/auth/auth-provider";
 import { useCart } from "@/domain/cart";
@@ -85,7 +86,8 @@ export function CartPage({ language }: { language: Language }) {
             const person = state.professionals.find(
               (person) => person.id === id,
             );
-            const available = person?.publication === "published";
+            const available =
+              person?.publication === "published" && isUsProfessional(person);
             return (
               <Panel
                 key={id}
