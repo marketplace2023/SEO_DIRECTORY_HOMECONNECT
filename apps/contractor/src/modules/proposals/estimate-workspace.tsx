@@ -1,5 +1,11 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { PiListPlus, PiRuler, PiCalculator, PiChartBar } from "react-icons/pi";
+import { useEffect, useState } from "react";
+import {
+  PiListPlus,
+  PiRuler,
+  PiCalculator,
+  PiChartBar,
+  PiReceipt,
+} from "react-icons/pi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -9,67 +15,35 @@ import { Empty, Field, Panel, copy } from "@/components/ecosystem/primitives";
 import { apiRequest } from "@/lib/http";
 import {
   lineAmount,
+  valuationQuantity,
   workUnits,
   type Estimate,
   type EstimateWorkspace,
   type WorkItem,
+  type WorkResource,
 } from "@/domain/contractor-estimates";
 import { money, type Language } from "@/domain/types";
+import { exportBudget } from "@/lib/contractor-documents";
+import { CatalogImport, ResourceEditor } from "./catalog-tools";
+import { EstimatePlan } from "./estimate-plan";
+import { EntryForm, read, type Save } from "./estimate-actions";
+import {
+  ChangeOrders,
+  commercialPending,
+  decisionLabel,
+  Invoices,
+  RetentionSettings,
+  ValuationActions,
+  valuationCanInvoice,
+} from "./estimate-commercial-panel";
 
 const endpoint = "/api/contractor/estimates";
-type Save = (body: Record<string, unknown>) => Promise<string>;
 type Translate = ReturnType<typeof copy>;
-type Stage = "items" | "measurement" | "budget" | "valuation";
-const read = (data: FormData, name: string) =>
-  String(data.get(name) ?? "").trim();
+type Stage = "items" | "measurement" | "budget" | "valuation" | "billing";
 const formatQuantity = (value: number, language: Language) =>
   new Intl.NumberFormat(language === "es" ? "es-US" : "en-US", {
     maximumFractionDigits: 3,
   }).format(value / 1000);
-
-function EntryForm({
-  children,
-  label,
-  save,
-  reset = true,
-}: {
-  children: ReactNode;
-  label: string;
-  save: (data: FormData) => Promise<void | false>;
-  reset?: boolean;
-}) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    const form = event.currentTarget;
-    try {
-      const result = await save(new FormData(form));
-      if (reset && result !== false) form.reset();
-    } catch (cause) {
-      setError((cause as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <form className="space-y-4" onSubmit={submit}>
-      <fieldset className="grid gap-4 md:grid-cols-2" disabled={busy}>
-        {children}
-      </fieldset>
-      {error && (
-        <p role="alert" className="text-sm text-red-700">
-          {error}
-        </p>
-      )}
-      <Button type="submit" disabled={busy} aria-busy={busy}>
-        {label}
-      </Button>
-    </form>
-  );
-}
 
 export function EstimateWorkspacePanel({ language }: { language: Language }) {
   const t = copy(language);
@@ -138,6 +112,11 @@ export function EstimateWorkspacePanel({ language }: { language: Language }) {
       label: t("Valuaciones", "Progress valuations"),
       Icon: PiChartBar,
     },
+    {
+      id: "billing",
+      label: t("Facturas y cobros", "Invoices and payments"),
+      Icon: PiReceipt,
+    },
   ];
   return (
     <div className="space-y-5">
@@ -156,8 +135,8 @@ export function EstimateWorkspacePanel({ language }: { language: Language }) {
       >
         <p className="text-sm text-muted-foreground">
           {t(
-            "Carga tu catálogo, mide la obra, cierra el presupuesto y registra los avances por período.",
-            "Set up your catalog, take off quantities, close the estimate and record progress by period.",
+            "Carga tu catálogo, mide la obra, acuerda el presupuesto y factura cada valuación aprobada.",
+            "Set up your catalog, take off quantities, agree on the estimate and invoice each approved valuation.",
           )}
         </p>
       </Panel>
@@ -266,12 +245,30 @@ export function EstimateWorkspacePanel({ language }: { language: Language }) {
                 save={save}
                 t={t}
                 language={language}
+                goToBilling={() => setStage("billing")}
               />
             ) : (
               <Empty
                 title={t(
                   "Aún no hay presupuestos de obra",
                   "No construction estimates yet",
+                )}
+              />
+            )}
+          </TabsContent>
+          <TabsContent value="billing">
+            {estimate ? (
+              <Invoices
+                key={estimate.id}
+                estimate={estimate}
+                language={language}
+                save={save}
+              />
+            ) : (
+              <Empty
+                title={t(
+                  "Crea un expediente en Mediciones",
+                  "Create a job file in Takeoffs",
                 )}
               />
             )}
@@ -294,8 +291,19 @@ function WorkItems({
   language: Language;
 }) {
   const [editing, setEditing] = useState<WorkItem>();
+  const [resources, setResources] = useState<WorkResource[]>([]);
+  function edit(item?: WorkItem) {
+    setEditing(item);
+    setResources(item?.resources ?? []);
+  }
   return (
     <div className="space-y-5">
+      <CatalogImport
+        language={language}
+        save={(items, updatePrices) =>
+          save({ action: "import-items", items, updatePrices })
+        }
+      />
       <Panel
         title={
           editing
@@ -313,11 +321,18 @@ function WorkItems({
               code: read(data, "code"),
               description: read(data, "description"),
               unit: read(data, "unit"),
-              unitPriceCents: Math.round(Number(read(data, "price")) * 100),
+              unitPriceCents: resources.length
+                ? 1
+                : Math.round(Number(read(data, "price")) * 100),
+              resources: resources.map((resource) => ({
+                ...resource,
+                description: resource.description.trim(),
+                unit: resource.unit.trim(),
+              })),
               priceSource: read(data, "source"),
               active: data.has("active"),
             });
-            setEditing(undefined);
+            edit();
           }}
         >
           <Field label={t("Código", "Code")}>
@@ -350,7 +365,8 @@ function WorkItems({
               min="0.01"
               max="1000000"
               step="0.01"
-              required
+              required={!resources.length}
+              disabled={resources.length > 0}
               defaultValue={editing ? editing.unitPriceCents / 100 : undefined}
             />
           </Field>
@@ -378,13 +394,18 @@ function WorkItems({
             />
             {t("Disponible para medir", "Available for takeoffs")}
           </label>
+          <ResourceEditor
+            language={language}
+            resources={resources}
+            setResources={setResources}
+          />
         </EntryForm>
         {editing && (
           <Button
             className="mt-3"
             type="button"
             variant="ghost"
-            onClick={() => setEditing(undefined)}
+            onClick={() => edit()}
           >
             {t("Cancelar edición", "Cancel editing")}
           </Button>
@@ -405,6 +426,8 @@ function WorkItems({
                   <p className="break-words text-muted-foreground">
                     {money(item.unitPriceCents / 100, language)} / {item.unit}
                     {item.priceSource && ` · ${item.priceSource}`}
+                    {!!item.resources?.length &&
+                      ` · APU (${item.resources.length})`}
                     {!item.active && ` · ${t("Archivada", "Archived")}`}
                   </p>
                 </div>
@@ -412,7 +435,7 @@ function WorkItems({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setEditing(item)}
+                  onClick={() => edit(item)}
                 >
                   {t("Editar", "Edit")}
                 </Button>
@@ -583,6 +606,12 @@ function Measurements({
                         {formatQuantity(measurement.quantity, language)}{" "}
                         {item?.unit}
                       </p>
+                      {measurement.source && (
+                        <p className="break-all text-muted-foreground">
+                          {measurement.source.format.toUpperCase()} ·{" "}
+                          {measurement.source.label}
+                        </p>
+                      )}
                     </div>
                     {!estimate.budget && (
                       <Button
@@ -642,6 +671,15 @@ function Measurements({
           )}
         </Panel>
       )}
+      {estimate && !estimate.budget && active.length > 0 && (
+        <EstimatePlan
+          language={language}
+          items={active}
+          save={(input) =>
+            save({ action: "measurement", estimateId: estimate.id, ...input })
+          }
+        />
+      )}
     </div>
   );
 }
@@ -659,6 +697,8 @@ function BudgetPanel({
   t: Translate;
   language: Language;
 }) {
+  const [exportError, setExportError] = useState("");
+  const [exporting, setExporting] = useState(false);
   const lines =
     estimate.budget?.lines ??
     items.flatMap((item) => {
@@ -676,6 +716,30 @@ function BudgetPanel({
         : [];
     });
   const total = lines.reduce((sum, line) => sum + line.amountCents, 0);
+  async function download(
+    format: "pdf" | "xlsx",
+    documentLines = lines,
+    revision = estimate.budget?.closedAt,
+  ) {
+    setExportError("");
+    setExporting(true);
+    try {
+      await exportBudget(
+        estimate.id,
+        estimate.title,
+        documentLines,
+        format,
+        language,
+        revision
+          ? `${t("Fecha de cierre", "Closed on")} · ${revision.slice(0, 10)}`
+          : t("Borrador", "Draft"),
+      );
+    } catch (cause) {
+      setExportError((cause as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  }
   return (
     <div className="space-y-5">
       <Panel title={t("Presupuesto por partidas", "Itemized estimate")}>
@@ -739,6 +803,52 @@ function BudgetPanel({
                 </tfoot>
               </table>
             </div>
+            <div className="my-4 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={exporting}
+                onClick={() => void download("pdf")}
+              >
+                {t("Descargar PDF", "Download PDF")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={exporting}
+                onClick={() => void download("xlsx")}
+              >
+                {t("Descargar Excel", "Download Excel")}
+              </Button>
+              {estimate.budget &&
+                !estimate.proposalStatus &&
+                !estimate.agreement &&
+                !estimate.valuations.length && (
+                  <EntryForm
+                    outline
+                    label={t("Reabrir como borrador", "Reopen as draft")}
+                    save={async () => {
+                      if (
+                        window.confirm(
+                          t(
+                            "¿Guardar esta versión y reabrir el presupuesto?",
+                            "Save this revision and reopen the estimate?",
+                          ),
+                        )
+                      )
+                        await save({
+                          action: "reopen",
+                          estimateId: estimate.id,
+                        });
+                    }}
+                  />
+                )}
+            </div>
+            {exportError && (
+              <p role="alert" className="text-sm text-red-700">
+                {exportError}
+              </p>
+            )}
             {!estimate.budget && (
               <EntryForm
                 label={t("Cerrar presupuesto", "Close estimate")}
@@ -760,6 +870,48 @@ function BudgetPanel({
           </>
         )}
       </Panel>
+      {!!estimate.revisions?.length && (
+        <Panel title={t("Versiones del presupuesto", "Estimate versions")}>
+          <ul className="divide-y">
+            {estimate.revisions.map((revision, index) => (
+              <li
+                key={`${revision.closedAt}-${index}`}
+                className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
+              >
+                <span>
+                  {t("Versión", "Version")} {index + 1} ·{" "}
+                  {revision.closedAt.slice(0, 10)} ·{" "}
+                  {money(revision.totalCents / 100, language)}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={exporting}
+                    onClick={() =>
+                      void download("pdf", revision.lines, revision.closedAt)
+                    }
+                  >
+                    PDF
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={exporting}
+                    onClick={() =>
+                      void download("xlsx", revision.lines, revision.closedAt)
+                    }
+                  >
+                    Excel
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
       {estimate.budget &&
         (estimate.requestId ? (
           <Panel title={t("Propuesta al cliente", "Customer proposal")}>
@@ -850,6 +1002,15 @@ function BudgetPanel({
             )}
           </Panel>
         ))}
+      {estimate.budget &&
+        (estimate.proposalStatus === "accepted" || estimate.agreement) && (
+          <ChangeOrders
+            estimate={estimate}
+            language={language}
+            items={items}
+            save={save}
+          />
+        )}
     </div>
   );
 }
@@ -859,11 +1020,13 @@ function Valuations({
   save,
   t,
   language,
+  goToBilling,
 }: {
   estimate: EstimateWorkspace["estimates"][number];
   save: Save;
   t: Translate;
   language: Language;
+  goToBilling: () => void;
 }) {
   const budget = estimate.budget;
   if (!budget)
@@ -889,16 +1052,17 @@ function Valuations({
         )}
       />
     );
-  const prior = new Map<string, number>();
-  for (const valuation of estimate.valuations)
-    for (const line of valuation.lines)
-      prior.set(line.itemId, line.accumulated);
+  const prior = valuationQuantity(estimate);
   const remaining = budget.lines.filter(
     (line) => line.quantity > (prior.get(line.id) ?? 0),
   );
-  const accumulated = estimate.valuations.at(-1)?.accumulatedCents ?? 0;
+  const accumulated =
+    estimate.valuations
+      .filter(({ status }) => !status || status === "approved")
+      .at(-1)?.accumulatedCents ?? 0;
   return (
     <div className="space-y-5">
+      <RetentionSettings estimate={estimate} language={language} save={save} />
       <Panel
         title={t("Registrar avance por período", "Record progress by period")}
       >
@@ -922,7 +1086,14 @@ function Valuations({
             </dd>
           </div>
         </dl>
-        {remaining.length ? (
+        {commercialPending(estimate) ? (
+          <p className="text-sm">
+            {t(
+              "Resuelve la valuación o la orden de cambio pendiente para registrar otro período.",
+              "Resolve the pending valuation or change order before recording another period.",
+            )}
+          </p>
+        ) : remaining.length ? (
           <EntryForm
             label={t("Guardar valuación", "Save valuation")}
             save={async (data) => {
@@ -993,14 +1164,34 @@ function Valuations({
           </p>
         )}
       </Panel>
-      <Panel title={t("Historial de valuaciones", "Valuation history")}>
+      <Panel
+        title={t("Historial de valuaciones", "Valuation history")}
+        action={
+          estimate.invoices?.length ? (
+            <Button type="button" variant="outline" onClick={goToBilling}>
+              {t("Ver facturas y cobros", "View invoices and payments")}
+            </Button>
+          ) : undefined
+        }
+      >
         {estimate.valuations.length ? (
           <div className="divide-y">
             {estimate.valuations.map((valuation) => (
-              <details className="py-3 text-sm" key={valuation.id}>
+              <details
+                className="py-3 text-sm"
+                key={valuation.id}
+                open={
+                  valuation.status === "draft" ||
+                  valuation.status === "submitted" ||
+                  valuationCanInvoice(estimate, valuation) ||
+                  undefined
+                }
+              >
                 <summary className="cursor-pointer font-semibold">
                   {valuation.start} – {valuation.end} ·{" "}
                   {money(valuation.amountCents / 100, language)}
+                  {" · "}
+                  {decisionLabel(valuation.status, language)}
                 </summary>
                 <p className="mt-2">
                   {t("Acumulado del presupuesto", "Cumulative value")} ·{" "}
@@ -1027,6 +1218,12 @@ function Valuations({
                     {valuation.notes}
                   </p>
                 )}
+                <ValuationActions
+                  estimate={estimate}
+                  valuation={valuation}
+                  save={save}
+                  language={language}
+                />
               </details>
             ))}
           </div>
