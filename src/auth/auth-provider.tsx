@@ -21,6 +21,7 @@ type Auth = {
   login: (email: string, password: string) => Promise<void>;
   register: (input: Omit<RegisterInput, "role">) => Promise<void>;
   logout: () => Promise<void>;
+  closeAccount: (password: string) => Promise<void>;
   refresh: () => Promise<void>;
 };
 const Context = createContext<Auth | null>(null);
@@ -87,6 +88,12 @@ export function AuthProvider({
           });
           saveToken(session.token);
           setUser(session.user);
+        },
+        closeAccount: async (password) => {
+          await authRequest("close", { password });
+          saveToken("");
+          setUser(null);
+          window.location.replace("#/login?closed=1");
         },
         logout: async () => {
           try {

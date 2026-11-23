@@ -3,6 +3,10 @@ import { PiGoogleLogo, PiArrowSquareOut } from "react-icons/pi";
 import { Panel } from "@/components/ecosystem/primitives";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/http";
+import {
+  googleIssueMessage,
+  type GoogleIssue,
+} from "@/components/dashboard/google-notice";
 export function GooglePage() {
   const [status, setStatus] = useState<any>(),
     [error, setError] = useState(""),
@@ -17,12 +21,15 @@ export function GooglePage() {
   }
   useEffect(() => {
     void load();
+    const interval = setInterval(load, 60000);
     if (location.hash.includes("error="))
       setError("La autorización no se completó. Puedes volver a intentarlo.");
+    return () => clearInterval(interval);
   }, []);
   async function action(path: string, body: unknown = {}) {
     setBusy(true);
     setError("");
+    setMessage("");
     try {
       const result = await apiRequest("/api/google/" + path, body);
       if (result.authorizationUrl) {
@@ -30,11 +37,16 @@ export function GooglePage() {
         return;
       }
       setMessage(
-        path === "sync"
-          ? `Sincronización completada: ${result.count} fichas autorizadas.`
-          : "Cambios registrados.",
+        path === "check"
+          ? result.verified
+            ? "Comprobación finalizada."
+            : "Google no pudo confirmar el estado. Inténtalo de nuevo en unos minutos."
+          : path === "sync"
+            ? `Sincronización completada: ${result.count} fichas autorizadas.`
+            : "Cambios registrados.",
       );
       await load();
+      window.dispatchEvent(new Event("google-profile-updated"));
     } catch (error) {
       setError((error as Error).message);
     } finally {
@@ -83,7 +95,21 @@ export function GooglePage() {
               tanto.
             </p>
           )}
+          {status.issue && (
+            <p role="alert" className="eco-error">
+              {googleIssueMessage(status.issue as GoogleIssue, "es")}
+            </p>
+          )}
           <div className="eco-actions">
+            {status.selected && (
+              <Button
+                variant="outline"
+                disabled={busy || !status.configured}
+                onClick={() => void action("check")}
+              >
+                Comprobar enlace
+              </Button>
+            )}
             <Button
               disabled={busy || !status.configured || status.requiresEmail}
               onClick={() => void action("connect")}

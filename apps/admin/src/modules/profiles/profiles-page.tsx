@@ -10,7 +10,17 @@ export function PublicationManager({ language }: { language: Language }) {
   const t = copy(language);
   const filter = useSectionFilter(
     state.professionals,
-    (p) => [p.name, p.fur, p.city, categoryName(p.categoryId, language)],
+    (p) => [
+      p.name,
+      p.fur,
+      p.city,
+      categoryName(p.categoryId, language),
+      p.vipRequested
+        ? t("VIP solicitado", "VIP requested")
+        : p.vip
+          ? "VIP"
+          : "",
+    ],
     t("Nombre, FUR, ciudad o especialidad", "Name, FUR, city or specialty"),
     language,
     {
@@ -36,6 +46,23 @@ export function PublicationManager({ language }: { language: Language }) {
             <img src={p.img} alt="" />
             <div>
               <strong>{p.name}</strong>
+              {p.vipRequested && (
+                <span className="eco-badge pending">
+                  {t("VIP solicitado", "VIP requested")}
+                </span>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                aria-pressed={Boolean(p.vip)}
+                onClick={() =>
+                  send({ type: "vip", professionalId: p.id, enabled: !p.vip })
+                }
+              >
+                {p.vip
+                  ? t("VIP activo · desactivar", "VIP active · disable")
+                  : t("Activar VIP", "Enable VIP")}
+              </Button>
               <p>
                 {p.fur} · {categoryName(p.categoryId, language)}
               </p>

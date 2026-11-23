@@ -6,13 +6,56 @@ import { Panel, Field } from "./primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/auth/auth-provider";
+export function readFileData(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+    reader.onload = () => resolve(String(reader.result).split(",")[1]);
+    reader.readAsDataURL(file);
+  });
+}
+
+function ReferencePreview({ id, name }: { id: string; name: string }) {
+  const [src, setSrc] = useState("");
+  useEffect(() => {
+    const controller = new AbortController();
+    let object = "";
+    fetch(apiEndpoint("/media/" + id), {
+      headers: { Authorization: "Bearer " + readToken() },
+      signal: controller.signal,
+    })
+      .then((r) => {
+        if (!r.ok) throw Error();
+        return r.blob();
+      })
+      .then((blob) => {
+        if (!controller.signal.aborted) {
+          object = URL.createObjectURL(blob);
+          setSrc(object);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      controller.abort();
+      if (object) URL.revokeObjectURL(object);
+    };
+  }, [id]);
+  return src ? (
+    <img
+      className="max-h-48 max-w-full rounded-lg object-contain"
+      alt={name}
+      src={src}
+    />
+  ) : null;
+}
+
 export function AttachmentsPanel({
   targetId,
   purpose,
   canUpload = true,
 }: {
   targetId: string;
-  purpose: "credential" | "portfolio" | "request";
+  purpose: "credential" | "portfolio" | "request" | "reference";
   canUpload?: boolean;
 }) {
   const { user } = useAuth();
@@ -46,12 +89,7 @@ export function AttachmentsPanel({
     setBusy(true);
     setError("");
     try {
-      const encoded = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = reject;
-        reader.onload = () => resolve(String(reader.result).split(",")[1]);
-        reader.readAsDataURL(file);
-      });
+      const encoded = await readFileData(file);
       await apiRequest("/api/files", {
         name: String(data.get("name") || file.name),
         data: encoded,
@@ -91,20 +129,27 @@ export function AttachmentsPanel({
           ? "Imágenes del portafolio"
           : purpose === "credential"
             ? "Documentos privados"
-            : "Archivos de la solicitud"
+            : purpose === "reference"
+              ? "Imágenes de referencia"
+              : "Archivos de la solicitud"
       }
     >
       <p className="eco-note">
-        JPEG, PNG, WebP o PDF de hasta 5 MB.{" "}
+        {purpose === "reference"
+          ? "Hasta dos imágenes JPEG, PNG o WebP de 5 MB cada una."
+          : "JPEG, PNG, WebP o PDF de hasta 5 MB."}{" "}
         {purpose === "portfolio"
           ? "Las imágenes se publican cuando tu ficha esté publicada."
-          : purpose === "request"
+          : purpose === "request" || purpose === "reference"
             ? "El cliente autoriza compartirlos con profesionales elegibles para esta solicitud."
             : "Solo tu cuenta y administración pueden descargarlos. Subir un documento no lo verifica automáticamente."}
       </p>
       {files.map((file) => (
         <div key={file.id} className="eco-record">
           <div>
+            {purpose === "reference" && (
+              <ReferencePreview id={file.id} name={file.name} />
+            )}
             <strong>{file.name}</strong>
             <p>
               {Math.ceil(file.size / 1024)} KB · {file.id}
@@ -115,7 +160,7 @@ export function AttachmentsPanel({
           </Button>
         </div>
       ))}
-      {canUpload && (
+      {canUpload && (purpose !== "reference" || files.length < 2) && (
         <form className="eco-form" onSubmit={(event) => void upload(event)}>
           <Field
             label={
@@ -132,7 +177,7 @@ export function AttachmentsPanel({
               name="file"
               required
               accept={
-                purpose === "portfolio"
+                purpose === "portfolio" || purpose === "reference"
                   ? "image/jpeg,image/png,image/webp"
                   : "image/jpeg,image/png,image/webp,application/pdf"
               }

@@ -1,7 +1,9 @@
 import { isUsProfessional } from "@/domain/us-area";
 import { SupportPanel } from "./pilot-panels";
+import { AccountClosure } from "@/auth/account-closure";
 import {
   PiSquaresFour,
+  PiGear,
   PiClipboardText,
   PiFolderOpen,
   PiHeart,
@@ -36,6 +38,7 @@ const sections = [
     en: "Coverage",
     icon: PiGlobeHemisphereWest,
   },
+  { key: "settings", es: "Configuración", en: "Settings", icon: PiGear },
 ];
 export function Workspace({
   route,
@@ -90,6 +93,7 @@ export function Workspace({
         </nav>
         <div className="workspace-content">
           {tab === "support" && <SupportPanel />}
+          {tab === "settings" && <AccountClosure language={language} />}
           {tab === "overview" && (
             <>
               <div className="eco-stats-grid">

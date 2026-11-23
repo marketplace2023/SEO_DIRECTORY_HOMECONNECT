@@ -14,7 +14,13 @@ import {
   PiMapPin,
 } from "react-icons/pi";
 import { categories, categoryName } from "@/data/catalog";
-import { usCities, usCounties, usStates } from "@/data/us-areas";
+import { CountyRegistrations } from "./county-registrations";
+import {
+  registrationCounties,
+  usCities,
+  usCounties,
+  usStates,
+} from "@/data/us-areas";
 import { findProfessionals, orderProfessionals } from "@/domain/queries";
 import { useStore } from "@/domain/store";
 import {
@@ -276,6 +282,13 @@ export function AreaExplorer({
           </Button>
         )}
       </form>
+      {registrationCounties.some((id) => id === area.county) && (
+        <CountyRegistrations
+          key={area.county}
+          county={area.county}
+          language={language}
+        />
+      )}
       {area.state ? (
         <Suspense
           fallback={

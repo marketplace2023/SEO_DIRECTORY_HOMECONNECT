@@ -1,3 +1,4 @@
+import { registrationCounties } from "../src/data/us-areas";
 import { Attachments } from "../server/files/attachments";
 import "../server/config/env";
 import { pilotRoutes } from "../server/pilot/routes";
@@ -44,15 +45,34 @@ const database = new Database(
 );
 await database.initialize();
 await database.importLegacy(file);
-const accounts = new Accounts(database, await database.loadAccounts());
+const closedAccounts = await database.sql.query<{
+  namespace: string;
+  id: string;
+  professional_id: string | null;
+}>("SELECT namespace,id,professional_id FROM closed_account");
+const accounts = new Accounts(
+  database,
+  await database.loadAccounts(),
+  closedAccounts.rows,
+);
+function withdrawClosedProfiles(session: string, state: DemoState) {
+  for (const p of state.professionals)
+    if (accounts.retiredProfile(session, p.id)) p.publication = "draft";
+  return state;
+}
+await accounts.seed("default");
 const origins = new Set([
   process.env.SERVINEXO_WEB_ORIGIN || "http://127.0.0.1:5175",
   process.env.SERVINEXO_CONTRACTOR_ORIGIN || "http://127.0.0.1:5180",
   process.env.SERVINEXO_ADMIN_ORIGIN || "http://127.0.0.1:5181",
 ]);
 const states = await database.loadStates();
+function stateFor(session: string) {
+  return states.get(session) || withdrawClosedProfiles(session, createSeed());
+}
 for (const [session, state] of states) {
   const upgraded = upgradeSeed(state);
+  withdrawClosedProfiles(session, upgraded);
   if (upgraded !== state) {
     await database.saveState(session, upgraded);
     states.set(session, upgraded);
@@ -68,6 +88,10 @@ const googleCacheCleanup = setInterval(() => {
   void google.purgeCachedProfiles().catch(() => {});
 }, 3600000);
 googleCacheCleanup.unref();
+const googleHealthTimer = setInterval(() => {
+  void google.monitor().catch(console.error);
+}, 60000);
+googleHealthTimer.unref();
 const streams = new Map<
   string,
   Set<{ res: ServerResponse; token: string; professional?: string }>
@@ -105,6 +129,8 @@ const value = z
       "message",
       "credential",
       "review",
+      "requestVip",
+      "vip",
       "publication",
       "profile",
       "material",
@@ -154,6 +180,8 @@ const fields: Record<string, z.ZodType> = {
     status: z.enum(["verified", "rejected"]),
     note: text,
   }),
+  requestVip: z.object({}),
+  vip: z.object({ professionalId: text, enabled: z.boolean() }),
   publication: z.object({ professionalId: text }),
   profile: z.object({
     socialLinks: socialLinksSchema.optional(),
@@ -187,10 +215,32 @@ async function persist(session: string) {
   const state = states.get(session);
   if (state) await database.saveState(session, state);
 }
+const releaseTimers = new Map<string, ReturnType<typeof setTimeout>>();
+function scheduleRelease(session: string, state: DemoState) {
+  clearTimeout(releaseTimers.get(session));
+  releaseTimers.delete(session);
+  const now = Date.now();
+  let next = Infinity;
+  for (const r of state.requests) {
+    if (r.status !== "open" || !r.publicAt) continue;
+    const release = Date.parse(r.publicAt);
+    if (release > now) next = Math.min(next, release);
+  }
+  if (Number.isFinite(next))
+    releaseTimers.set(
+      session,
+      setTimeout(() => {
+        const latest = states.get(session);
+        if (latest) publish(session, latest);
+      }, next - now),
+    );
+}
+for (const [session, state] of states) scheduleRelease(session, state);
 function publish(session: string, state: DemoState) {
+  scheduleRelease(session, state);
   for (const stream of streams.get(session) || [])
     stream.res.write(
-      `data: ${JSON.stringify(visibleState(state, viewUser(accounts.user(session, stream.token), stream.professional)))}\n\n`,
+      `data: ${JSON.stringify(visibleState(state, viewUser(accounts.user(session, stream.token), stream.professional), (id) => accounts.ownerName(session, id)))}\n\n`,
     );
 }
 let mutationTail = Promise.resolve();
@@ -244,7 +294,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       database,
       user,
       session,
-      states.get(session) || createSeed(),
+      stateFor(session),
       send,
     ))
   )
@@ -259,7 +309,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       res,
       user,
       session,
-      states.get(session) || createSeed(),
+      stateFor(session),
       send,
       async (next) => {
         states.set(session, next);
@@ -275,6 +325,45 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       service: "servinexo-demo-api",
       database: "postgresql-pglite",
     });
+    return;
+  }
+  if (
+    req.method === "GET" &&
+    [
+      "/api/admin/county-registrations",
+      "/api/public/county-registrations",
+    ].includes(url.pathname)
+  ) {
+    if (
+      url.pathname === "/api/admin/county-registrations" &&
+      user?.role !== "admin"
+    ) {
+      send(403, { error: "Acceso administrativo requerido." });
+      return;
+    }
+    const { rows } = await database.sql.query<{
+      county: string;
+      customers: number;
+      contractors: number;
+    }>(
+      `SELECT data->>'registrationCounty' AS county,
+         count(*) FILTER (WHERE data->>'role'='owner')::int AS customers,
+         count(*) FILTER (WHERE data->>'role'='contractor')::int AS contractors
+       FROM res_users WHERE namespace=$1 AND data->>'demo'='false'
+       GROUP BY data->>'registrationCounty'`,
+      [session],
+    );
+    send(
+      200,
+      registrationCounties.map(
+        (county) =>
+          rows.find((row) => row.county === county) ?? {
+            county,
+            customers: 0,
+            contractors: 0,
+          },
+      ),
+    );
     return;
   }
   if (req.method === "GET" && url.pathname === "/api/integrations/status") {
@@ -307,8 +396,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       res,
       url,
       database,
-      states.get(url.pathname.startsWith("/api/") ? session : "default") ||
-        createSeed(),
+      stateFor(url.pathname.startsWith("/api/") ? session : "default"),
       user,
       url.pathname.startsWith("/api/") ? session : "default",
       send,
@@ -368,7 +456,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     streams.set(session, clients);
     if (states.has(session))
       res.write(
-        `data: ${JSON.stringify(visibleState(states.get(session)!, viewUser(accounts.user(session, channel.token), channel.professional)))}\n\n`,
+        `data: ${JSON.stringify(visibleState(states.get(session)!, viewUser(accounts.user(session, channel.token), channel.professional), (id) => accounts.ownerName(session, id)))}\n\n`,
       );
     const keepAlive = setInterval(() => res.write(": keepalive\n\n"), 15000);
     req.on("close", () => {
@@ -388,6 +476,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   });
   await previousMutation;
   try {
+    if (user && !accounts.user(session, token)) {
+      send(401, { error: "Tu sesión ha finalizado." });
+      return;
+    }
     let body = "";
     for await (const chunk of req) {
       body += chunk;
@@ -408,7 +500,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         res,
         user,
         session,
-        states.get(session) || createSeed(),
+        stateFor(session),
         send,
         async (next) => {
           states.set(session, next);
@@ -427,7 +519,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         database,
         user,
         session,
-        states.get(session) || createSeed(),
+        stateFor(session),
         send,
       )
     )
@@ -439,7 +531,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         res,
         url,
         database,
-        states.get(session) || createSeed(),
+        stateFor(session),
         user,
         session,
         send,
@@ -548,6 +640,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
             .max(128)
             .regex(/^(?=.*[A-Za-z])(?=.*\d).+$/),
           role: z.enum(["owner", "contractor"]),
+          registrationCounty: z.enum(registrationCounties).optional(),
           categoryId: z.string().optional(),
           city: z.string().trim().max(100).optional(),
         })
@@ -564,7 +657,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       try {
         const result = await accounts.register(session, input, professionalId);
         if (professionalId) {
-          const state = states.get(session) || createSeed();
+          const state = stateFor(session);
           state.professionals.push({
             id: professionalId,
             fur: "SN-" + professionalId.slice(4, 12).toUpperCase(),
@@ -607,6 +700,23 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
       return;
     }
+    if (url.pathname === "/api/auth/close") {
+      if (!user) {
+        send(401, { error: "Inicia sesión para dar de baja tu cuenta." });
+        return;
+      }
+      const { password } = z
+        .object({ password: z.string().min(1).max(128) })
+        .parse(data);
+      if (!(await accounts.close(session, user.id, password))) {
+        send(403, { error: "La contraseña actual es incorrecta." });
+        return;
+      }
+      const state = states.get(session);
+      if (state) publish(session, withdrawClosedProfiles(session, state));
+      send(200, { ok: true });
+      return;
+    }
     if (url.pathname === "/api/auth/logout") {
       accounts.logout(token);
       send(200, { ok: true });
@@ -614,14 +724,26 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
     if (url.pathname === "/api/demo/bootstrap") {
       if (!states.has(session)) {
-        states.set(session, createSeed());
+        states.set(session, withdrawClosedProfiles(session, createSeed()));
         await persist(session);
       }
-      send(200, visibleState(states.get(session)!, selectedUser));
+      send(
+        200,
+        visibleState(states.get(session)!, selectedUser, (id) =>
+          accounts.ownerName(session, id),
+        ),
+      );
       return;
     }
     if (url.pathname === "/api/demo/commands") {
       const action = value.parse(data);
+      if (
+        accounts.retiredProfile(session, action.actingProfessional) ||
+        accounts.retiredProfile(session, action.professionalId)
+      ) {
+        send(409, { error: "La cuenta de este profesional está cerrada." });
+        return;
+      }
       fields[action.type].parse(data);
       if (!user) {
         send(401, { error: "Inicia sesión para realizar esta acción." });
@@ -653,7 +775,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         send(403, { error: "Solo puedes gestionar tu perfil profesional." });
         return;
       }
-      const state = states.get(session) || createSeed();
+      const state = stateFor(session);
       if (action.type === "accept" || action.type === "cancel") {
         const target =
           action.type === "accept"
@@ -666,20 +788,28 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
           return;
         }
       }
-      const next = reducer(state, { ...action, actorId: user.id } as Parameters<
-        typeof reducer
-      >[1]);
+      const next = reducer(state, {
+        ...action,
+        at: new Date().toISOString(),
+        actorId: user.id,
+      } as Parameters<typeof reducer>[1]);
       if (action.type === "reset")
         next.professionals.push(
           ...state.professionals.filter((person) =>
             person.id.startsWith("pro-"),
           ),
         );
+      withdrawClosedProfiles(session, next);
       if (!hasValidRelations(next)) throw Error("Invalid state transition");
       await database.saveState(session, next);
       states.set(session, next);
       publish(session, next);
-      send(200, visibleState(next, viewUser(user, action.actingProfessional)));
+      send(
+        200,
+        visibleState(next, viewUser(user, action.actingProfessional), (id) =>
+          accounts.ownerName(session, id),
+        ),
+      );
       return;
     }
     send(404, { error: "Not found" });
@@ -715,6 +845,7 @@ server.listen(port, "127.0.0.1", () =>
 );
 function stop() {
   clearInterval(googleCacheCleanup);
+  clearInterval(googleHealthTimer);
   for (const set of streams.values())
     for (const stream of set) stream.res.end();
   server.close(async () => {

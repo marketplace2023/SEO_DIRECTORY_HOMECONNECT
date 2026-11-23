@@ -1,3 +1,4 @@
+import { AccountClosure } from "@/auth/account-closure";
 import { IntegrationsPage } from "../modules/integrations/integrations-page";
 import {
   SupportPanel,
@@ -150,7 +151,10 @@ export function AdminRoutes({
       ) : tab === "activity" ? (
         <Activity language={language} />
       ) : tab === "settings" ? (
-        <Settings language={language} />
+        <>
+          <Settings language={language} />
+          <AccountClosure language={language} />
+        </>
       ) : tab === "seed" ? (
         <Seed language={language} />
       ) : tab === "inventory" ? (

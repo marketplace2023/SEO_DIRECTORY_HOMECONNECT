@@ -8,6 +8,7 @@ import { stateSchema, hasValidRelations } from "../../src/domain/schema";
 import type { DemoState } from "../../src/domain/types";
 import type { AuthUser } from "../../src/auth/types";
 export type StoredAccount = AuthUser & {
+  registrationCounty?: string;
   namespace: string;
   salt: string;
   hash: string;
@@ -31,6 +32,23 @@ export class Database {
         "utf8",
       ),
     );
+    for (const id of [
+      "003_support_numbers",
+      "004_support_handoff",
+      "005_account_closure",
+    ]) {
+      const migration = await this.sql.query(
+        "SELECT id FROM schema_migration WHERE id=$1",
+        [id],
+      );
+      if (!migration.rows.length)
+        await this.sql.exec(
+          readFileSync(
+            new URL(`./migrations/${id}.sql`, import.meta.url),
+            "utf8",
+          ),
+        );
+    }
     await this.sql.transaction(async (tx) => {
       await tx.query(
         `INSERT INTO prototype_dataset(namespace,data) VALUES('__catalog__','{}') ON CONFLICT DO NOTHING`,

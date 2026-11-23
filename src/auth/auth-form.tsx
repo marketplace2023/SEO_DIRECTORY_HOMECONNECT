@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categories } from "@/data/catalog";
 import { portalHref } from "@/lib/portals";
+import { registrationCounties } from "@/data/us-areas";
+import { countyById } from "@/domain/us-area";
 import "./auth.css";
 
 const loginPanels = {
@@ -77,6 +79,8 @@ export function AuthForm({
           name: String(data.get("name")).trim(),
           email,
           password,
+          registrationCounty:
+            String(data.get("registrationCounty") || "") || undefined,
           ...(application === "contractor"
             ? {
                 city: String(data.get("city")).trim(),
@@ -155,6 +159,11 @@ export function AuthForm({
                 ? "Accede con tu cuenta de administración."
                 : "Qué bueno tenerte de vuelta."}
           </p>
+          {params.get("closed") === "1" && (
+            <p role="status" className="eco-success">
+              Tu cuenta se ha dado de baja definitivamente.
+            </p>
+          )}
           <form onSubmit={submit} className="account-form">
             {signingUp && (
               <label>
@@ -219,6 +228,24 @@ export function AuthForm({
                     required
                     autoComplete="new-password"
                   />
+                </label>
+                <label>
+                  Condado de registro
+                  <select
+                    name="registrationCounty"
+                    defaultValue={
+                      registrationCounties.find(
+                        (id) => id === params.get("county"),
+                      ) ?? ""
+                    }
+                  >
+                    <option value="">Otro condado o sin especificar</option>
+                    {registrationCounties.map((id) => (
+                      <option key={id} value={id}>
+                        {countyById.get(id)} County, Georgia
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 {application === "contractor" && (
                   <div className="account-form-row">

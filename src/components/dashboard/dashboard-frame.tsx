@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { IconType } from "react-icons";
 import { PiArrowUpRight, PiList, PiX, PiSignOut } from "react-icons/pi";
 import { Brand } from "@/components/brand";
+import { GoogleNotice } from "./google-notice";
 import { VerificationNotice } from "@/auth/email-pages";
 import { useAuth } from "@/auth/auth-provider";
 import { useStore } from "@/domain/store";
@@ -64,6 +65,9 @@ export function DashboardFrame({
             {title}
           </span>
           <div className="portal-header-actions">
+            {application === "contractor" && user && (
+              <GoogleNotice key={user.id} language={language} />
+            )}
             <label>
               <span className="sr-only">Idioma / Language</span>
               <select

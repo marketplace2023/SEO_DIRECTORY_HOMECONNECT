@@ -1,13 +1,32 @@
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  PiArrowLeft,
+  PiMagnifyingGlass,
+  PiPaperPlaneTilt,
+} from "react-icons/pi";
 import { useStore } from "@/domain/store";
 import { isGuestOwner } from "@/domain/guest-quotes";
-import type { Language } from "@/domain/types";
-import type { FormEvent } from "react";
-import { PiUserCircle, PiPaperPlaneTilt } from "react-icons/pi";
-import { MapSurface } from "./map-surface";
+import { normalize, type Language, type Message } from "@/domain/types";
 import { navigate, type Route } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, Panel, Empty, copy } from "./primitives";
+import { MapSurface } from "./map-surface";
+import { copy } from "./primitives";
+import "./messages.css";
+
+function Avatar({ name, image }: { name: string; image?: string }) {
+  return image ? (
+    <img className="chat-avatar" src={image} alt="" />
+  ) : (
+    <span className="chat-avatar" aria-hidden="true">
+      {name
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((word) => word[0])
+        .join("")}
+    </span>
+  );
+}
 
 export function Messages({
   language,
@@ -18,169 +37,207 @@ export function Messages({
 }) {
   const { state, role, professionalId, send } = useStore();
   const t = copy(language);
-  const selected =
-    role === "contractor"
-      ? professionalId
-      : state.professionals.find(
-          (p) => p.id === route.params.get("professional"),
-        )?.id || state.professionals[0]?.id;
-  const professional = state.professionals.find((p) => p.id === selected);
-  const guestRequests =
-    role === "contractor"
-      ? state.requests.filter(
-          (request) =>
-            isGuestOwner(request.ownerId) &&
-            (request.professionalId === selected ||
-              state.proposals.some(
-                (proposal) =>
-                  proposal.requestId === request.id &&
-                  proposal.professionalId === selected,
-              )),
-        )
-      : [];
-  const owners = [
-    ...new Set([
-      ...guestRequests.map((request) => request.ownerId),
-      ...state.messages
-        .filter((m) => m.professionalId === selected)
-        .map((m) => m.ownerId || "demo-owner"),
-    ]),
-  ];
-  const ownerId = route.params.get("owner") || owners[0] || "demo-owner";
-  const messages = state.messages.filter(
-    (m) =>
-      m.professionalId === selected &&
-      (role !== "contractor" || (m.ownerId || "demo-owner") === ownerId),
+  const contractor = role === "contractor";
+  const param = contractor ? "owner" : "professional";
+  const requested = route.params.get(param);
+  const path = "/workspace/" + role + "/messages";
+  const [search, setSearch] = useState("");
+  const history = useRef<HTMLDivElement>(null);
+  const threads = new Map<string, Message[]>();
+  for (const m of state.messages) {
+    if (contractor && m.professionalId !== professionalId) continue;
+    const id = contractor ? m.ownerId || "demo-owner" : m.professionalId;
+    const thread = threads.get(id);
+    if (thread) thread.push(m);
+    else threads.set(id, [m]);
+  }
+  const contacts: { id: string; name: string; image?: string }[] = contractor
+    ? []
+    : state.professionals.map((p) => ({
+        id: p.id,
+        name: p.name,
+        image: p.img,
+      }));
+  if (contractor) {
+    const related = state.requests.filter(
+      (r) =>
+        r.professionalId === professionalId ||
+        state.proposals.some(
+          (p) => p.requestId === r.id && p.professionalId === professionalId,
+        ),
+    );
+    const ids = new Set([
+      ...threads.keys(),
+      ...related.filter((r) => isGuestOwner(r.ownerId)).map((r) => r.ownerId),
+    ]);
+    if (requested && state.requests.some((r) => r.ownerId === requested))
+      ids.add(requested);
+    for (const id of ids) {
+      const request = related.find((r) => r.ownerId === id);
+      const name =
+        threads.get(id)?.find((m) => m.ownerName)?.ownerName ||
+        request?.guestContact?.name ||
+        (id === "demo-owner"
+          ? "Carolina Mendoza"
+          : t("Cliente", "Customer") + " " + id.slice(0, 6));
+      contacts.push({ id, name });
+    }
+  }
+  const latest = (id: string) => threads.get(id)?.at(-1);
+  contacts.sort((a, b) =>
+    (latest(b.id)?.createdAt || "").localeCompare(
+      latest(a.id)?.createdAt || "",
+    ),
   );
-  const guest = role === "contractor" && isGuestOwner(ownerId);
-  const guestRequest = guestRequests.find(
-    (request) => request.ownerId === ownerId,
-  );
-  const canSend = !guest;
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const text = String(data.get("message")).trim();
-    if (!text || !selected || !canSend) return;
-    send({ type: "message", professionalId: selected, text, ownerId });
-    event.currentTarget.reset();
+  const active = contacts.find((c) => c.id === requested) || contacts[0];
+  const messages = active ? threads.get(active.id) || [] : [];
+  const last = messages.at(-1);
+  useEffect(() => {
+    if (history.current)
+      history.current.scrollTop = history.current.scrollHeight;
+  }, [active?.id, last?.id, requested]);
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const text = String(
+      new FormData(e.currentTarget).get("message") || "",
+    ).trim();
+    if (!text || !active || (contractor && isGuestOwner(active.id))) return;
+    send({
+      type: "message",
+      professionalId: contractor ? professionalId : active.id,
+      ownerId: contractor ? active.id : undefined,
+      text,
+    });
+    e.currentTarget.reset();
   };
+  const shown = contacts.filter((c) =>
+    normalize(c.name).includes(normalize(search)),
+  );
+  const time = (at: string) =>
+    new Date(at).toLocaleTimeString(language, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   return (
-    <Panel title={t("Conversaciones", "Conversations")}>
-      <p className="eco-note">
-        {t(
-          "Mensajes locales entre los roles de demostración. No se envían comunicaciones externas.",
-          "Local messages between demo roles. No external communications are sent.",
-        )}
-      </p>
-      {role === "contractor" && owners.length > 1 && (
-        <Field label={t("Conversación con cliente", "Client conversation")}>
-          <select
-            value={ownerId}
-            onChange={(event) =>
-              navigate(
-                "/workspace/contractor/messages",
-                new URLSearchParams({ owner: event.target.value }),
-              )
-            }
-          >
-            {owners.map((id) => (
-              <option key={id} value={id}>
-                {id === "demo-owner"
-                  ? "Carolina Mendoza"
-                  : (guestRequests.find((request) => request.ownerId === id)
-                      ?.title ?? `Cliente ${id.slice(0, 6)}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
-      )}
-      {role === "owner" && (
-        <Field label={t("Conversar con", "Talk to")}>
-          <select
-            value={selected}
-            onChange={(e) =>
-              navigate(
-                "/workspace/owner/messages",
-                new URLSearchParams({ professional: e.target.value }),
-              )
-            }
-          >
-            {state.professionals.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-      )}
-      <div className="conversation-title">
-        <PiUserCircle />
-        <strong>
-          {guest
-            ? (guestRequest?.title ?? t("Cliente invitado", "Guest customer"))
-            : role === "contractor"
-              ? t("Propietario de demostración", "Demo homeowner")
-              : professional?.name}
-        </strong>
-      </div>
-      <div className="message-history" aria-live="polite">
-        {messages.length ? (
-          messages.map((m) => (
-            <article
-              key={m.id}
-              className={`message-bubble ${m.sender === role ? "outgoing" : ""}`}
+    <section
+      className="chat-shell"
+      data-open={Boolean(requested && active?.id === requested)}
+      aria-label={t("Mensajería", "Messaging")}
+    >
+      <aside className="chat-sidebar" aria-label={t("Contactos", "Contacts")}>
+        <header>
+          <h2>{t("Conversaciones", "Conversations")}</h2>
+          <label className="chat-search">
+            <PiMagnifyingGlass aria-hidden="true" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("Buscar contacto", "Search contacts")}
+              aria-label={t("Buscar contacto", "Search contacts")}
+            />
+          </label>
+        </header>
+        <div className="chat-contacts">
+          {shown.map((c) => (
+            <button
+              type="button"
+              key={c.id}
+              aria-current={c.id === active?.id ? "true" : undefined}
+              onClick={() =>
+                navigate(path, new URLSearchParams({ [param]: c.id }))
+              }
             >
+              <Avatar name={c.name} image={c.image} />
               <span>
-                {m.sender === "owner"
-                  ? guest
-                    ? t("Cliente invitado", "Guest customer")
-                    : t("Propietario", "Homeowner")
-                  : professional?.name}
+                <strong>{c.name}</strong>
+                <small>
+                  {latest(c.id)?.text ||
+                    t("Iniciar conversación", "Start conversation")}
+                </small>
               </span>
-              <p>{m.text}</p>
-              <time dateTime={m.createdAt}>
-                {new Date(m.createdAt).toLocaleTimeString(language, {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </time>
-            </article>
-          ))
-        ) : (
-          <Empty
-            title={t("Empieza la conversación", "Start the conversation")}
-            description={t(
-              "Pregunta por el alcance, los materiales o la disponibilidad.",
-              "Ask about scope, materials or availability.",
+            </button>
+          ))}
+          {!shown.length && (
+            <p>
+              {search
+                ? t("Sin coincidencias", "No matches")
+                : t("Aún no hay conversaciones.", "No conversations yet.")}
+            </p>
+          )}
+        </div>
+      </aside>
+      <div className="chat-pane">
+        {active ? (
+          <>
+            <header className="chat-heading">
+              <button
+                className="chat-back"
+                aria-label={t(
+                  "Volver a conversaciones",
+                  "Back to conversations",
+                )}
+                onClick={() => navigate(path)}
+              >
+                <PiArrowLeft />
+              </button>
+              <Avatar name={active.name} image={active.image} />
+              <h3>{active.name}</h3>
+            </header>
+            <div
+              className="chat-history"
+              ref={history}
+              role="log"
+              aria-label={t("Historial de mensajes", "Message history")}
+            >
+              {messages.map((m) => (
+                <article
+                  key={m.id}
+                  className="message-bubble"
+                  data-outgoing={m.sender === role}
+                >
+                  <p>{m.text}</p>
+                  <time dateTime={m.createdAt}>
+                    {new Date(m.createdAt).toLocaleDateString(language)} ·{" "}
+                    {time(m.createdAt)}
+                  </time>
+                </article>
+              ))}
+              {!messages.length && (
+                <p className="chat-empty">
+                  {t("Empieza la conversación", "Start the conversation")}
+                </p>
+              )}
+            </div>
+            {contractor && isGuestOwner(active.id) ? (
+              <p className="chat-empty">
+                {t(
+                  "Conversación disponible para consulta.",
+                  "Read-only conversation.",
+                )}
+              </p>
+            ) : (
+              <form key={active.id} className="chat-compose" onSubmit={submit}>
+                <Input
+                  name="message"
+                  aria-label={t("Mensaje", "Message")}
+                  placeholder={t("Escribe tu mensaje…", "Write your message…")}
+                  required
+                  maxLength={2000}
+                />
+                <Button type="submit" aria-label={t("Enviar", "Send")}>
+                  <PiPaperPlaneTilt aria-hidden="true" />
+                </Button>
+              </form>
             )}
-          />
+          </>
+        ) : (
+          <p className="chat-empty">
+            {t("Selecciona una conversación", "Select a conversation")}
+          </p>
         )}
       </div>
-      {guest && (
-        <p className="eco-note">
-          {t(
-            "Esta conversación anterior está disponible para consulta.",
-            "This past conversation is available to read.",
-          )}
-        </p>
-      )}
-      {canSend && (
-        <form className="message-compose" onSubmit={submit}>
-          <Input
-            name="message"
-            aria-label={t("Mensaje", "Message")}
-            required
-            maxLength={2000}
-            placeholder={t("Escribe tu mensaje…", "Write your message…")}
-          />
-          <Button type="submit">
-            {t("Enviar", "Send")}
-            <PiPaperPlaneTilt />
-          </Button>
-        </form>
-      )}
-    </Panel>
+    </section>
   );
 }
 

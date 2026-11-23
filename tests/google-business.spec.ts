@@ -96,9 +96,20 @@ test("Google: OAuth con PKCE, control de cuenta, renovación, selección y desco
       ).code,
     ).toBe(400);
     const calls: string[] = [];
+    let publicStatus = 404;
+    let profileStatus = 200;
     globalThis.fetch = async (input, init) => {
       const url = String(input);
       calls.push(url);
+      if (url.startsWith("https://maps.google.com/"))
+        return new Response("", { status: publicStatus });
+      if (url.includes("/v1/locations/456?"))
+        return new Response(
+          JSON.stringify({
+            metadata: { mapsUri: "https://maps.google.com/?cid=456" },
+          }),
+          { status: profileStatus },
+        );
       if (url.includes("/token"))
         return new Response(
           JSON.stringify({
@@ -181,7 +192,28 @@ test("Google: OAuth con PKCE, control de cuenta, renovación, selección y desco
       (await invoke("/api/google/location", "POST", { name: "locations/456" }))
         .code,
     ).toBe(200);
+    const issue = async () =>
+      (await invoke("/api/google/notice", "GET")).data.issue;
+    expect(await issue()).toBe("maps");
+    publicStatus = 503;
+    expect((await invoke("/api/google/check", "POST", {})).data.verified).toBe(
+      false,
+    );
+    expect(await issue()).toBe("maps");
+    publicStatus = 200;
+    await invoke("/api/google/check", "POST", {});
+    expect(await issue()).toBeNull();
+    profileStatus = 403;
+    await db.sql.query(
+      "UPDATE google_business_connection SET data=data-'checkedAt'",
+    );
+    await service.monitor();
+    expect(await issue()).toBe("authorization");
+    profileStatus = 404;
+    await invoke("/api/google/check", "POST", {});
+    expect(await issue()).toBe("location");
     expect((await invoke("/api/google/disconnect", "POST", {})).code).toBe(200);
+    expect(await issue()).toBeNull();
     expect((await invoke("/api/google/status", "GET")).data.connected).toBe(
       false,
     );

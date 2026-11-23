@@ -485,3 +485,41 @@
     gap: 8px;
   }
 }
+
+.vip-membership {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-block: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #eed3b7;
+  border-radius: 12px;
+  background: #fff6eb;
+}
+.vip-membership[data-active="true"] {
+  border-color: #285a7c;
+  background: #194f73;
+  color: white;
+}
+.vip-membership[data-active="true"] button {
+  color: var(--brand-deep);
+}
+.vip-membership > div {
+  flex: 1 1 240px;
+}
+.vip-crown {
+  font-size: 28px;
+  color: #aa5000;
+}
+.vip-membership[data-active="true"] .vip-crown {
+  color: #ffbf76;
+}
+.vip-membership h2 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.vip-membership p {
+  margin-top: 4px;
+  font-size: 0.85rem;
+}

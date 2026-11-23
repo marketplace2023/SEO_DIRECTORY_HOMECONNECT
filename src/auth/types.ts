@@ -14,6 +14,7 @@ export type RegisterInput = {
   email: string;
   password: string;
   role: "owner" | "contractor";
+  registrationCounty?: string;
   categoryId?: string;
   city?: string;
 };

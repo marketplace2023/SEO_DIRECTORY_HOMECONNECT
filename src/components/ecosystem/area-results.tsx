@@ -1,3 +1,4 @@
+import { MapViewport } from "./map-viewport";
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import type { MultiPolygon, Polygon } from "geojson";
@@ -14,7 +15,7 @@ import { PiMapPin } from "react-icons/pi";
 import { ProfessionalCard } from "@/components/professional-card";
 import { categoryName } from "@/data/catalog";
 import { professionalLocations } from "@/data/locations";
-import { locationOf } from "@/domain/geography";
+import { contains, locationOf, type MapBounds } from "@/domain/geography";
 import { usCities, usCounties } from "@/data/us-areas";
 import { normalize, type Language, type Professional } from "@/domain/types";
 import {
@@ -156,6 +157,7 @@ export default function AreaResults({
     };
   }, []);
 
+  const [viewport, setViewport] = useState<MapBounds>();
   const mapped = new Set<string>();
   const pins = new Map<string, Pin>();
   if (geography) {
@@ -174,7 +176,15 @@ export default function AreaResults({
             : ((city && geography.cities[city[0]]) ??
               professionalLocations[person.id]);
       if (!position) continue;
-      mapped.add(person.id);
+      if (
+        viewport &&
+        contains(viewport, {
+          latitude: position[0],
+          longitude: position[1],
+          precision: "city",
+        })
+      )
+        mapped.add(person.id);
       const key = position.join(",");
       const pin = pins.get(key);
       if (pin) pin.people.push(person);
@@ -207,9 +217,10 @@ export default function AreaResults({
     if (rect && (rect.bottom < 120 || rect.top > window.innerHeight - 120))
       panel?.scrollIntoView({ block: "start" });
   };
-  const inArea = people.filter((person) => matchesUsArea(person, area));
+  const visible = people.filter((person) => mapped.has(person.id));
+  const inArea = visible.filter((person) => matchesUsArea(person, area));
   const localIds = new Set(inArea.map((person) => person.id));
-  const outsideArea = people.filter((person) => !localIds.has(person.id));
+  const outsideArea = visible.filter((person) => !localIds.has(person.id));
 
   return (
     <div className="us-area-detail">
@@ -222,9 +233,9 @@ export default function AreaResults({
             {t("Contratistas disponibles", "Available contractors")}
           </h2>
           <p role="status">
-            {people.length === 1
+            {visible.length === 1
               ? t("1 perfil", "1 profile")
-              : t(`${people.length} perfiles`, `${people.length} profiles`)}
+              : t(`${visible.length} perfiles`, `${visible.length} profiles`)}
           </p>
         </div>
         {outsideArea.length > 0 && (
@@ -235,7 +246,7 @@ export default function AreaResults({
             )}
           </p>
         )}
-        {people.length ? (
+        {visible.length ? (
           <div className="us-area-contractor-grid">
             {[...inArea, ...outsideArea].map((person) => (
               <div
@@ -289,8 +300,8 @@ export default function AreaResults({
         ) : (
           <Empty
             title={t(
-              "No hay contratistas para estos filtros",
-              "No contractors match these filters",
+              "No hay contratistas en el área visible con estos filtros",
+              "No matching contractors in the visible area",
             )}
           />
         )}
@@ -323,10 +334,11 @@ export default function AreaResults({
             boundsOptions={{ padding: [24, 24], maxZoom: 11 }}
             minZoom={2}
             maxZoom={18}
-            scrollWheelZoom={false}
+            scrollWheelZoom
             className="us-area-street-map"
           >
             <MapResize />
+            <MapViewport onChange={setViewport} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"

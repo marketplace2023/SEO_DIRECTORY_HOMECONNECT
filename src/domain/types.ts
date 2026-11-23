@@ -62,6 +62,8 @@ export type Professional = {
   img: string;
   bio: Localized;
   socialLinks?: SocialLinks;
+  vip?: boolean;
+  vipRequested?: boolean;
   publication: PublicationState;
   credentials: {
     id: string;
@@ -85,6 +87,7 @@ export type QuoteRequest = {
   budget: number | null;
   date: string;
   createdAt: string;
+  publicAt?: string;
   status: "open" | "awarded" | "cancelled";
 };
 export type Proposal = {
@@ -110,6 +113,7 @@ export type Project = {
   milestones: { id: string; title: Localized; done: boolean }[];
 };
 export type Message = {
+  ownerName?: string;
   id: string;
   professionalId: string;
   ownerId?: string;

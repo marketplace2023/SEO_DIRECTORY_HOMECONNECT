@@ -5,6 +5,7 @@ import { navigate } from "@/lib/navigation";
 import { categories } from "@/data/catalog";
 import type { Language } from "@/domain/types";
 import { ReviewQueue } from "../verifications/verifications-page";
+import { CountyRegistrations } from "@/components/ecosystem/county-registrations";
 export function OverviewPage({ language }: { language: Language }) {
   const { state, role } = useStore(),
     t = copy(language);
@@ -93,6 +94,7 @@ export function OverviewPage({ language }: { language: Language }) {
           {t("Ver pendientes", "Review pending")}
         </Button>
       </div>
+      {role === "admin" && <CountyRegistrations language={language} />}
       <ReviewQueue language={language} />
     </>
   );

@@ -31,7 +31,7 @@ export class Attachments {
     if (!user) return false;
     if (user.role === "admin" || user.id === file.ownerId) return true;
     return (
-      file.purpose === "request" &&
+      (file.purpose === "request" || file.purpose === "reference") &&
       user.role === "contractor" &&
       (allowedRequests(state, user.professionalId || "").some(
         (r) => r.id === file.targetId,
@@ -119,13 +119,13 @@ export class Attachments {
         .object({
           name: z.string().trim().min(1).max(120),
           data: z.string().min(8).max(7000000),
-          purpose: z.enum(["credential", "portfolio", "request"]),
+          purpose: z.enum(["credential", "portfolio", "request", "reference"]),
           targetId: z.string().max(100),
           publicConsent: z.boolean().optional(),
         })
         .parse(body);
       if (
-        input.purpose === "request"
+        input.purpose === "request" || input.purpose === "reference"
           ? user.role !== "owner" ||
             !state.requests.some(
               (r) => r.id === input.targetId && r.ownerId === user.id,
@@ -158,6 +158,22 @@ export class Attachments {
             "El portafolio requiere una imagen y autorización expresa de publicación.",
         });
         return true;
+      }
+      if (input.purpose === "reference") {
+        if (!mime.startsWith("image/")) {
+          send(400, { error: "Selecciona una imagen JPEG, PNG o WebP." });
+          return true;
+        }
+        const result = await this.db.sql.query<{ count: number }>(
+          "SELECT count(*)::int AS count FROM ir_attachment WHERE namespace=$1 AND data->>'targetId'=$2 AND data->>'purpose'='reference'",
+          [namespace, input.targetId],
+        );
+        if (result.rows[0].count >= 2) {
+          send(409, {
+            error: "Esta solicitud ya tiene dos imágenes de referencia.",
+          });
+          return true;
+        }
       }
       const id = randomUUID(),
         file = {

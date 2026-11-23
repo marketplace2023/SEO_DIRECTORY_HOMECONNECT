@@ -22,6 +22,11 @@ export class Accounts {
   constructor(
     private database: Database,
     accounts: StoredAccount[],
+    private closed: {
+      namespace: string;
+      id: string;
+      professional_id: string | null;
+    }[] = [],
   ) {
     this.accounts = accounts;
     this.email = new EmailService(database);
@@ -55,6 +60,12 @@ export class Accounts {
     const start = this.accounts.length;
     for (const sample of demoAccounts) {
       if (
+        this.closed.some(
+          (row) => row.namespace === namespace && row.id === sample.id,
+        )
+      )
+        continue;
+      if (
         this.accounts.some(
           (a) => a.namespace === namespace && a.email === sample.email,
         )
@@ -68,7 +79,7 @@ export class Accounts {
         salt,
         hash: scryptSync("Servinexo2026!", salt, 64).toString("hex"),
         demo: true,
-        ...(sample.role === "contractor" ? { professionalId: "ruiz" } : {}),
+        ...(sample.id === "demo-contractor" ? { professionalId: "ruiz" } : {}),
       });
     }
     await this.persist(this.accounts.slice(start));
@@ -92,6 +103,7 @@ export class Accounts {
       name: input.name,
       email: input.email.toLowerCase(),
       role: input.role,
+      registrationCounty: input.registrationCounty,
       professionalId,
       demo: false,
       emailVerified: false,
@@ -148,8 +160,76 @@ export class Accounts {
     );
     return account ? this.safe(account) : null;
   }
+  ownerName(namespace: string, id: string) {
+    return this.accounts.find(
+      (a) => a.namespace === namespace && a.id === id && a.role === "owner",
+    )?.name;
+  }
   logout(token: string) {
     this.sessions.delete(token);
+  }
+  retiredProfile(namespace: string, id: unknown) {
+    return (
+      !!id &&
+      this.closed.some(
+        (row) => row.namespace === namespace && row.professional_id === id,
+      )
+    );
+  }
+  async close(namespace: string, userId: string, password: string) {
+    const account = this.accounts.find(
+      (a) => a.namespace === namespace && a.id === userId,
+    );
+    if (
+      !account ||
+      !timingSafeEqual(
+        Buffer.from(account.hash, "hex"),
+        scryptSync(password, account.salt, 64),
+      )
+    )
+      return false;
+    const params = [namespace, userId];
+    await this.database.sql.transaction(async (tx) => {
+      await tx.query(
+        "INSERT INTO closed_account(namespace,id,professional_id) VALUES($1,$2,$3)",
+        [...params, account.professionalId ?? null],
+      );
+      await tx.query(
+        "DELETE FROM res_users WHERE namespace=$1 AND id=$2",
+        params,
+      );
+      await tx.query(
+        "DELETE FROM auth_token WHERE namespace=$1 AND user_id=$2",
+        params,
+      );
+      await tx.query(
+        "DELETE FROM mail_mail WHERE namespace=$1 AND data->>'userId'=$2",
+        params,
+      );
+      await tx.query(
+        "DELETE FROM google_business_connection WHERE namespace=$1 AND id=$2",
+        params,
+      );
+      await tx.query(
+        "DELETE FROM google_oauth_state WHERE data->>'namespace'=$1 AND data->>'userId'=$2",
+        params,
+      );
+      if (account.professionalId)
+        await tx.query(
+          "UPDATE res_partner SET data=jsonb_set(data,'{publication}','\"draft\"') WHERE namespace=$1 AND id=$2 AND kind='contractor'",
+          [namespace, account.professionalId],
+        );
+    });
+    this.closed.push({
+      namespace,
+      id: userId,
+      professional_id: account.professionalId ?? null,
+    });
+    this.accounts = this.accounts.filter((a) => a !== account);
+    for (const [key, session] of this.sessions)
+      if (session.namespace === namespace && session.accountId === userId)
+        this.sessions.delete(key);
+    return true;
   }
   async resend(user: AuthUser, application: string) {
     const account = this.accounts.find((a) => a.id === user.id);

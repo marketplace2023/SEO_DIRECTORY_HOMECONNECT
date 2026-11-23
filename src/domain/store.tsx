@@ -43,7 +43,10 @@ export const STORAGE_KEY = "servinexo.ecosystem.v1";
 type Command =
   | {
       type: "request";
-      value: Omit<QuoteRequest, "id" | "createdAt" | "ownerId" | "status">;
+      value: Omit<
+        QuoteRequest,
+        "id" | "createdAt" | "ownerId" | "status" | "publicAt"
+      >;
     }
   | {
       type: "proposal";
@@ -66,6 +69,8 @@ type Command =
       status: EvidenceState;
       note: string;
     }
+  | { type: "requestVip" }
+  | { type: "vip"; professionalId: string; enabled: boolean }
   | { type: "publication"; professionalId: string }
   | {
       type: "profile";
@@ -88,26 +93,27 @@ type Action = Command & {
   actorId?: string;
 };
 type StoreAction = Action | { type: "hydrate"; value: DemoState };
-const allowedRequests = (state: DemoState, professionalId: string) =>
-  state.requests.filter(
+export const vipWindowMs = 5 * 60 * 1000;
+export function allowedRequests(
+  state: DemoState,
+  professionalId: string,
+  now = Date.now(),
+) {
+  const person = state.professionals.find((p) => p.id === professionalId);
+  if (person?.publication !== "published") return [];
+  return state.requests.filter(
     (r) =>
       r.status === "open" &&
       !isGuestOwner(r.ownerId) &&
-      state.professionals.some(
-        (p) => p.id === professionalId && p.publication === "published",
+      person.coverage.some((area) =>
+        normalize(r.location).includes(normalize(area)),
       ) &&
-      state.professionals
-        .find((p) => p.id === professionalId)
-        ?.coverage.some((area) =>
-          normalize(r.location).includes(normalize(area)),
-        ) &&
       (r.professionalId
-        ? r.professionalId === professionalId
-        : state.professionals
-            .find((p) => p.id === professionalId)
-            ?.serviceIds.includes(r.serviceId)),
+        ? r.professionalId === person.id
+        : person.serviceIds.includes(r.serviceId) &&
+          (person.vip || !r.publicAt || Date.parse(r.publicAt) <= now)),
   );
-export { allowedRequests };
+}
 
 export function reducer(state: DemoState, action: StoreAction): DemoState {
   if (action.type === "hydrate") return action.value;
@@ -260,6 +266,9 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
               id: action.id,
               ownerId: action.actorId || "demo-owner",
               status: "open",
+              publicAt: recipient
+                ? undefined
+                : new Date(Date.parse(action.at) + vipWindowMs).toISOString(),
               createdAt: action.at,
             },
             ...state.requests,
@@ -570,6 +579,41 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
         action.credentialId,
       );
     }
+    case "requestVip": {
+      const person = state.professionals.find(
+        (p) => p.id === action.actingProfessional,
+      );
+      if (
+        action.actor !== "contractor" ||
+        !person ||
+        person.vip ||
+        person.vipRequested
+      )
+        return state;
+      return audit(
+        {
+          ...state,
+          professionals: state.professionals.map((p) =>
+            p.id === person.id ? { ...p, vipRequested: true } : p,
+          ),
+        },
+        person.id,
+      );
+    }
+    case "vip": {
+      if (action.actor !== "admin") return state;
+      return audit(
+        {
+          ...state,
+          professionals: state.professionals.map((p) =>
+            p.id === action.professionalId
+              ? { ...p, vip: action.enabled, vipRequested: false }
+              : p,
+          ),
+        },
+        action.professionalId,
+      );
+    }
     case "publication": {
       if (action.actor !== "admin") return state;
       return audit(
@@ -686,7 +730,10 @@ type Store = {
   setRole: (role: Role) => void;
   professionalId: string;
   setProfessionalId: (id: string) => void;
-  send: (command: Command) => string;
+  send: (
+    command: Command,
+    onSave?: (saved: Promise<DemoState>) => void,
+  ) => string;
   storageError: boolean;
   syncError: boolean;
 };
@@ -834,7 +881,7 @@ export function StoreProvider({
         },
         storageError,
         syncError,
-        send: (command) => {
+        send: (command, onSave) => {
           if (!user) {
             window.location.hash =
               "/login?next=" +
@@ -852,8 +899,11 @@ export function StoreProvider({
           };
           dispatch(action);
           transport.current.pending++;
-          transport.current.tail = transport.current.tail
-            .then(() => demoPost("/api/demo/commands", action))
+          const saved = transport.current.tail.then(() =>
+            demoPost("/api/demo/commands", action),
+          );
+          onSave?.(saved);
+          transport.current.tail = saved
             .then((remote) => {
               transport.current.pending--;
               if (transport.current.pending === 0 && !transport.current.dirty)

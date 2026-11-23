@@ -56,8 +56,10 @@ export const usStates: readonly (readonly [
   ["WI", "Wisconsin"],
   ["WY", "Wyoming"],
 ];
+export const registrationCounties = ["gwinnett", "cobb", "dekalb", "fulton"] as const;
 export const usCounties: readonly (readonly [id: string, name: string])[] = [
   ["gwinnett", "Gwinnett"],
+  ["cobb", "Cobb"],
   ["fulton", "Fulton"],
   ["dekalb", "DeKalb"],
 ];
@@ -82,6 +84,9 @@ export const usCities: readonly (readonly [
   ["san-francisco", "San Francisco", "San Francisco", "CA", ""],
   ["seattle", "Seattle", "Seattle", "WA", ""],
   ["tampa", "Tampa", "Tampa", "FL", ""],
+  ["marietta-ga", "Marietta", "Marietta", "GA", "cobb"],
+  ["kennesaw-ga", "Kennesaw", "Kennesaw", "GA", "cobb"],
+  ["smyrna-ga", "Smyrna", "Smyrna", "GA", "cobb"],
   ["auburn-ga", "Auburn", "Auburn", "GA", "gwinnett"],
   ["berkeley-lake-ga", "Berkeley Lake", "Berkeley Lake", "GA", "gwinnett"],
   ["braselton-ga", "Braselton", "Braselton", "GA", "gwinnett"],

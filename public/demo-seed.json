@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "seedRevision": 2,
+  "seedRevision": 6,
   "professionals": [
     {
       "id": "ruiz",
@@ -30,6 +30,7 @@
         "remodeling-5"
       ],
       "img": "/images/professional-0.jpg",
+      "vip": true,
       "publication": "published",
       "bio": {
         "es": "Un equipo dedicado a remodelación, con atención en Miami y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
@@ -792,6 +793,266 @@
           "image": "/images/professional-1.jpg"
         }
       ]
+    },
+    {
+      "id": "demo-gwinnett",
+      "name": "Gwinnett Home Demo",
+      "fur": "SN-CTR-0013",
+      "categoryId": "roofing",
+      "city": "Dacula",
+      "region": "Georgia",
+      "country": "Estados Unidos",
+      "years": 8,
+      "location": {
+        "latitude": 33.989,
+        "longitude": -83.897,
+        "precision": "city"
+      },
+      "rating": 4.7,
+      "coverage": [
+        "Dacula",
+        "Gwinnett County"
+      ],
+      "serviceIds": [
+        "roofing-1",
+        "roofing-2",
+        "roofing-3",
+        "roofing-4",
+        "roofing-5"
+      ],
+      "img": "/images/process.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a techos y cubiertas, con atención en Dacula y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to roofing, serving Dacula and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "demo-gwinnett-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-13",
+          "note": ""
+        },
+        {
+          "id": "demo-gwinnett-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-13",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "demo-gwinnett-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/process.jpg"
+        }
+      ]
+    },
+    {
+      "id": "demo-fulton",
+      "name": "Fulton Home Demo",
+      "fur": "SN-CTR-0014",
+      "categoryId": "electrical",
+      "city": "Alpharetta",
+      "region": "Georgia",
+      "country": "Estados Unidos",
+      "years": 7,
+      "location": {
+        "latitude": 34.075,
+        "longitude": -84.294,
+        "precision": "city"
+      },
+      "rating": 4.6,
+      "coverage": [
+        "Alpharetta",
+        "Fulton County"
+      ],
+      "serviceIds": [
+        "electrical-1",
+        "electrical-2",
+        "electrical-3",
+        "electrical-4",
+        "electrical-5"
+      ],
+      "img": "/images/professional-1.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a electricidad, con atención en Alpharetta y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to electrical, serving Alpharetta and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "demo-fulton-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-14",
+          "note": ""
+        },
+        {
+          "id": "demo-fulton-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-14",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "demo-fulton-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-1.jpg"
+        }
+      ]
+    },
+    {
+      "id": "demo-dekalb",
+      "name": "DeKalb Home Demo",
+      "fur": "SN-CTR-0015",
+      "categoryId": "plumbing",
+      "city": "Chamblee",
+      "region": "Georgia",
+      "country": "Estados Unidos",
+      "years": 6,
+      "location": {
+        "latitude": 33.881134,
+        "longitude": -84.301654,
+        "precision": "city"
+      },
+      "rating": 4.7,
+      "coverage": [
+        "Chamblee",
+        "DeKalb County"
+      ],
+      "serviceIds": [
+        "plumbing-1",
+        "plumbing-2",
+        "plumbing-3",
+        "plumbing-4",
+        "plumbing-5"
+      ],
+      "img": "/images/professional-2.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a plomería, con atención en Chamblee y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to plumbing, serving Chamblee and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "demo-dekalb-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-15",
+          "note": ""
+        },
+        {
+          "id": "demo-dekalb-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-15",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "demo-dekalb-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-2.jpg"
+        }
+      ]
+    },
+    {
+      "id": "demo-cobb",
+      "name": "Cobb Home Demo",
+      "fur": "SN-CTR-0016",
+      "categoryId": "painting",
+      "city": "Marietta",
+      "region": "Georgia",
+      "country": "Estados Unidos",
+      "years": 6,
+      "location": {
+        "latitude": 33.953,
+        "longitude": -84.55,
+        "precision": "city"
+      },
+      "rating": 4.7,
+      "coverage": [
+        "Marietta",
+        "Cobb County"
+      ],
+      "serviceIds": [
+        "painting-1",
+        "painting-2",
+        "painting-3",
+        "painting-4",
+        "painting-5"
+      ],
+      "img": "/images/professional-3.jpg",
+      "publication": "published",
+      "bio": {
+        "es": "Un equipo dedicado a pintura, con atención en Marietta y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.",
+        "en": "A team dedicated to painting, serving Marietta and nearby areas. We plan each job with you, from the first assessment to completion."
+      },
+      "credentials": [
+        {
+          "id": "demo-cobb-identity",
+          "name": {
+            "es": "Identidad comercial",
+            "en": "Business identity"
+          },
+          "status": "verified",
+          "reference": "DEMO-ID-16",
+          "note": ""
+        },
+        {
+          "id": "demo-cobb-insurance",
+          "name": {
+            "es": "Seguro de responsabilidad",
+            "en": "Liability insurance"
+          },
+          "status": "declared",
+          "reference": "DEMO-POL-16",
+          "note": ""
+        }
+      ],
+      "portfolio": [
+        {
+          "id": "demo-cobb-work",
+          "title": {
+            "es": "Un proyecto de nuestro portafolio",
+            "en": "A project from our portfolio"
+          },
+          "image": "/images/professional-3.jpg"
+        }
+      ]
     }
   ],
   "requests": [
@@ -1152,6 +1413,54 @@
         "es": "Administradora de prueba",
         "en": "Demo administrator"
       }
+    },
+    {
+      "id": "account-demo-gwinnett",
+      "role": "contractor",
+      "name": "Gwinnett Home Demo",
+      "email": "gwinnett@example.test",
+      "label": {
+        "es": "Contratista de muestra · Gwinnett",
+        "en": "Demo contractor · Gwinnett"
+      },
+      "registrationCounty": "gwinnett",
+      "professionalId": "demo-gwinnett"
+    },
+    {
+      "id": "account-demo-cobb",
+      "role": "contractor",
+      "name": "Cobb Home Demo",
+      "email": "cobb@example.test",
+      "label": {
+        "es": "Contratista de muestra · Cobb",
+        "en": "Demo contractor · Cobb"
+      },
+      "registrationCounty": "cobb",
+      "professionalId": "demo-cobb"
+    },
+    {
+      "id": "account-demo-dekalb",
+      "role": "contractor",
+      "name": "DeKalb Home Demo",
+      "email": "dekalb@example.test",
+      "label": {
+        "es": "Contratista de muestra · DeKalb",
+        "en": "Demo contractor · DeKalb"
+      },
+      "registrationCounty": "dekalb",
+      "professionalId": "demo-dekalb"
+    },
+    {
+      "id": "account-demo-fulton",
+      "role": "contractor",
+      "name": "Fulton Home Demo",
+      "email": "fulton@example.test",
+      "label": {
+        "es": "Contratista de muestra · Fulton",
+        "en": "Demo contractor · Fulton"
+      },
+      "registrationCounty": "fulton",
+      "professionalId": "demo-fulton"
     }
   ]
 }

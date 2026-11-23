@@ -137,7 +137,7 @@ export function ContractorRoutes({
       ) : tab === "coverage" ? (
         <Coverage language={language} />
       ) : (
-        <Account />
+        <Account language={language} />
       )}
     </Suspense>
   );

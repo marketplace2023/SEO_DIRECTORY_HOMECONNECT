@@ -68,22 +68,64 @@ type Connection = {
   locations?: any[];
   syncedAt?: string;
   selected?: string;
+  checkedAt?: string;
+  issue?: "authorization" | "location" | "maps";
 };
+class GoogleFailure extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+async function publicMapsStatus(uri: string): Promise<boolean | undefined> {
+  let url = new URL(uri);
+  for (let redirects = 0; redirects < 5; redirects++) {
+    if (
+      url.protocol !== "https:" ||
+      url.port ||
+      url.username ||
+      url.password ||
+      ![
+        "maps.google.com",
+        "www.google.com",
+        "google.com",
+        "maps.app.goo.gl",
+        "g.page",
+      ].includes(url.hostname)
+    )
+      return undefined;
+    const response = await fetch(url, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(8000),
+    });
+    await response.body?.cancel();
+    if (response.status === 404 || response.status === 410) return false;
+    if (response.ok) return true;
+    const target = response.headers.get("location");
+    if (!target || response.status < 300 || response.status >= 400)
+      return undefined;
+    url = new URL(target, url);
+  }
+}
 async function googleFetch(url: string, init: RequestInit = {}) {
   const response = await fetch(url, {
     ...init,
     signal: AbortSignal.timeout(15000),
   });
-  const data = await response.json();
-  if (!response.ok)
-    throw Error(
+  if (!response.ok) {
+    const failure = await response.json().catch(() => ({}));
+    throw new GoogleFailure(
+      failure?.error === "invalid_grant" ? 401 : response.status,
       response.status === 403
         ? "Google rechazó el acceso. Revisa la aprobación de las APIs y los permisos sobre las fichas."
         : response.status === 401
           ? "La autorización de Google venció o fue revocada. Vuelve a conectar."
           : "No fue posible completar la solicitud a Google.",
     );
-  return data;
+  }
+  return response.json();
 }
 export class GoogleBusiness {
   constructor(private db: Database) {}
@@ -115,7 +157,7 @@ export class GoogleBusiness {
     if (connection.expires > Date.now() + 30000)
       return tokens.access_token as string;
     if (!tokens.refresh_token)
-      throw Error("Vuelve a conectar tu cuenta de Google.");
+      throw new GoogleFailure(401, "Vuelve a conectar tu cuenta de Google.");
     const fresh = await googleFetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -126,10 +168,81 @@ export class GoogleBusiness {
         refresh_token: tokens.refresh_token,
       }),
     });
+    const previous = connection.encrypted;
     connection.encrypted = encryptToken({ ...tokens, ...fresh });
     connection.expires = Date.now() + fresh.expires_in * 1000;
-    await this.save(namespace, id, connection);
+    await this.db.sql.query(
+      "UPDATE google_business_connection SET data=data || $3::jsonb WHERE namespace=$1 AND id=$2 AND data->>'encrypted'=$4",
+      [
+        namespace,
+        id,
+        JSON.stringify({
+          encrypted: connection.encrypted,
+          expires: connection.expires,
+        }),
+        previous,
+      ],
+    );
     return fresh.access_token as string;
+  }
+  private async check(namespace: string, id: string, connection: Connection) {
+    if (!connection.selected || !/^locations\/\d+$/.test(connection.selected))
+      return;
+    let issue = connection.issue;
+    let verified = false;
+    try {
+      const token = await this.access(namespace, id, connection);
+      const location = await googleFetch(
+        `https://mybusinessbusinessinformation.googleapis.com/v1/${connection.selected}?readMask=name,metadata`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const uri = location.metadata?.mapsUri;
+      const reachable = uri ? await publicMapsStatus(uri) : false;
+      if (reachable !== undefined) {
+        issue = reachable ? undefined : "maps";
+        verified = true;
+      }
+    } catch (error) {
+      if (error instanceof GoogleFailure) {
+        if ([401, 403].includes(error.status)) {
+          issue = "authorization";
+          verified = true;
+        }
+        if (error.status === 404 || error.status === 410) {
+          issue = "location";
+          verified = true;
+        }
+      }
+    }
+    await this.db.sql.query(
+      "UPDATE google_business_connection SET data=(data-'issue') || $3::jsonb WHERE namespace=$1 AND id=$2 AND data->>'selected'=$4 AND data->>'encrypted'=$5",
+      [
+        namespace,
+        id,
+        JSON.stringify({ issue, checkedAt: new Date().toISOString() }),
+        connection.selected,
+        connection.encrypted,
+      ],
+    );
+    return verified;
+  }
+  private monitoring = false;
+  async monitor() {
+    if (this.monitoring || !googleConfiguration().configured) return;
+    this.monitoring = true;
+    try {
+      const rows = await this.db.sql.query<{
+        namespace: string;
+        id: string;
+        data: Connection;
+      }>(
+        "SELECT namespace,id,data FROM google_business_connection WHERE data ? 'selected' AND (NOT data ? 'checkedAt' OR (data->>'checkedAt')::timestamptz < now()-interval '1 hour') ORDER BY data->>'checkedAt' NULLS FIRST LIMIT 50",
+      );
+      for (const row of rows.rows)
+        await this.check(row.namespace, row.id, row.data);
+    } finally {
+      this.monitoring = false;
+    }
   }
   async route(
     req: IncomingMessage,
@@ -197,7 +310,10 @@ export class GoogleBusiness {
             .includes(scope)
         )
           throw Error("Permiso no concedido");
+        const old = await this.connection(grant.namespace, grant.userId);
         await this.save(grant.namespace, grant.userId, {
+          selected: old?.selected,
+          issue: old?.issue,
           encrypted: encryptToken(tokens),
           expires: Date.now() + Number(tokens.expires_in || 3600) * 1000,
         });
@@ -221,6 +337,10 @@ export class GoogleBusiness {
       return true;
     }
     const connection = await this.connection(namespace, user.id);
+    if (req.method === "GET" && url.pathname === "/api/google/notice") {
+      send(200, { issue: connection?.issue || null });
+      return true;
+    }
     if (req.method === "GET" && url.pathname === "/api/google/status") {
       const fresh =
         connection?.syncedAt &&
@@ -229,6 +349,7 @@ export class GoogleBusiness {
         ...config,
         connected: !!connection,
         selected: connection?.selected || "",
+        issue: connection?.issue || null,
         syncedAt: fresh ? connection?.syncedAt : null,
         locations: fresh ? connection?.locations || [] : [],
         requiresEmail: !user.emailVerified,
@@ -311,6 +432,15 @@ export class GoogleBusiness {
       send(503, { error: "La conexión de Google requiere configuración." });
       return true;
     }
+    if (
+      req.method === "POST" &&
+      url.pathname === "/api/google/check" &&
+      connection.selected
+    ) {
+      const verified = await this.check(namespace, user.id, connection);
+      send(200, { verified });
+      return true;
+    }
     if (req.method === "POST" && url.pathname === "/api/google/sync") {
       const access = await this.access(namespace, user.id, connection),
         headers = { Authorization: `Bearer ${access}` };
@@ -357,7 +487,14 @@ export class GoogleBusiness {
       }
       connection.locations = locations;
       connection.syncedAt = new Date().toISOString();
-      await this.save(namespace, user.id, connection);
+      await this.db.sql.query(
+        "UPDATE google_business_connection SET data=data || $3::jsonb WHERE namespace=$1 AND id=$2",
+        [
+          namespace,
+          user.id,
+          JSON.stringify({ locations, syncedAt: connection.syncedAt }),
+        ],
+      );
       send(200, { ok: true, count: locations.length });
       return true;
     }
@@ -377,7 +514,9 @@ export class GoogleBusiness {
         return true;
       }
       connection.selected = name;
+      delete connection.checkedAt;
       await this.save(namespace, user.id, connection);
+      await this.check(namespace, user.id, connection);
       send(200, { ok: true });
       return true;
     }

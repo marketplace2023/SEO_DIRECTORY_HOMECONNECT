@@ -185,6 +185,18 @@ const records = [
     "Chamblee|DeKalb County",
     2,
   ],
+  [
+    "demo-cobb",
+    "Cobb Home Demo",
+    "painting",
+    "Marietta",
+    "Georgia",
+    "Estados Unidos",
+    6,
+    4.7,
+    "Marietta|Cobb County",
+    3,
+  ],
 ] as const;
 export function createSeed(): DemoState {
   const sample = structuredClone(scenarios);
@@ -228,6 +240,7 @@ export function createSeed(): DemoState {
         image === 5
           ? "/images/process.jpg"
           : `/images/professional-${image}.jpg`,
+      ...(id === "ruiz" ? {vip: true} : {}),
       publication: "published",
       bio: {
         es: `Un equipo dedicado a ${categories.find((c) => c.id === categoryId)!.name.es.toLowerCase()}, con atención en ${city} y zonas cercanas. Planificamos cada trabajo contigo, desde el primer diagnóstico hasta la entrega.`,
@@ -266,7 +279,7 @@ export function createSeed(): DemoState {
   );
   return {
     version: 1,
-    seedRevision: 4,
+    seedRevision: 6,
     professionals,
     requests: sample.requests as DemoState["requests"],
     proposals: sample.proposals as DemoState["proposals"],

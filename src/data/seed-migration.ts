@@ -2,7 +2,35 @@ import { createSeed } from "./seed";
 import type { DemoState } from "@/domain/types";
 
 export function upgradeSeed(current: DemoState): DemoState {
-  if ((current.seedRevision || 0) >= 4) return current;
+  if ((current.seedRevision || 0) >= 6) return current;
+  const state = current.seedRevision === 5 ? current : upgradeToFive(current);
+  return {
+    ...state,
+    seedRevision: 6,
+    professionals: state.professionals.map((p) =>
+      p.id === "ruiz" && p.vip === undefined ? { ...p, vip: true } : p,
+    ),
+  };
+}
+
+function upgradeToFive(current: DemoState): DemoState {
+  const previous = upgradeToFour(current);
+  const cobb = createSeed().professionals.find(
+    (person) => person.id === "demo-cobb",
+  )!;
+  return {
+    ...previous,
+    seedRevision: 5,
+    professionals: previous.professionals.some(
+      (person) => person.id === cobb.id,
+    )
+      ? previous.professionals
+      : [...previous.professionals, cobb],
+  };
+}
+
+function upgradeToFour(current: DemoState): DemoState {
+  if (current.seedRevision === 4) return current;
   const sample = createSeed();
   const merge = <T extends { id: string }>(existing: T[], added: T[]) => [
     ...existing,

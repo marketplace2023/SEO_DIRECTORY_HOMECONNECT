@@ -1,3 +1,4 @@
+import { MapViewport } from "./map-viewport";
 import { isUsProfessional } from "@/domain/us-area";
 import { ProfessionalFilters } from "./professional-filters";
 import { ProfessionalCard } from "@/components/professional-card";
@@ -32,7 +33,11 @@ import {
   subcategories,
 } from "@/data/catalog";
 import type { Language } from "@/domain/types";
-import { displayedLocation, type MapBounds } from "@/domain/geography";
+import {
+  contains,
+  displayedLocation,
+  type MapBounds,
+} from "@/domain/geography";
 import {
   filtersFromParams,
   findProfessionals,
@@ -266,55 +271,26 @@ export function CoverageMap({
     ...filters,
     bounds: undefined,
   });
-  const visible = orderProfessionals(baseResults, params.get("sort"), language);
-  const compatible = !visible.length
-    ? findProfessionals(state, {
-        categoryId: filters.categoryId,
-        serviceId: filters.serviceId,
-        subcategoryId: filters.subcategoryId,
-      })
-    : [];
-  const alternatives = visible.length
-    ? []
-    : ([
-        compatible,
-        filters.categoryId
-          ? findProfessionals(state, { categoryId: filters.categoryId })
-          : [],
-        findProfessionals(state),
-      ].find((people) => people.length) ?? []);
-  const center = area
-    ? L.latLng((area[0] + area[2]) / 2, (area[1] + area[3]) / 2).wrap()
-    : undefined;
-  const distance = (person: (typeof alternatives)[number]) => {
+  const located = orderProfessionals(
+    baseResults,
+    params.get("sort"),
+    language,
+  ).flatMap((person) => {
     const point = displayedLocation(person);
-    return center && point
-      ? center.distanceTo([point.latitude, point.longitude])
-      : Infinity;
-  };
-  const alternative = orderProfessionals(alternatives, "best", language).reduce<
-    (typeof alternatives)[number] | undefined
-  >(
-    (best, person) =>
-      !best || distance(person) < distance(best) ? person : best,
-    undefined,
-  );
-  const located = visible
-    .map((p) => {
-      const point = displayedLocation(p, area);
-      if (point && area)
-        return {
-          person: p,
-          point: {
-            ...point,
-            longitude:
-              point.longitude +
-              360 * Math.ceil((area[1] - point.longitude) / 360),
-          },
-        };
-      return { person: p, point };
-    })
-    .filter((row) => row.point !== null);
+    if (!point || !viewport || !contains(viewport, point)) return [];
+    return [
+      {
+        person,
+        point: {
+          ...point,
+          longitude:
+            point.longitude +
+            360 * Math.ceil((viewport[1] - point.longitude) / 360),
+        },
+      },
+    ];
+  });
+  const visible = located.map((row) => row.person);
   const positions = baseResults.flatMap((person): [number, number][] => {
     const point = displayedLocation(person);
     return point ? [[point.latitude, point.longitude]] : [];
@@ -583,12 +559,6 @@ export function CoverageMap({
           {located.length}{" "}
           {t("contratistas en el mapa", "contractors on the map")}
         </p>
-        {located.length !== visible.length && (
-          <span>
-            {visible.length}{" "}
-            {t("contratistas en la lista", "contractors in the list")}
-          </span>
-        )}
         {area && (
           <Button
             variant="ghost"
@@ -642,7 +612,7 @@ export function CoverageMap({
             zoom={8}
             minZoom={2}
             maxZoom={18}
-            scrollWheelZoom={false}
+            scrollWheelZoom
             className="real-map"
             aria-label={t(
               "Mapa interactivo de contratistas",
@@ -689,13 +659,13 @@ export function CoverageMap({
                 eventHandlers={{ tileerror: () => setTileError(true) }}
               />
             )}
+            <MapViewport onChange={setViewport} />
             <MapBehavior
               positions={positions}
               selected={focusedPosition}
               applied={filters.bounds}
               fitKey={fitKey + "#" + fitVersion}
               onMove={(bounds, source) => {
-                setViewport(bounds);
                 if (source !== "layout") {
                   if (source === "user") setSelected("");
                   setSearchedArea({ key: fitKey, bounds });
@@ -898,36 +868,11 @@ export function CoverageMap({
                 </ProfessionalCard>
               );
             })
-          ) : alternative ? (
-            <div className="catalog-map-alternative">
-              <h3>
-                {t(
-                  "Sin coincidencias en esta búsqueda",
-                  "No matches for this search",
-                )}
-              </h3>
-              <p className="eco-note">
-                {t(
-                  "Alternativa del directorio fuera de los filtros seleccionados.",
-                  "Directory alternative outside the selected filters.",
-                )}
-              </p>
-              <ProfessionalCard
-                horizontal
-                person={alternative}
-                language={language}
-                category={categoryName(alternative.categoryId, language)}
-                experience={t("años de experiencia", "years of experience")}
-                details={t("Ver ficha", "View profile")}
-                verifiedLabel={t("Verificado · demo", "Verified · demo")}
-                onOpen={() => navigate(`/professionals/${alternative.id}`)}
-              />
-            </div>
           ) : (
             <Empty
               title={t(
-                "No hay contratistas con estos filtros",
-                "No contractors match these filters",
+                "No hay contratistas en el área visible con estos filtros",
+                "No matching contractors in the visible area",
               )}
               description={
                 scope

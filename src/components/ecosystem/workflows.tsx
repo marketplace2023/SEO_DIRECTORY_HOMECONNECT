@@ -1,6 +1,6 @@
 import { AttachmentsPanel } from "./attachments-panel";
 import { ProjectFeedback } from "./pilot-panels";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { lineCents } from "@/domain/estimating";
 import { isGuestOwner } from "@/domain/guest-quotes";
 import {
@@ -21,6 +21,48 @@ import { categoryName, serviceName } from "@/data/catalog";
 import { navigate } from "@/lib/navigation";
 import { Panel, Empty, copy } from "./primitives";
 import { Missing } from "./public-pages";
+
+function OpportunityClock({
+  release,
+  language,
+}: {
+  release: string;
+  language: Language;
+}) {
+  const deadline = Date.parse(release);
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (deadline <= Date.now()) return;
+    const timer = setInterval(() => {
+      const time = Date.now();
+      setNow(time);
+      if (time >= deadline) clearInterval(timer);
+    }, 500);
+    return () => clearInterval(timer);
+  }, [deadline]);
+  const seconds = Math.max(0, Math.ceil((deadline - now) / 1000));
+  const t = copy(language);
+  if (!seconds)
+    return (
+      <small>
+        {t(
+          "Abierta a contratistas compatibles",
+          "Open to matching contractors",
+        )}
+      </small>
+    );
+  const time =
+    Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
+  return (
+    <span className="eco-badge active">
+      {t(
+        "Acceso VIP · apertura general en ",
+        "VIP access · general release in ",
+      )}
+      {time}
+    </span>
+  );
+}
 
 export function RequestList({
   language,
@@ -52,6 +94,15 @@ export function RequestList({
         )
       }
     >
+      {contractor &&
+        state.professionals.find((p) => p.id === professionalId)?.vip && (
+          <p className="eco-note">
+            {t(
+              "VIP activo · Recibes las oportunidades de tu especialidad y zona cinco minutos antes de la apertura general.",
+              "VIP active · See matching opportunities in your area five minutes before general release.",
+            )}
+          </p>
+        )}
       {rows.length ? (
         <div className="eco-records">
           {rows.map((request) => (
@@ -129,6 +180,9 @@ export function RequestRow({
           {categoryName(request.categoryId, language)}
         </span>
         <h3>{request.title}</h3>
+        {request.status === "open" && request.publicAt && (
+          <OpportunityClock release={request.publicAt} language={language} />
+        )}
         <p>
           {request.location} · {serviceName(request.serviceId, language)}
         </p>
@@ -181,10 +235,18 @@ export function RequestDetail({
       <div>
         <AttachmentsPanel
           targetId={request.id}
+          purpose="reference"
+          canUpload={!contractor}
+        />
+        <AttachmentsPanel
+          targetId={request.id}
           purpose="request"
           canUpload={!contractor}
         />
         <Panel title={request.title}>
+          {request.status === "open" && request.publicAt && (
+            <OpportunityClock release={request.publicAt} language={language} />
+          )}
           <span className={`eco-badge ${request.status}`}>
             {request.status === "open"
               ? t("Solicitud abierta", "Open request")

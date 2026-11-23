@@ -5,6 +5,7 @@ import { isUsProfessional } from "../../src/domain/us-area";
 export function visibleState(
   state: DemoState,
   user: AuthUser | null,
+  ownerName?: (id: string) => string | undefined,
 ): DemoState {
   if (user?.role === "admin") return structuredClone(state);
   const professionalId = user?.professionalId;
@@ -65,6 +66,7 @@ export function visibleState(
         ? structuredClone(p)
         : ({
             ...p,
+            vipRequested: undefined,
             credentials: p.credentials.map((c) => ({
               ...c,
               reference: "",
@@ -100,7 +102,13 @@ export function visibleState(
             ),
           }
         : undefined,
-    messages,
+    messages:
+      user?.role === "contractor" && ownerName
+        ? messages.map((m) => ({
+            ...m,
+            ownerName: ownerName(m.ownerId || "demo-owner"),
+          }))
+        : messages,
     favorites,
     favoritesByOwner:
       user?.role === "owner" && user.id !== "demo-owner"

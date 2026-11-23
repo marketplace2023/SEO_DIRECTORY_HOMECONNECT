@@ -1,7 +1,7 @@
 import { isUsProfessional } from "@/domain/us-area";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/auth/auth-provider";
-import { PiArrowRight, PiArrowUpRight } from "react-icons/pi";
+import { PiArrowRight, PiArrowUpRight, PiImage } from "react-icons/pi";
 import { categories, services } from "@/data/catalog";
 import { useStore } from "@/domain/store";
 import type { Language } from "@/domain/types";
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, PageTitle, Panel, copy } from "./primitives";
 import { Missing } from "./public-pages";
+import { readFileData } from "./attachments-panel";
+import { apiRequest } from "@/lib/http";
 
 export function RequestPage({
   route,
@@ -61,6 +63,10 @@ export function RequestPage({
   const [categoryId, setCategory] = useState(initial.categoryId);
   const [serviceId, setService] = useState(initial.id);
   const [error, setError] = useState("");
+  const [dragging, setDragging] = useState(false);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [posted, setPosted] = useState("");
   if (!user?.emailVerified || user.role !== "owner") return null;
   if (
     (route.params.has("professional") && !recipient) ||
@@ -77,8 +83,31 @@ export function RequestPage({
       s.categoryId === categoryId &&
       (!recipient || recipient.serviceIds.includes(s.id)),
   );
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  function addPhotos(additions: File[]) {
+    if (!additions.length) return;
+    if (
+      photos.length + additions.length > 2 ||
+      additions.some(
+        (file) =>
+          !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+          !file.size ||
+          file.size > 5 * 1024 * 1024,
+      )
+    ) {
+      setError(
+        t(
+          "Selecciona hasta dos imágenes JPEG, PNG o WebP de hasta 5 MB cada una.",
+          "Select up to two JPEG, PNG or WebP images, up to 5 MB each.",
+        ),
+      );
+      return;
+    }
+    setError("");
+    setPhotos([...photos, ...additions]);
+  }
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (busy) return;
     const data = new FormData(event.currentTarget);
     const title = String(data.get("title")).trim();
     const location = String(data.get("location")).trim();
@@ -109,8 +138,41 @@ export function RequestPage({
       date: String(data.get("date")),
       ...(recipient ? { professionalId: recipient.id } : {}),
     };
-    const id = send({ type: "request", value });
-    if (!id) return;
+    setBusy(true);
+    setError("");
+    let id = posted;
+    try {
+      if (!id) {
+        let saved: Promise<unknown> | undefined;
+        id = send({ type: "request", value }, (promise) => {
+          saved = promise;
+        });
+        if (!id) return;
+        await saved;
+        setPosted(id);
+      }
+      for (const photo of photos) {
+        await apiRequest("/api/files", {
+          targetId: id,
+          purpose: "reference",
+          name: photo.name.slice(0, 120),
+          data: await readFileData(photo),
+        });
+        setPhotos((items) => items.filter((item) => item !== photo));
+      }
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : t(
+              "No se pudo completar el envío.",
+              "Unable to complete submission.",
+            ),
+      );
+      return;
+    } finally {
+      setBusy(false);
+    }
     try {
       sessionStorage.removeItem(draftKey);
     } catch {
@@ -250,19 +312,114 @@ export function RequestPage({
                 />
               </Field>
             </div>
+            <fieldset className="grid gap-2" disabled={busy || Boolean(posted)}>
+              <legend className="mb-2 font-semibold">
+                {t(
+                  "Imágenes de referencia (opcional)",
+                  "Reference images (optional)",
+                )}
+              </legend>
+              <label
+                className="request-photo-drop"
+                data-dragging={dragging}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  if (!busy && !posted) setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragging(false);
+                  if (!busy && !posted)
+                    addPhotos(Array.from(event.dataTransfer.files));
+                }}
+              >
+                <PiImage aria-hidden="true" size={30} />
+                <strong>
+                  {t(
+                    "Arrastra y suelta tus imágenes aquí",
+                    "Drag and drop your images here",
+                  )}
+                </strong>
+                <span>
+                  {t(
+                    "o selecciona archivos de tu dispositivo",
+                    "or choose files from your device",
+                  )}
+                </span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp"
+                  aria-label={t(
+                    "Añade hasta dos imágenes del proyecto",
+                    "Add up to two project images",
+                  )}
+                  onChange={(event) => {
+                    addPhotos(Array.from(event.currentTarget.files || []));
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+              <small>
+                {t(
+                  "JPEG, PNG o WebP · 5 MB por imagen. Los contratistas que reciban la solicitud podrán verlas.",
+                  "JPEG, PNG or WebP · 5 MB per image. Contractors who receive the request can view them.",
+                )}
+              </small>
+              {photos.map((photo, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span className="break-all">{photo.name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() =>
+                      setPhotos(photos.filter((_, index) => index !== i))
+                    }
+                  >
+                    {t("Quitar", "Remove")}
+                  </Button>
+                </div>
+              ))}
+            </fieldset>
+            {posted && !busy && (
+              <p>
+                {t(
+                  "Solicitud creada. Puedes reintentar la carga o abrir su detalle.",
+                  "Request created. Retry the upload or open the request.",
+                )}{" "}
+                <a
+                  className="underline"
+                  href={"#/workspace/owner/requests/" + posted}
+                >
+                  {t("Ver solicitud", "View request")}
+                </a>
+              </p>
+            )}
             {error && (
               <p role="alert" className="eco-error">
                 {error}
               </p>
             )}
-            <Button type="submit">
-              {t("Publicar solicitud de prueba", "Post demo request")}
+            <Button type="submit" disabled={busy}>
+              {busy
+                ? t("Enviando…", "Sending…")
+                : posted
+                  ? t("Reintentar carga", "Retry upload")
+                  : t("Publicar solicitud de prueba", "Post demo request")}
               <PiArrowRight />
             </Button>
             <p className="eco-note">
               {t(
-                "Recibe y compara las propuestas desde tu cuenta.",
-                "Receive and compare proposals from your account.",
+                recipient
+                  ? "Esta solicitud se envía al contratista seleccionado."
+                  : "Los contratistas VIP compatibles reciben tu solicitud primero. Cinco minutos después se abre a los demás profesionales compatibles.",
+                recipient
+                  ? "Your request goes to the selected contractor."
+                  : "Matching VIP contractors receive your request first. Other matching contractors can see it after five minutes.",
               )}
             </p>
           </form>
