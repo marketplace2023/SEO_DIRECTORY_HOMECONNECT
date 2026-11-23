@@ -32,6 +32,7 @@ import {
 import { seoRoutes } from "../server/seo/routes";
 import { localSeoRoutes } from "../server/local-seo/routes";
 import { contractorEstimateRoutes } from "../server/contractor-estimates";
+import { stripeWebhook } from "../server/contractor-checkout";
 
 const port = Number(process.env.SERVINEXO_API_PORT || 5190);
 const file = resolve(
@@ -241,14 +242,14 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     send(200, accounts.seoUsers(session));
     return;
   }
-  const isEstimateRoute = url.pathname === "/api/contractor/estimates";
+  const isEstimateRoute = ["/api/contractor/estimates", "/api/owner/estimate"].includes(url.pathname);
   const estimateRoute = async (method: "GET" | "POST", body?: unknown) =>
     contractorEstimateRoutes(url.pathname, method, body, database, accounts.user(session, token), session,
       states.get(session) || createSeed(), send, async (next) => {
         await database.saveState(session, next);
         states.set(session, next);
         publish(session, next);
-      });
+      },url.searchParams.get("project")||"");
   if (isEstimateRoute && req.method === "GET" && await estimateRoute("GET")) return;
   if (
     req.method === "GET" &&
@@ -431,16 +432,26 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   });
   await previousMutation;
   try {
-    let body = "";
+    const chunks: Buffer[] = [];
+    let bodyLength = 0;
     for await (const chunk of req) {
-      body += chunk;
+      const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      bodyLength += bytes.length;
       if (
-        body.length > (url.pathname === "/api/files" ? 8_000_000 : 2_000_000)
+        bodyLength > (url.pathname === "/api/files" ? 8_000_000 : 2_000_000)
       ) {
         send(413, { error: "Payload too large" });
         return;
       }
+      chunks.push(bytes);
     }
+    const bytes = Buffer.concat(chunks, bodyLength);
+    if (url.pathname === "/api/stripe/webhook") {
+      const status = await stripeWebhook(database, bytes, req.headers["stripe-signature"]);
+      send(status, { received: status === 200 });
+      return;
+    }
+    const body = bytes.toString("utf8");
     const data = body ? JSON.parse(body) : {};
     if (isEstimateRoute && await estimateRoute("POST", data)) return;
     if (url.pathname === "/api/local-seo/event") {

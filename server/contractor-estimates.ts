@@ -5,6 +5,8 @@ import type { DemoState } from "../src/domain/types";
 import { allowedRequests, reducer } from "../src/domain/store";
 import {
   lineAmount,
+  resourceKinds,
+  valuationQuantity,
   workUnits,
   type Budget,
   type Estimate,
@@ -13,6 +15,16 @@ import {
   type WorkItem,
 } from "../src/domain/contractor-estimates";
 import type { Database } from "./database/database";
+import {
+  applyCommercialAction,
+  clientEstimate,
+  commercialActions,
+  commercialSchema,
+  EstimateError,
+  hasChangeInReview,
+  hasValuationInReview,
+  requireBudget,
+} from "./contractor-commercial";
 
 const id = z.uuid();
 const title = z.string().trim().min(1).max(160);
@@ -25,16 +37,35 @@ const factor = z
     (value) => Math.abs(value * 1000 - Math.round(value * 1000)) < 0.000001,
   );
 const date = z.iso.date();
+const itemFields = z.object({
+  code: title.max(40),
+  description: title,
+  unit: z.enum(workUnits),
+  unitPriceCents: z.number().int().min(1).max(100_000_000),
+  priceSource: z.string().trim().max(160),
+  active: z.boolean(),
+  resources: z
+    .array(
+      z.object({
+        kind: z.enum(resourceKinds),
+        description: title,
+        unit: title.max(20),
+        quantity,
+        rateCents: z.number().int().min(1).max(100_000_000),
+      }),
+    )
+    .max(100)
+    .optional(),
+});
 const actions = z.discriminatedUnion("action", [
-  z.object({
+  itemFields.extend({
     action: z.literal("item"),
     id: id.optional(),
-    code: title.max(40),
-    description: title,
-    unit: z.enum(workUnits),
-    unitPriceCents: z.number().int().min(1).max(100_000_000),
-    priceSource: z.string().trim().max(160),
-    active: z.boolean(),
+  }),
+  z.object({
+    action: z.literal("import-items"),
+    items: z.array(itemFields).min(1).max(500),
+    updatePrices: z.boolean().optional(),
   }),
   z.object({
     action: z.literal("estimate"),
@@ -47,6 +78,9 @@ const actions = z.discriminatedUnion("action", [
     itemId: id,
     location: title,
     factors: z.array(factor).min(1).max(3),
+    source: z
+      .object({ format: z.enum(["pdf", "dxf", "ifc"]), label: title })
+      .optional(),
   }),
   z.object({
     action: z.literal("measurement-remove"),
@@ -54,6 +88,7 @@ const actions = z.discriminatedUnion("action", [
     measurementId: id,
   }),
   z.object({ action: z.literal("close"), estimateId: id }),
+  z.object({ action: z.literal("reopen"), estimateId: id }),
   z.object({
     action: z.literal("agreement"),
     estimateId: id,
@@ -76,22 +111,13 @@ const actions = z.discriminatedUnion("action", [
       .min(1)
       .max(200),
   }),
+  z.object({
+    action: z.literal("valuation-remove"),
+    estimateId: id,
+    recordId: id,
+  }),
+  ...commercialActions,
 ]);
-
-class EstimateError extends Error {
-  constructor(
-    message: string,
-    readonly status = 400,
-  ) {
-    super(message);
-  }
-}
-
-function requireBudget(estimate: Estimate): Budget {
-  if (!estimate.budget)
-    throw new EstimateError("Primero cierra el presupuesto.");
-  return estimate.budget;
-}
 
 function prepareBudget(estimate: Estimate, items: WorkItem[]): Budget {
   const quantities = new Map<string, number>();
@@ -127,7 +153,9 @@ function prepareValuation(
   input: Extract<z.infer<typeof actions>, { action: "valuation" }>,
 ): Valuation {
   const budget = requireBudget(estimate);
-  const previous = estimate.valuations.at(-1);
+  const previous = estimate.valuations
+    .filter((entry) => entry.status !== "rejected")
+    .at(-1);
   if (input.start > input.end || (previous && input.start <= previous.end))
     throw new EstimateError(
       "Las fechas deben formar un período posterior al último, sin solaparse.",
@@ -136,10 +164,7 @@ function prepareValuation(
     new Set(input.lines.map((line) => line.itemId)).size !== input.lines.length
   )
     throw new EstimateError("Incluye cada partida una sola vez.");
-  const quantities = new Map<string, number>();
-  for (const valuation of estimate.valuations)
-    for (const line of valuation.lines)
-      quantities.set(line.itemId, line.accumulated);
+  const quantities = valuationQuantity(estimate);
   const lines = input.lines.map((line) => {
     const approved = budget.lines.find((record) => record.id === line.itemId);
     if (!approved)
@@ -165,6 +190,7 @@ function prepareValuation(
     lines,
     amountCents,
     accumulatedCents: (previous?.accumulatedCents ?? 0) + amountCents,
+    status: "draft",
   };
 }
 
@@ -178,7 +204,19 @@ export async function contractorEstimateRoutes(
   state: DemoState,
   send: (status: number, body: unknown) => void,
   saveMarketplace: (next: DemoState) => Promise<void>,
+  projectId = "",
 ) {
+  if (path === "/api/owner/estimate")
+    return ownerEstimateRoute(
+      method,
+      body,
+      db,
+      user,
+      namespace,
+      state,
+      projectId,
+      send,
+    );
   if (path !== "/api/contractor/estimates") return false;
   const professionalId = user?.professionalId;
   if (
@@ -241,6 +279,51 @@ export async function contractorEstimateRoutes(
   }
   const input = parsed.data;
   try {
+    if (input.action === "import-items") {
+      const existing = new Map(items.map((item) => [item.code, item]));
+      const codes = new Set<string>();
+      let newItems = 0;
+      const imported = input.items.map((item) => {
+        const code = item.code.toUpperCase();
+        if (codes.has(code))
+          throw new EstimateError(
+            `Código repetido: ${code}. Corrige el archivo antes de importar.`,
+            409,
+          );
+        codes.add(code);
+        const previous = existing.get(code);
+        if (previous) {
+          if (!input.updatePrices)
+            throw new EstimateError(
+              `El código ${code} ya existe en tu catálogo.`,
+              409,
+            );
+          if (previous.resources?.length || previous.unit !== item.unit)
+            throw new EstimateError(
+              `El código ${code} tiene un APU o una unidad diferente. Revisa la partida antes de actualizar.`,
+              409,
+            );
+          return {
+            ...previous,
+            unitPriceCents: item.unitPriceCents,
+            priceSource: item.priceSource,
+          };
+        }
+        newItems++;
+        return makeItem(item, randomUUID());
+      });
+      if (items.length + newItems > 500)
+        throw new EstimateError("El catálogo admite hasta 500 partidas.");
+      await db.sql.transaction(async (tx) => {
+        for (const item of imported)
+          await tx.query(
+            "INSERT INTO contractor_work_item(namespace,professional_id,id,code,data) VALUES($1,$2,$3,$4,$5) ON CONFLICT(namespace,professional_id,id) DO UPDATE SET data=excluded.data",
+            [...scope, item.id, item.code, JSON.stringify(item)],
+          );
+      });
+      send(200, { id: imported[0].id, count: imported.length });
+      return true;
+    }
     if (input.action === "item") {
       const previous = items.find((item) => item.id === input.id);
       if (input.id && !previous)
@@ -253,21 +336,22 @@ export async function contractorEstimateRoutes(
       if (
         previous &&
         previous.unit !== input.unit &&
-        estimates.some((record) =>
-          record.measurements.some(
-            (measurement) => measurement.itemId === previous.id,
-          ),
+        estimates.some(
+          (record) =>
+            record.budget?.lines.some((line) => line.id === previous.id) ||
+            record.changes?.some((change) =>
+              change.lines.some((line) => line.id === previous.id),
+            ) ||
+            record.measurements.some(
+              (measurement) => measurement.itemId === previous.id,
+            ),
         )
       )
         throw new EstimateError(
           "La unidad ya se usó en mediciones. Crea una partida para la nueva unidad.",
         );
       const { action: _, ...fields } = input;
-      const item: WorkItem = {
-        ...fields,
-        id: previous?.id ?? randomUUID(),
-        code,
-      };
+      const item = makeItem(fields, previous?.id ?? randomUUID());
       await db.sql.query(
         "INSERT INTO contractor_work_item(namespace,professional_id,id,code,data) VALUES($1,$2,$3,$4,$5) ON CONFLICT(namespace,professional_id,id) DO UPDATE SET code=excluded.code,data=excluded.data",
         [...scope, item.id, item.code, JSON.stringify(item)],
@@ -335,6 +419,7 @@ export async function contractorEstimateRoutes(
             location: input.location,
             factors: input.factors,
             quantity: measured,
+            source: input.source,
           });
           break;
         case "measurement-remove":
@@ -354,6 +439,17 @@ export async function contractorEstimateRoutes(
           if (estimate.budget)
             throw new EstimateError("El presupuesto ya está cerrado.", 409);
           estimate.budget = prepareBudget(estimate, items);
+          break;
+        case "reopen":
+          if (proposal || estimate.agreement || estimate.valuations.length)
+            throw new EstimateError(
+              "El presupuesto ya está comprometido. Usa una orden de cambio cuando quede aceptado.",
+              409,
+            );
+          if ((estimate.revisions?.length ?? 0) >= 200)
+            throw new EstimateError("Se alcanzó el límite de revisiones.");
+          (estimate.revisions ??= []).push(requireBudget(estimate));
+          delete estimate.budget;
           break;
         case "agreement":
           requireBudget(estimate);
@@ -413,8 +509,45 @@ export async function contractorEstimateRoutes(
             throw new EstimateError(
               "El expediente admite hasta 200 valuaciones.",
             );
+          if (hasValuationInReview(estimate) || hasChangeInReview(estimate))
+            throw new EstimateError(
+              "Resuelve la orden o valuación pendiente antes de registrar otro período.",
+              409,
+            );
           estimate.valuations.push(prepareValuation(estimate, input));
           break;
+        case "valuation-remove":
+          if (
+            !estimate.valuations.some(
+              (record) =>
+                record.id === input.recordId && record.status === "draft",
+            )
+          )
+            throw new EstimateError(
+              "Solo se puede retirar una valuación en borrador.",
+              409,
+            );
+          estimate.valuations = estimate.valuations.filter(
+            (record) => record.id !== input.recordId,
+          );
+          break;
+        default:
+          if (
+            !(estimate.requestId
+              ? proposal?.status === "accepted"
+              : estimate.agreement)
+          )
+            throw new EstimateError(
+              "Se requiere una propuesta aceptada o acuerdo externo.",
+              409,
+            );
+          await applyCommercialAction(
+            estimate,
+            input,
+            items,
+            professionalId,
+            "contractor",
+          );
       }
     }
     await db.sql.query(
@@ -425,6 +558,112 @@ export async function contractorEstimateRoutes(
   } catch (error) {
     if (!(error instanceof EstimateError)) throw error;
     send(error.status, { error: error.message });
+  }
+  return true;
+}
+
+function makeItem(fields: z.infer<typeof itemFields>, id: string): WorkItem {
+  const unitPriceCents = fields.resources?.length
+    ? fields.resources.reduce(
+        (sum, resource) =>
+          sum + lineAmount(resource.quantity, resource.rateCents),
+        0,
+      )
+    : fields.unitPriceCents;
+  if (unitPriceCents < 1 || unitPriceCents > 100_000_000)
+    throw new EstimateError(
+      "El precio calculado por APU está fuera del rango permitido.",
+    );
+  return { ...fields, id, code: fields.code.toUpperCase(), unitPriceCents };
+}
+
+async function ownerEstimateRoute(
+  method: "GET" | "POST",
+  body: unknown,
+  db: Database,
+  user: AuthUser | null,
+  namespace: string,
+  state: DemoState,
+  projectId: string,
+  send: (status: number, body: unknown) => void,
+) {
+  if (user?.role !== "owner") {
+    send(user ? 403 : 401, { error: "Inicia sesión como cliente de la obra." });
+    return true;
+  }
+  const project = state.projects.find((record) => record.id === projectId);
+  const request =
+    project &&
+    state.requests.find(
+      (record) => record.id === project.requestId && record.ownerId === user.id,
+    );
+  const proposal =
+    request &&
+    state.proposals.find(
+      (record) =>
+        record.id === project.proposalId &&
+        record.status === "accepted" &&
+        record.professionalId === project.professionalId,
+    );
+  if (!proposal?.contractorEstimateId) {
+    send(404, { error: "Expediente no disponible." });
+    return true;
+  }
+  const scope = [
+    namespace,
+    proposal.professionalId,
+    proposal.contractorEstimateId,
+  ];
+  const estimate = (
+    await db.sql.query<{ data: Estimate }>(
+      "SELECT data FROM contractor_estimate WHERE namespace=$1 AND professional_id=$2 AND id=$3",
+      scope,
+    )
+  ).rows[0]?.data;
+  if (!estimate || estimate.requestId !== request?.id) {
+    send(404, { error: "Expediente no disponible." });
+    return true;
+  }
+  if (method === "GET") {
+    send(200, clientEstimate(estimate, proposal.professionalId));
+    return true;
+  }
+  const parsed = commercialSchema.safeParse(body);
+  if (
+    !parsed.success ||
+    parsed.data.estimateId !== estimate.id ||
+    !["review", "checkout"].includes(parsed.data.action)
+  ) {
+    send(400, { error: "Revisa los datos del expediente." });
+    return true;
+  }
+  try {
+    const checkoutUrl = await applyCommercialAction(
+      estimate,
+      parsed.data,
+      [],
+      proposal.professionalId,
+      "owner",
+      projectId,
+    );
+    await db.sql.query(
+      "UPDATE contractor_estimate SET data=$4 WHERE namespace=$1 AND professional_id=$2 AND id=$3",
+      [...scope, JSON.stringify(estimate)],
+    );
+    send(200, {
+      workspace: clientEstimate(estimate, proposal.professionalId),
+      checkoutUrl,
+    });
+  } catch (error) {
+    if (error instanceof EstimateError)
+      send(error.status, { error: error.message });
+    else if (
+      parsed.data.action === "checkout" &&
+      error instanceof Error &&
+      !("code" in error)
+    )
+      send(502, { error: error.message });
+    else throw error;
   }
   return true;
 }
