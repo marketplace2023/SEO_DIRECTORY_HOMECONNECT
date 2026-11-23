@@ -19,7 +19,6 @@ h3 {
   letter-spacing: -0.03em;
 }
 :root {
-  --primary: #e00707;
   --background: #fff;
   --foreground: #2d2e2f;
   color: #2d2e2f;
@@ -29,15 +28,15 @@ h3 {
   background: #fffffff5;
 }
 .announcement {
-  background: #fff1f1;
-  color: #8c1414;
+  background: var(--brand-tint);
+  color: #194f78;
 }
 .project-cta h2 em {
-  color: var(--primary);
+  color: #a94b00;
 }
 .project-cta-inner,
 .workspace-welcome {
-  background: #fff1f1;
+  background: var(--brand-tint);
 }
 .category-icon,
 .category-tile:hover .category-icon {
@@ -46,8 +45,8 @@ h3 {
 .category-tile:hover,
 .catalog-category:hover,
 .service-tile:hover {
-  background: #fff1f1;
-  border-color: #f2b3b3;
+  background: var(--brand-tint);
+  border-color: #adcee6;
 }
 .eco-badge.verified,
 .eco-badge.accepted,
@@ -108,13 +107,13 @@ h3 {
   white-space: nowrap;
 }
 .environment-access a svg {
-  color: #e00707;
+  color: var(--primary);
   font-size: 1.15rem;
 }
 .environment-access a:hover,
 .environment-access a[aria-current="page"] {
-  color: #c41200;
-  background: #fff1f1;
+  color: var(--brand-deep);
+  background: var(--brand-tint);
   border-color: #edb0b0;
 }
 .environment-cards-section {
@@ -137,7 +136,7 @@ h3 {
 }
 .environment-card > svg {
   font-size: 2rem;
-  color: #e00707;
+  color: var(--primary);
   margin-bottom: 24px;
 }
 .environment-card h3 {
@@ -157,15 +156,15 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #b80a0a;
+  color: #1a5683;
   font-size: 0.67rem;
   font-weight: 650;
   padding-top: 18px;
   border-top: 1px solid #f1dddd;
 }
 .environment-card:hover {
-  border-color: #e00707;
-  box-shadow: 0 8px 30px #a8000009;
+  border-color: var(--primary);
+  box-shadow: 0 8px 30px #14568412;
   transform: translateY(-3px);
 }
 .workspace-shell {
@@ -193,27 +192,27 @@ h3 {
   font-size: 0.72rem;
 }
 .workspace-shell .workspace-tabs > button.selected {
-  background: #e00707;
+  background: var(--primary);
   color: #fff;
 }
 .workspace-shell .workspace-tabs > button:not(.selected):hover {
-  color: #c41200;
-  background: #fff1f1;
+  color: var(--brand-deep);
+  background: var(--brand-tint);
 }
 .workspace-shell .workspace-tabs > button > span {
   margin-left: auto;
   background: #fff;
-  color: #c41200;
+  color: var(--brand-deep);
 }
 .workspace-shell .workspace-content {
   min-width: 0;
 }
 .workspace-admin .eco-stat {
-  border-top: 3px solid #e00707;
+  border-top: 3px solid var(--primary);
 }
 .workspace-owner .workspace-welcome,
 .workspace-contractor .workspace-welcome {
-  border-left: 4px solid #e00707;
+  border-left: 4px solid var(--primary);
 }
 .eco-panel {
   background: #fff;
@@ -225,7 +224,7 @@ h3 {
   gap: 15px;
   padding: 18px 22px;
   border: 1px solid #efcccc;
-  background: #fff7f7;
+  background: #f1f7fc;
   border-radius: 12px;
   margin-bottom: 25px;
 }
@@ -239,7 +238,7 @@ h3 {
 }
 .seed-overview a {
   margin-left: auto;
-  color: #c41200;
+  color: var(--brand-deep);
   font-size: 0.7rem;
   font-weight: 600;
   text-decoration: underline;
@@ -323,7 +322,7 @@ h3 {
   place-items: center;
   border-radius: 50% 50% 50% 3px;
   transform: rotate(-45deg);
-  background: #e00707;
+  background: var(--primary);
   border: 2px solid white;
   color: transparent;
   box-shadow: 0 3px 8px #5c000039;
@@ -354,7 +353,7 @@ h3 {
 }
 .map-popup button {
   text-align: left;
-  color: #c41200;
+  color: var(--brand-deep);
   font-size: 0.72rem;
   font-weight: 600;
 }
@@ -367,7 +366,7 @@ h3 {
   font-size: 9px;
 }
 .real-map .leaflet-control-zoom a {
-  color: #e00707;
+  color: var(--primary);
 }
 @media (max-width: 1050px) {
   .environment-access a {
@@ -529,7 +528,7 @@ h3 {
   padding: 11px 9px;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  color: #b80606;
+  color: var(--brand-deep);
   background: white;
   font-size: 12px;
   font-weight: 650;
@@ -561,11 +560,11 @@ h3 {
   margin-left: auto;
 }
 a.profile-social-item:hover {
-  border-color: #b80606;
-  background: #fff5f5;
+  border-color: var(--brand-deep);
+  background: #eff6fc;
 }
 a.profile-social-item:focus-visible {
-  outline: 2px solid #b80606;
+  outline: 2px solid var(--brand-deep);
   outline-offset: 3px;
 }
 .profile-social-item.is-unlinked {

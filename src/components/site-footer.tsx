@@ -167,7 +167,7 @@ export function SiteFooter({
           </div>
         </div>
         <div className="footer-directory-bottom">
-          <Brand onClick={() => onNavigate("/")} />
+          <Brand full onClick={() => onNavigate("/")} />
           <div>
             <p>© {new Date().getFullYear()} HOME CONNECT</p>
             <p>

@@ -1,3 +1,4 @@
+import { useSectionFilter } from "@/components/ecosystem/section-filter";
 import { demoAccounts } from "@/data/demo-accounts";
 import { Panel, copy } from "@/components/ecosystem/primitives";
 import { workspaceHref } from "@/lib/portals";
@@ -5,11 +6,19 @@ import type { Language } from "@/domain/types";
 import { DemoSettings } from "../settings/settings-page";
 export function SeedPage({ language }: { language: Language }) {
   const t = copy(language);
+  const filter = useSectionFilter(
+    demoAccounts,
+    (a) => [a.name, a.email, a.label[language]],
+    t("Nombre, correo o rol", "Name, email or role"),
+    language,
+    { label: t("Rol", "Role"), value: (a) => a.label[language] },
+  );
   return (
     <>
       <Panel title={t("Cuentas de demostración", "Demo accounts")}>
+        {filter.controls}
         <div className="team-grid">
-          {demoAccounts.map((account) => (
+          {filter.visible.map((account) => (
             <article className="team-card" key={account.id}>
               <span>
                 {account.name
@@ -38,7 +47,7 @@ export function SeedPage({ language }: { language: Language }) {
           {t("Descargar seed JSON", "Download seed JSON")}
         </a>
       </Panel>
-      <DemoSettings language={language} />
+      <DemoSettings searchable={false} language={language} />
     </>
   );
 }

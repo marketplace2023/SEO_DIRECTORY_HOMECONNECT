@@ -1,3 +1,4 @@
+import { useSectionFilter } from "@/components/ecosystem/section-filter";
 import { useStore } from "@/domain/store";
 import type { Language } from "@/domain/types";
 import { roleNames } from "@/domain/types";
@@ -22,11 +23,24 @@ export function Activity({ language }: { language: Language }) {
     member: t("Integrante añadido", "Team member added"),
     cancel: t("Solicitud cancelada", "Request cancelled"),
   };
+  const filter = useSectionFilter(
+    state.audit,
+    (e) => [
+      actions[e.action] || e.action,
+      roleNames[e.actor][language],
+      e.entityId,
+      new Date(e.at).toLocaleString(language),
+    ],
+    t("Acción, fecha o identificador", "Action, date or ID"),
+    language,
+    { label: t("Rol", "Role"), value: (e) => roleNames[e.actor][language] },
+  );
   return (
     <Panel title={t("Actividad del ecosistema", "Ecosystem activity")}>
+      {filter.controls}
       {state.audit.length ? (
         <ol className="audit-list">
-          {state.audit.map((event) => (
+          {filter.visible.map((event) => (
             <li key={event.id}>
               <span className="audit-dot" />
               <div>

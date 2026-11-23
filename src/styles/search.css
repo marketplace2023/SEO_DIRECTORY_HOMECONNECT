@@ -95,7 +95,7 @@
 }
 .search-suggestions button:hover,
 .search-suggestions button[aria-selected="true"] {
-  background: #fff1f1;
+  background: var(--brand-tint);
 }
 .search-popular-options {
   display: flex;
@@ -110,7 +110,7 @@
   font-size: 12px;
 }
 .search-suggestions .search-current-location {
-  color: #b80606;
+  color: var(--brand-deep);
   font-weight: 650;
   border-bottom: 1px solid #f0f0f0;
   border-radius: 0;

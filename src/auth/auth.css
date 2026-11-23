@@ -11,9 +11,9 @@
   justify-content: space-between;
   gap: 60px;
   padding: 48px clamp(32px, 5vw, 80px);
-  background: #fff5f4;
+  background: #fff4e8;
   border-right: 1px solid #f5dedb;
-  border-top: 6px solid #e00707;
+  border-top: 6px solid var(--primary);
 }
 .account-intro > div {
   max-width: 450px;
@@ -48,7 +48,7 @@
   font-size: 14px;
 }
 .account-intro li svg {
-  color: #e00707;
+  color: var(--primary);
   font-size: 22px;
   flex-shrink: 0;
 }
@@ -68,6 +68,50 @@
   width: 100%;
   max-width: 430px;
 }
+.account-login-intro {
+  position: relative;
+  isolation: isolate;
+  background: #102c41;
+  color: white;
+}
+.account-intro-photo,
+.account-login-intro::before {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.account-intro-photo {
+  z-index: -2;
+  object-fit: cover;
+}
+.account-login-intro::before {
+  content: "";
+  z-index: -1;
+  background: linear-gradient(
+    100deg,
+    rgb(8 27 42 / 86%),
+    rgb(8 27 42 / 65%) 70%,
+    rgb(8 27 42 / 45%)
+  );
+}
+.account-login-intro .brand {
+  align-self: flex-start;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 9px;
+}
+.account-login-intro p,
+.account-login-intro .account-kicker {
+  color: white;
+}
+.account-login-intro .account-kicker {
+  text-transform: uppercase;
+}
+.account-login-intro li svg {
+  color: #ffb266;
+}
 .account-lock {
   display: grid;
   place-items: center;
@@ -76,7 +120,7 @@
   border: 1px solid #e6e6e6;
   border-radius: 12px;
   font-size: 26px;
-  color: #e00707;
+  color: var(--primary);
   margin-bottom: 24px;
 }
 .account-form-container h2 {
@@ -144,7 +188,7 @@
 .account-terms input {
   min-height: 16px;
   width: 16px;
-  accent-color: #e00707;
+  accent-color: var(--primary);
 }
 .account-form > button {
   height: 46px;
@@ -169,7 +213,7 @@
   font-size: 13px !important;
 }
 .account-switch a {
-  color: #c41200;
+  color: var(--brand-deep);
   font-weight: 700;
 }
 .account-demo {
@@ -188,7 +232,7 @@
   color: #737373;
 }
 .account-demo button {
-  color: #c41200;
+  color: var(--brand-deep);
   font-weight: 600;
   margin-top: 8px;
 }

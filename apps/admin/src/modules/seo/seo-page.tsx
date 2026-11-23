@@ -1,3 +1,4 @@
+import { useSectionFilter } from "@/components/ecosystem/section-filter";
 import { useEffect, useState, type FormEvent } from "react";
 import { Panel, Field } from "@/components/ecosystem/primitives";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,16 @@ export function SeoPage() {
     [busy, setBusy] = useState(false),
     [editing, setEditing] = useState<any>();
   const { state } = useStore();
+  const filter = useSectionFilter<any>(
+    config?.pages ?? [],
+    (p) => [p.title, p.city, p.categoryId, p.description],
+    "Título, localidad o especialidad",
+    "es",
+    {
+      label: "Publicación",
+      value: (p) => (p.published ? "Publicada" : "Borrador"),
+    },
+  );
   async function load() {
     try {
       setConfig(await apiRequest("/api/seo/config"));
@@ -82,8 +93,9 @@ export function SeoPage() {
             estructurados de negocios ficticios.
           </p>
           <h3>Páginas por localidad y servicio</h3>
+          {filter.controls}
           <div className="eco-records">
-            {config.pages.map((page: any) => (
+            {filter.visible.map((page: any) => (
               <button
                 className="eco-record"
                 key={page.id}

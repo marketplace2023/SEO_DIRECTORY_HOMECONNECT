@@ -14,6 +14,19 @@ import { Input } from "@/components/ui/input";
 import { categories } from "@/data/catalog";
 import { portalHref } from "@/lib/portals";
 import "./auth.css";
+
+const loginPanels = {
+  web: { label: "Panel del consumidor", photo: "/images/hero.jpg" },
+  contractor: {
+    label: "Panel del contratista",
+    photo: "/images/professional-0.jpg",
+  },
+  admin: {
+    label: "Panel de administración",
+    photo: "/images/professional-5.jpg",
+  },
+};
+
 export function AuthForm({
   application,
   mode,
@@ -34,6 +47,7 @@ export function AuthForm({
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState("");
   const signingUp = mode === "register";
+  const panel = loginPanels[application];
   const role = application === "web" ? "owner" : application;
   const params = new URLSearchParams(window.location.hash.split("?")[1] || "");
   const requested = params.get("next") || "";
@@ -93,15 +107,24 @@ export function AuthForm({
       className={`account-page account-${application}`}
       data-auth-application={application}
     >
-      <aside className="account-intro">
+      <aside
+        className={
+          signingUp ? "account-intro" : "account-intro account-login-intro"
+        }
+      >
+        {!signingUp && (
+          <img className="account-intro-photo" src={panel.photo} alt="" />
+        )}
         <Brand onClick={() => window.location.assign(portalHref("web", "/"))} />
         <div>
           <span className="account-kicker">
-            {application === "admin"
-              ? "CENTRO DE ADMINISTRACIÓN"
-              : application === "contractor"
-                ? "HOME CONNECT PARA PROFESIONALES"
-                : "TU PRÓXIMO PROYECTO EMPIEZA AQUÍ"}
+            {!signingUp
+              ? panel.label
+              : application === "admin"
+                ? "CENTRO DE ADMINISTRACIÓN"
+                : application === "contractor"
+                  ? "HOME CONNECT PARA PROFESIONALES"
+                  : "TU PRÓXIMO PROYECTO EMPIEZA AQUÍ"}
           </span>
           <h1>{title}</h1>
           <p>{description}</p>

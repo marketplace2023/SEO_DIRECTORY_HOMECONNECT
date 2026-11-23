@@ -1,3 +1,4 @@
+import { useSectionFilter } from "@/components/ecosystem/section-filter";
 import { useStore } from "@/domain/store";
 import type { Language } from "@/domain/types";
 import { useState } from "react";
@@ -12,6 +13,13 @@ export function SupplierPanel({ language }: { language: Language }) {
   const t = copy(language);
   const [editing, setEditing] = useState<string | null>(null);
   const material = state.materials.find((m) => m.id === editing);
+  const filter = useSectionFilter(
+    state.materials,
+    (m) => [m.name, m.unit, m.stock, m.price],
+    t("Material o unidad", "Material or unit"),
+    language,
+    { label: t("Unidad", "Unit"), value: (m) => m.unit },
+  );
   return (
     <Panel title={t("Materiales e inventario", "Materials and inventory")}>
       <p className="eco-note">
@@ -20,6 +28,7 @@ export function SupplierPanel({ language }: { language: Language }) {
           "Demo inventory independent of Odoo. Sample prices in USD.",
         )}
       </p>
+      {filter.controls}
       <div className="table-scroll">
         <table className="eco-table">
           <thead>
@@ -34,7 +43,7 @@ export function SupplierPanel({ language }: { language: Language }) {
             </tr>
           </thead>
           <tbody>
-            {state.materials.map((m) => (
+            {filter.visible.map((m) => (
               <tr key={m.id}>
                 <td>{m.name}</td>
                 <td>{m.unit}</td>

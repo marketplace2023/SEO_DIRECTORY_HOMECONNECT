@@ -18,6 +18,9 @@ export function CatalogPage({ language }: { language: Language }) {
         c.name.es,
         c.name.en,
         c.id,
+        ...services
+          .filter((service) => service.categoryId === c.id)
+          .flatMap((service) => [service.id, service.name.es, service.name.en]),
         ...subcategories
           .filter((sub) => sub.categoryId === c.id)
           .flatMap((sub) => [sub.name.es, sub.name.en, sub.id]),
@@ -38,8 +41,8 @@ export function CatalogPage({ language }: { language: Language }) {
       <Input
         aria-label={t("Buscar categoría", "Search category")}
         placeholder={t(
-          "Buscar categoría o subcategoría…",
-          "Search category or subcategory…",
+          "Buscar categoría, subcategoría o servicio…",
+          "Search category, subcategory or service…",
         )}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
@@ -55,7 +58,7 @@ export function CatalogPage({ language }: { language: Language }) {
                   variant="ghost"
                   onClick={() => setSelected(c.id)}
                   aria-pressed={category?.id === c.id}
-                  className={`h-auto w-full justify-start gap-3 px-2 py-2 text-left ${category?.id === c.id ? "bg-red-50 text-red-700" : ""}`}
+                  className={`h-auto w-full justify-start gap-3 px-2 py-2 text-left ${category?.id === c.id ? "bg-accent text-accent-foreground" : ""}`}
                 >
                   <img
                     src={c.image}

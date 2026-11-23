@@ -279,7 +279,7 @@ export function CatalogPage({
                 onClick={() => selectCategory("")}
                 className={cn(
                   "mb-2 flex min-h-12 w-full items-center gap-3 rounded-lg px-3 text-left text-[13px] transition-colors hover:bg-neutral-50",
-                  !selected && "bg-red-50 font-semibold text-primary",
+                  !selected && "bg-accent font-semibold text-primary",
                 )}
               >
                 <PiSquaresFour className="size-5" aria-hidden="true" />
@@ -295,7 +295,7 @@ export function CatalogPage({
                   className={cn(
                     "group flex min-h-14 w-full items-center gap-3 rounded-lg p-2 text-left text-[13px] leading-5 transition-colors hover:bg-neutral-50",
                     selected?.id === category.id &&
-                      "bg-red-50 font-semibold text-primary",
+                      "bg-accent font-semibold text-primary",
                   )}
                 >
                   <img
@@ -364,9 +364,9 @@ export function CatalogPage({
                     <MagicCard
                       key={group.id}
                       className="rounded-2xl"
-                      gradientFrom="#e00707"
-                      gradientTo="#f5b5a7"
-                      gradientColor="#fff1f1"
+                      gradientFrom="var(--primary)"
+                      gradientTo="#ff8010"
+                      gradientColor="var(--brand-tint)"
                       gradientOpacity={0.22}
                     >
                       <article
@@ -439,7 +439,7 @@ export function CatalogPage({
                 })}
               </div>
               <section
-                className="mt-8 rounded-2xl bg-[#fff5f4] px-6 py-7 sm:px-8"
+                className="mt-8 rounded-2xl bg-[#fff4e8] px-6 py-7 sm:px-8"
                 aria-label={t("Prepara tu solicitud", "Prepare your request")}
               >
                 <h2 className="text-lg font-semibold tracking-tight">
@@ -504,9 +504,9 @@ export function CatalogPage({
                     <MagicCard
                       key={category.id}
                       className="rounded-2xl"
-                      gradientFrom="#e00707"
-                      gradientTo="#f5b5a7"
-                      gradientColor="#fff1f1"
+                      gradientFrom="var(--primary)"
+                      gradientTo="#ff8010"
+                      gradientColor="var(--brand-tint)"
                       gradientOpacity={0.22}
                     >
                       <button

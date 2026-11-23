@@ -1,9 +1,52 @@
+import { useSectionFilter } from "@/components/ecosystem/section-filter";
 import { useEffect, useState } from "react";
 import { Panel } from "@/components/ecosystem/primitives";
 import { apiRequest } from "@/lib/http";
 export function IntegrationsPage() {
   const [status, setStatus] = useState<any>(),
     [error, setError] = useState("");
+  const integrations = status
+    ? [
+        {
+          name: "Correo electrónico",
+          state:
+            status.email.mode === "local"
+              ? "Buzón local de pruebas"
+              : status.email.configured
+                ? "SMTP configurado"
+                : "Pendiente de SMTP",
+          details: [
+            "El modo local permite probar los enlaces; no envía mensajes a direcciones reales.",
+          ],
+        },
+        {
+          name: "Google Business Profile",
+          state: status.google.configured
+            ? "Listo para autorizar"
+            : "Pendiente de Google Cloud",
+          details: [
+            "Solo fichas autorizadas por sus propietarios.",
+            "Configuración pendiente: " +
+              (status.google.missing.join(", ") || "ninguna"),
+          ],
+        },
+        {
+          name: "Dominio y SEO",
+          state: status.seo.indexingEnabled
+            ? "Indexación habilitada"
+            : "Preparación · noindex",
+          details: [
+            status.seo.origin,
+            "Se necesitan dominio HTTPS y oferta real publicada.",
+          ],
+        },
+      ]
+    : [];
+  const filter = useSectionFilter(
+    integrations,
+    (i) => [i.name, i.state, ...i.details],
+    "Proveedor, estado o dominio",
+  );
   useEffect(() => {
     apiRequest("/api/integrations/status")
       .then(setStatus)
@@ -11,45 +54,18 @@ export function IntegrationsPage() {
   }, []);
   return (
     <Panel title="Integraciones del ecosistema">
+      {filter.controls}
       {status ? (
         <div className="eco-stats-grid">
-          <article className="eco-panel">
-            <h3>Correo electrónico</h3>
-            <strong>
-              {status.email.mode === "local"
-                ? "Buzón local de pruebas"
-                : status.email.configured
-                  ? "SMTP configurado"
-                  : "Pendiente de SMTP"}
-            </strong>
-            <p>
-              El modo local permite probar los enlaces; no envía mensajes a
-              direcciones reales.
-            </p>
-          </article>
-          <article className="eco-panel">
-            <h3>Google Business Profile</h3>
-            <strong>
-              {status.google.configured
-                ? "Listo para autorizar"
-                : "Pendiente de Google Cloud"}
-            </strong>
-            <p>Solo fichas autorizadas por sus propietarios.</p>
-            <p>
-              Configuración pendiente:{" "}
-              {status.google.missing.join(", ") || "ninguna"}
-            </p>
-          </article>
-          <article className="eco-panel">
-            <h3>Dominio y SEO</h3>
-            <strong>
-              {status.seo.indexingEnabled
-                ? "Indexación habilitada"
-                : "Preparación · noindex"}
-            </strong>
-            <p>{status.seo.origin}</p>
-            <p>Se necesitan dominio HTTPS y oferta real publicada.</p>
-          </article>
+          {filter.visible.map((i) => (
+            <article className="eco-panel" key={i.name}>
+              <h3>{i.name}</h3>
+              <strong>{i.state}</strong>
+              {i.details.map((text: string) => (
+                <p key={text}>{text}</p>
+              ))}
+            </article>
+          ))}
         </div>
       ) : (
         <p role="status">Consultando configuración…</p>

@@ -1,54 +1,77 @@
+import { useSectionFilter } from "@/components/ecosystem/section-filter";
 import { useStore } from "@/domain/store";
 import type { Language } from "@/domain/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Panel, copy } from "@/components/ecosystem/primitives";
 
-export function DemoSettings({ language }: { language: Language }) {
+export function DemoSettings({
+  language,
+  searchable = true,
+}: {
+  language: Language;
+  searchable?: boolean;
+}) {
   const { send } = useStore();
   const t = copy(language);
   const [confirm, setConfirm] = useState(false);
   const [done, setDone] = useState(false);
+  const filter = useSectionFilter(
+    [
+      t(
+        "Datos de demostración Restablecer demostración",
+        "Demo data Reset demo",
+      ),
+    ],
+    (value) => [value],
+    t("Buscar una opción", "Find a setting"),
+    language,
+  );
   return (
     <Panel title={t("Datos de demostración", "Demo data")}>
-      <p className="eco-body">
-        {t(
-          "Los datos se guardan en el servicio local compartido. Restablecer la muestra afecta a las tres aplicaciones; las cuentas registradas se conservan. Odoo y pagos siguen pendientes.",
-          "Data is saved in the shared local service. Resetting sample data affects all three applications; registered accounts are preserved. Odoo and payments remain pending.",
-        )}
-      </p>
-      {confirm ? (
-        <div className="eco-reset-confirm">
-          <p>
+      {searchable && filter.controls}
+      {(!searchable || filter.visible.length > 0) && (
+        <>
+          <p className="eco-body">
             {t(
-              "Se eliminarán solicitudes, propuestas, mensajes y cambios locales. Se restaurará la muestra inicial.",
-              "Requests, proposals, messages and local changes will be removed. The initial sample will be restored.",
+              "Los datos se guardan en el servicio local compartido. Restablecer la muestra afecta a las tres aplicaciones; las cuentas registradas se conservan. Odoo y pagos siguen pendientes.",
+              "Data is saved in the shared local service. Resetting sample data affects all three applications; registered accounts are preserved. Odoo and payments remain pending.",
             )}
           </p>
-          <div className="eco-actions">
-            <Button
-              onClick={() => {
-                send({ type: "reset" });
-                setConfirm(false);
-                setDone(true);
-              }}
-            >
-              {t("Confirmar restablecimiento", "Confirm reset")}
+          {confirm ? (
+            <div className="eco-reset-confirm">
+              <p>
+                {t(
+                  "Se eliminarán solicitudes, propuestas, mensajes y cambios locales. Se restaurará la muestra inicial.",
+                  "Requests, proposals, messages and local changes will be removed. The initial sample will be restored.",
+                )}
+              </p>
+              <div className="eco-actions">
+                <Button
+                  onClick={() => {
+                    send({ type: "reset" });
+                    setConfirm(false);
+                    setDone(true);
+                  }}
+                >
+                  {t("Confirmar restablecimiento", "Confirm reset")}
+                </Button>
+                <Button variant="outline" onClick={() => setConfirm(false)}>
+                  {t("Cancelar", "Cancel")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" onClick={() => setConfirm(true)}>
+              {t("Restablecer demostración", "Reset demo")}
             </Button>
-            <Button variant="outline" onClick={() => setConfirm(false)}>
-              {t("Cancelar", "Cancel")}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Button variant="outline" onClick={() => setConfirm(true)}>
-          {t("Restablecer demostración", "Reset demo")}
-        </Button>
-      )}
-      {done && (
-        <p role="status" className="eco-success">
-          {t("Demostración restablecida.", "Demo reset.")}
-        </p>
+          )}
+          {done && (
+            <p role="status" className="eco-success">
+              {t("Demostración restablecida.", "Demo reset.")}
+            </p>
+          )}
+        </>
       )}
     </Panel>
   );

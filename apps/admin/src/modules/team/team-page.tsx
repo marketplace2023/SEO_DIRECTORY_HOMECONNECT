@@ -1,3 +1,4 @@
+import { useSectionFilter } from "@/components/ecosystem/section-filter";
 import { useStore } from "@/domain/store";
 import type { Language } from "@/domain/types";
 import { PiPlus } from "react-icons/pi";
@@ -8,6 +9,12 @@ import { Field, Panel, copy } from "@/components/ecosystem/primitives";
 export function OrganizationPanel({ language }: { language: Language }) {
   const { state, send } = useStore();
   const t = copy(language);
+  const filter = useSectionFilter(
+    state.team,
+    (m) => [m.name, m.specialty],
+    t("Nombre o responsabilidad", "Name or responsibility"),
+    language,
+  );
   return (
     <Panel title={t("Equipo de la organización", "Organization team")}>
       <p className="eco-note">
@@ -16,8 +23,9 @@ export function OrganizationPanel({ language }: { language: Language }) {
           "Sample members of a fictional organization. No invitations are sent.",
         )}
       </p>
+      {filter.controls}
       <div className="team-grid">
-        {state.team.map((member) => (
+        {filter.visible.map((member) => (
           <article className="team-card" key={member.id}>
             <span>
               {member.name

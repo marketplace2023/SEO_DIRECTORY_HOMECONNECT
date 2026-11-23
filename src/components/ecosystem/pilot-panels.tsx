@@ -1,3 +1,4 @@
+import { useSectionFilter } from "@/components/ecosystem/section-filter";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Panel, Field, copy } from "./primitives";
 import { Input } from "@/components/ui/input";
@@ -257,6 +258,21 @@ export function SupportPanel({ admin = false }: { admin?: boolean }) {
   useEffect(() => {
     void load();
   }, []);
+  const ticketStates: Record<string, string> = {
+    open: "Abierta",
+    reviewing: "En revisión",
+    resolved: "Resuelta",
+  };
+  const filter = useSectionFilter(
+    tickets,
+    (t) => [t.id, t.subject, t.message, t.response, ticketStates[t.status]],
+    "Asunto, mensaje o respuesta",
+    "es",
+    {
+      label: "Estado de incidencia",
+      value: (t) => ticketStates[t.status] || t.status,
+    },
+  );
   async function submit(event: FormEvent<HTMLFormElement>, id?: string) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -286,7 +302,8 @@ export function SupportPanel({ admin = false }: { admin?: boolean }) {
           <Button>Crear incidencia</Button>
         </form>
       )}
-      {tickets.map((ticket) => (
+      {admin && filter.controls}
+      {(admin ? filter.visible : tickets).map((ticket) => (
         <article className="eco-panel" key={ticket.id}>
           <h3>{ticket.subject}</h3>
           <p>{ticket.message}</p>
@@ -323,8 +340,28 @@ export function SupportPanel({ admin = false }: { admin?: boolean }) {
   );
 }
 export function ReviewModeration() {
+  const { state } = useStore();
   const [reviews, setReviews] = useState<any[]>([]),
     [error, setError] = useState("");
+  const names = new Map(state.professionals.map((p) => [p.id, p.name]));
+  const statuses: Record<string, string> = {
+    pending: "Pendiente",
+    published: "Publicada",
+    rejected: "Rechazada",
+  };
+  const filter = useSectionFilter(
+    reviews,
+    (r) => [
+      r.text,
+      r.rating,
+      r.professionalId,
+      names.get(r.professionalId),
+      statuses[r.status],
+    ],
+    "Profesional, comentario o puntuación",
+    "es",
+    { label: "Estado de reseña", value: (r) => statuses[r.status] || r.status },
+  );
   async function load() {
     try {
       setReviews((await apiRequest("/api/reviews?moderation=1")).reviews);
@@ -337,10 +374,13 @@ export function ReviewModeration() {
   }, []);
   return (
     <Panel title="Moderación de reseñas">
-      {reviews.map((review) => (
+      {filter.controls}
+      {filter.visible.map((review) => (
         <article key={review.id} className="eco-panel">
           <strong>
-            {review.rating}/5 · {review.professionalId} · {review.status}
+            {review.rating}/5 ·{" "}
+            {names.get(review.professionalId) || review.professionalId} ·{" "}
+            {statuses[review.status] || review.status}
           </strong>
           <p>{review.text}</p>
           <form

@@ -12,7 +12,7 @@
   height: 23px;
 }
 .header-icon-action:hover {
-  background: #fff1f1;
+  background: var(--brand-tint);
   color: var(--primary);
 }
 .header-action-count {
@@ -62,7 +62,7 @@
 }
 .header-services-menu a:hover {
   color: var(--primary);
-  background: #fff5f5;
+  background: #eff6fc;
 }
 .header-services-menu .header-all-services {
   display: flex;
@@ -126,7 +126,7 @@
   position: relative;
 }
 .header-notifications > button[aria-expanded="true"] {
-  background: #fff0f1;
+  background: #edf5fc;
   color: var(--primary);
 }
 .header-notifications-panel {
@@ -183,7 +183,7 @@
 }
 .notification-panel-entry:hover,
 .notification-panel-entry:focus-visible {
-  background: #fff2f3;
+  background: #edf5fc;
 }
 .notification-panel-avatar {
   position: relative;

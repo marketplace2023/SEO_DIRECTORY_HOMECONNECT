@@ -138,7 +138,7 @@ export function DashboardFrame({
                   onClick={() => navigate(`${path}/${item.key}`)}
                   aria-label={item.label}
                   aria-current={item.key === active ? "page" : undefined}
-                  className={`h-auto w-full justify-start gap-3 rounded-lg px-3 py-3 text-left text-[13px] font-medium ${item.key === active ? "selected bg-red-50 text-red-700 hover:bg-red-50" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"}`}
+                  className={`h-auto w-full justify-start gap-3 rounded-lg px-3 py-3 text-left text-[13px] font-medium ${item.key === active ? "selected bg-accent text-accent-foreground hover:bg-accent" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"}`}
                 >
                   <item.icon />
                   {item.label}

@@ -73,7 +73,7 @@ export const adminModules = [
     icon: PiGear,
   },
   { key: "support", es: "Soporte", en: "Support", icon: PiGear },
-  { key: "reviews", es: "Rese?as", en: "Reviews", icon: PiSealCheck },
+  { key: "reviews", es: "Reseñas", en: "Reviews", icon: PiSealCheck },
   { key: "seo", es: "SEO local", en: "Local SEO", icon: PiGlobeHemisphereWest },
   { key: "overview", es: "Resumen", en: "Overview", icon: PiSquaresFour },
   {
@@ -130,7 +130,7 @@ export function AdminRoutes({
   )
     return <Missing language={language} />;
   return (
-    <Suspense fallback={<p role="status">Cargando módulo…</p>}>
+    <Suspense key={route.path} fallback={<p role="status">Cargando módulo…</p>}>
       {tab === "integrations" ? (
         <IntegrationsPage />
       ) : tab === "support" ? (

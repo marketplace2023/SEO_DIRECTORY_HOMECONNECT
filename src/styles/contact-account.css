@@ -33,14 +33,14 @@
   position: relative;
   padding: 26px clamp(20px, 5vw, 38px) 30px;
   background:
-    radial-gradient(ellipse at 102% 0%, #ff6253aa, transparent 54%),
+    radial-gradient(ellipse at 102% 0%, #4e9ed1aa, transparent 54%),
     repeating-radial-gradient(
       ellipse at 99% 0%,
       #fff0 0 34px,
       #ffffff16 35px 36px,
       #fff0 37px 53px
     ),
-    linear-gradient(120deg, #77152a, #a51630 58%, #c9273e);
+    linear-gradient(120deg, #123e60, #195981 58%, #276b9b);
   color: white;
 }
 .contact-account-close {
@@ -67,7 +67,7 @@
   font-size: 24px;
 }
 .contact-account-kicker {
-  color: #ffe3e5;
+  color: #ffead5;
   font-size: 0.78rem;
   font-weight: 650;
   letter-spacing: 0.04em;
@@ -80,7 +80,7 @@
 }
 .contact-account-person {
   margin-top: 8px;
-  color: #ffe1e3;
+  color: #e1eff9;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -97,11 +97,11 @@
 }
 .contact-account-actions .contact-account-register {
   background: white;
-  color: #8d1730;
+  color: #194e73;
   font-weight: 750;
 }
 .contact-account-actions .contact-account-register:hover {
-  background: #ffe7ea;
+  background: #ecf5fc;
 }
 .contact-account-actions .contact-account-login {
   background: #39081445;
@@ -114,7 +114,7 @@
 }
 .contact-account-links {
   padding: 24px clamp(20px, 5vw, 38px) 28px;
-  background: #fffafa;
+  background: #f7fbff;
 }
 .contact-account-links h2 {
   font-size: 1.08rem;

@@ -91,9 +91,9 @@ export function Empty({
 export function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
     <MagicCard
-      gradientFrom="#e00707"
-      gradientTo="#f5b5a7"
-      gradientColor="#fff1ed"
+      gradientFrom="var(--primary)"
+      gradientTo="#ff8010"
+      gradientColor="#fff2e5"
       gradientOpacity={0.4}
       className="eco-stat rounded-xl p-0!"
     >

@@ -31,7 +31,6 @@ export function portalConfig(name: "contractor" | "admin", port: number) {
             "maps",
             "category-art",
             "CATEGORY_PICS",
-            "favicon.svg",
             "demo-seed.json",
           ]) {
             const source = resolve(projectRoot, "public", asset);
@@ -44,7 +43,7 @@ export function portalConfig(name: "contractor" | "admin", port: number) {
             const pathname = req.url?.split("?")[0] || "";
             if (
               !/^\/(images|maps|category-art|CATEGORY_PICS)\//.test(pathname) &&
-              !["/favicon.svg", "/demo-seed.json"].includes(pathname)
+              pathname !== "/demo-seed.json"
             )
               return next();
             try {

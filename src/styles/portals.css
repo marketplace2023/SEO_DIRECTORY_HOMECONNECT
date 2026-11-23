@@ -33,7 +33,7 @@
   font-weight: 600;
 }
 .portal-product > svg {
-  color: #e00707;
+  color: var(--primary);
   font-size: 22px;
 }
 .portal-header-actions {
@@ -57,7 +57,7 @@
   font-weight: 600;
 }
 .portal-header-actions a:hover {
-  color: #e00707;
+  color: var(--primary);
 }
 .portal-context-bar {
   display: none;
@@ -150,9 +150,9 @@
   font-size: 20px;
 }
 .portal-main .dashboard-sidebar > button.selected {
-  background: #fff1f1;
-  color: #c41200;
-  box-shadow: inset 3px 0 #e00707;
+  background: var(--brand-tint);
+  color: var(--brand-deep);
+  box-shadow: inset 3px 0 var(--primary);
 }
 .portal-main .workspace-tabs > button > span {
   margin-left: auto;
@@ -247,8 +247,8 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #fff1f1;
-  color: #c41200;
+  background: var(--brand-tint);
+  color: var(--brand-deep);
   font-size: 12px;
   font-weight: 700;
 }
@@ -279,7 +279,7 @@
   font-size: 20px;
 }
 .portal-logout:hover {
-  color: #e00707;
+  color: var(--primary);
 }
 .admin-catalog-grid {
   display: grid;
@@ -301,8 +301,8 @@
   font-size: 13px;
 }
 .admin-catalog-grid > nav button.selected {
-  background: #fff1f1;
-  color: #c41200;
+  background: var(--brand-tint);
+  color: var(--brand-deep);
 }
 .admin-catalog-grid small {
   display: block;
@@ -473,17 +473,6 @@
   }
   .portal-header .brand {
     gap: 6px;
-  }
-  .portal-header .brand-symbol {
-    width: 26px;
-    height: 26px;
-    font-size: 20px;
-  }
-  .portal-header .brand-wordmark {
-    font-size: 14px;
-    max-width: 90px;
-    white-space: normal;
-    letter-spacing: -0.3px;
   }
   .portal-header-actions .portal-return-label {
     display: none;

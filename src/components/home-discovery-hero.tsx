@@ -56,7 +56,7 @@ export function DiscoveryHero({
           <BlurFade delay={0.05}>
             <Badge
               variant="outline"
-              className="mb-7 gap-2 rounded-md border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-semibold text-red-700"
+              className="mb-7 gap-2 rounded-md border-blue-200 bg-accent px-3 py-1.5 text-[11px] font-semibold text-accent-foreground"
             >
               <PiMapPin />
               Georgia · {es ? "Servicios del hogar" : "Home services"}
@@ -119,7 +119,7 @@ export function DiscoveryHero({
             fadeEffect={{ crossFade: true }}
             pagination={{ clickable: true }}
             keyboard={{ enabled: true, onlyInViewport: true }}
-            className="overflow-hidden rounded-xl [--swiper-pagination-color:#e00707]"
+            className="overflow-hidden rounded-xl [--swiper-pagination-color:var(--primary)]"
             aria-label={es ? "Inspiración para tu hogar" : "Home inspiration"}
           >
             {projects.map((project) => (

@@ -1,3 +1,4 @@
+import { useSectionFilter } from "@/components/ecosystem/section-filter";
 import { useStore } from "@/domain/store";
 import type { Language } from "@/domain/types";
 import { PiSealCheck } from "react-icons/pi";
@@ -19,6 +20,21 @@ export function ReviewQueue({ language }: { language: Language }) {
       .filter((c) => c.status === "pending")
       .map((c) => ({ professional: p, credential: c })),
   );
+  const filter = useSectionFilter(
+    pending,
+    ({ professional: p, credential: c }) => [
+      p.name,
+      p.fur,
+      c.name[language],
+      c.reference,
+    ],
+    t("Profesional o referencia", "Professional or reference"),
+    language,
+    {
+      label: t("Credencial", "Credential"),
+      value: (item) => item.credential.name[language],
+    },
+  );
   return (
     <Panel title={t("Revisión de credenciales", "Credential review")}>
       <p className="eco-note">
@@ -27,8 +43,9 @@ export function ReviewQueue({ language }: { language: Language }) {
           "Reviews are simulated and update badges on sample profiles. They do not verify real businesses.",
         )}
       </p>
+      {filter.controls}
       {pending.length ? (
-        pending.map(({ professional, credential }) => (
+        filter.visible.map(({ professional, credential }) => (
           <form
             key={credential.id}
             className="review-card"

@@ -20,6 +20,7 @@ import {
   PiArrowUpRight,
   PiGlobeHemisphereWest,
   PiList,
+  PiSquaresFour,
   PiMapTrifold,
   PiMagnifyingGlass,
 } from "react-icons/pi";
@@ -180,6 +181,7 @@ export function CoverageMap({
   const [city, setCity] = useState(params.get("city") || "");
   const [selected, setSelected] = useState(params.get("selected") || "");
   const [mobileView, setMobileView] = useState("map");
+  const [resultView, setResultView] = useState<"cards" | "list">("cards");
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [viewport, setViewport] = useState<MapBounds>();
   const [searchedArea, setSearchedArea] = useState<{
@@ -796,9 +798,38 @@ export function CoverageMap({
         </div>
         <aside
           className="map-results"
+          data-result-view={resultView}
           ref={resultList}
           aria-label={t("Contratistas del mapa", "Map contractors")}
         >
+          <div
+            className="map-result-view-switch"
+            role="group"
+            aria-label={t(
+              "Formato de profesionales",
+              "Contractor display format",
+            )}
+          >
+            <Button
+              type="button"
+              size="sm"
+              variant={resultView === "cards" ? "default" : "outline"}
+              aria-pressed={resultView === "cards"}
+              onClick={() => setResultView("cards")}
+            >
+              <PiSquaresFour aria-hidden="true" /> {t("Tarjetas", "Cards")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={resultView === "list" ? "default" : "outline"}
+              aria-label={t("Vista de lista", "List view")}
+              aria-pressed={resultView === "list"}
+              onClick={() => setResultView("list")}
+            >
+              <PiList aria-hidden="true" /> {t("Lista", "List")}
+            </Button>
+          </div>
           {visible.length ? (
             visible.map((p) => {
               const point =

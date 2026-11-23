@@ -267,7 +267,7 @@
 }
 .catalog-sidebar > button.selected {
   color: var(--primary);
-  background: #fff1f1;
+  background: var(--brand-tint);
   font-weight: 600;
 }
 .catalog-sidebar > button:hover {
@@ -315,7 +315,7 @@
 }
 .catalog-category:hover {
   border-color: #767676;
-  background: #fff1f1;
+  background: var(--brand-tint);
 }
 .service-grid {
   display: grid;
@@ -348,7 +348,7 @@
   color: var(--primary);
 }
 .service-tile:hover {
-  background: #fff1f1;
+  background: var(--brand-tint);
   border-color: #767676;
 }
 .service-detail {
@@ -493,7 +493,7 @@
 }
 .request-help {
   padding: 38px 28px;
-  background: #fff1f1;
+  background: var(--brand-tint);
   border-radius: 16px 90px 16px 16px;
   align-self: start;
 }
@@ -553,7 +553,7 @@
 }
 .eco-demo-flag {
   display: inline-flex;
-  background: #fff1f1;
+  background: var(--brand-tint);
   padding: 10px 15px;
   color: #838383;
   border-radius: 7px;
@@ -593,7 +593,7 @@
 .workspace-tabs > button > span {
   min-width: 16px;
   height: 16px;
-  background: #e00707;
+  background: var(--primary);
   color: white;
   display: grid;
   place-items: center;
@@ -633,7 +633,7 @@
   justify-content: space-between;
   gap: 35px;
   border-radius: 16px;
-  background: #fff1f1;
+  background: var(--brand-tint);
   padding: 35px;
   margin-bottom: 26px;
 }
@@ -817,14 +817,14 @@
   height: 6px;
   border-radius: 5px;
   background: #ebebeb;
-  accent-color: #e00707;
+  accent-color: var(--primary);
 }
 .project-progress progress::-webkit-progress-bar {
   background: #ebebeb;
   border-radius: 5px;
 }
 .project-progress progress::-webkit-progress-value {
-  background: #e00707;
+  background: var(--primary);
   border-radius: 5px;
 }
 .milestones {
@@ -881,7 +881,7 @@
 }
 .message-bubble.outgoing {
   align-self: end;
-  background: #fff1f1;
+  background: var(--brand-tint);
   border-radius: 14px 14px 2px 14px;
 }
 .message-bubble > span,
@@ -1082,7 +1082,7 @@
   display: grid;
   gap: 20px;
   padding: 20px;
-  background: #fff1f1;
+  background: var(--brand-tint);
   border-radius: 12px;
   font-size: 0.8rem;
   line-height: 1.8;
