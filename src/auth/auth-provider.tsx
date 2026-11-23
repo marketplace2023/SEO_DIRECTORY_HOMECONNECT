@@ -39,7 +39,10 @@ export function AuthProvider({
       setChecking(true);
       try {
         const { user } = await loadAccount();
-        if (user.role !== (application === "web" ? "owner" : application))
+        if (
+          user.role !== (application === "web" ? "owner" : application) &&
+          !(application === "admin" && user.role === "seo")
+        )
           throw Error("Wrong application");
         if (active) setUser(user);
       } catch {

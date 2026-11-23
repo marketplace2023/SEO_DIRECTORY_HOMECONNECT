@@ -1,10 +1,15 @@
-export type AccountRole = "owner" | "contractor" | "admin";
+export type AccountRole = "owner" | "contractor" | "admin" | "seo";
 export type AuthUser = {
   id: string;
   name: string;
   email: string;
   role: AccountRole;
   professionalId?: string;
+  seoAccess?: {
+    professionalIds: string[];
+    manageDirectories: boolean;
+    exportReports: boolean;
+  };
   demo: boolean;
   emailVerified?: boolean;
 };

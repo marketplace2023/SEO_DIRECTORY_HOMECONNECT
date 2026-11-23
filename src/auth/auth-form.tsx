@@ -34,6 +34,8 @@ export function AuthForm({
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState("");
   const signingUp = mode === "register";
+  const registrationEnabled =
+    import.meta.env.VITE_REGISTRATION_ENABLED !== "false";
   const role = application === "web" ? "owner" : application;
   const params = new URLSearchParams(window.location.hash.split("?")[1] || "");
   const requested = params.get("next") || "";
@@ -45,10 +47,17 @@ export function AuthForm({
       ? requested
       : home;
   useEffect(() => {
-    if (!checking && user?.role === role) window.location.replace("#" + next);
+    if (
+      !checking &&
+      (user?.role === role || (application === "admin" && user?.role === "seo"))
+    )
+      window.location.replace(
+        "#" + (user?.role === "seo" ? "/workspace/admin/local-seo" : next),
+      );
   }, [user, checking, next, role]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (signingUp && !registrationEnabled) return;
     if (busy) return;
     const data = new FormData(event.currentTarget);
     setError("");
@@ -132,6 +141,15 @@ export function AuthForm({
                 ? "Accede con tu cuenta de administración."
                 : "Qué bueno tenerte de vuelta."}
           </p>
+          {signingUp && !registrationEnabled && (
+            <p
+              role="status"
+              className="mb-6 rounded-lg bg-neutral-50 p-4 text-sm leading-6"
+            >
+              El registro estará disponible cuando se habilite el correo de
+              confirmación. Si ya tienes una cuenta, puedes iniciar sesión.
+            </p>
+          )}
           <form onSubmit={submit} className="account-form">
             {signingUp && (
               <label>
@@ -229,7 +247,10 @@ export function AuthForm({
                 {error}
               </p>
             )}
-            <Button type="submit" disabled={busy || checking}>
+            <Button
+              type="submit"
+              disabled={busy || checking || (signingUp && !registrationEnabled)}
+            >
               {busy
                 ? "Procesando…"
                 : signingUp
@@ -256,7 +277,7 @@ export function AuthForm({
               gestión.
             </p>
           )}
-          {!signingUp && (
+          {!signingUp && import.meta.env.DEV && (
             <details className="account-demo">
               <summary>Probar con una cuenta de demostración</summary>
               <p>
@@ -276,7 +297,9 @@ export function AuthForm({
             </details>
           )}
           <p className="account-note">
-            Prototipo local · Cuentas de prueba · Sesiones de 24 horas
+            {import.meta.env.DEV
+              ? "Prototipo local · Cuentas de prueba · Sesiones de 24 horas"
+              : "HOME CONNECT · Sesiones de 24 horas"}
           </p>
         </div>
       </main>

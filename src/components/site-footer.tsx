@@ -25,7 +25,10 @@ export function SiteFooter({
     {
       title: es ? "Explora HOME CONNECT" : "Explore HOME CONNECT",
       links: [
-        ["#/catalog", es ? "Todas las especialidades" : "All specialties"],
+        [
+          "#/categories",
+          es ? "Categorías y subcategorías" : "Categories and subcategories",
+        ],
         [
           "#/professionals",
           es ? "Directorio de contratistas" : "Contractor directory",

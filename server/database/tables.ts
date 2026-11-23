@@ -1,5 +1,14 @@
 /** SQL names only. Native names refer to Odoo 18; column compatibility is not implied. */
 export const tables = {
+  localSeoKeywords: "local_seo_keyword",
+  localSeoContents: "local_seo_content",
+  localSeoDirectories: "local_seo_directory",
+  localSeoListings: "local_seo_listing",
+  localSeoProjects: "local_seo_project",
+  localSeoAudits: "local_seo_audit",
+  localSeoRanks: "local_seo_rank_run",
+  localSeoActivity: "local_seo_activity",
+  localSeoEvents: "local_seo_event",
   attachments: "ir_attachment",
   settings: "ir_config_parameter",
   authTokens: "auth_token",

@@ -26,7 +26,7 @@ test("portada: familias shadcn filtran Swiper y la galería permite explorar la 
     .locator(".swiper-slide-active")
     .getByRole("button", { name: "Explorar especialidad", exact: true })
     .click();
-  await expect(page).toHaveURL(/category=general-contractors/);
+  await expect(page).toHaveURL(/categories\/general-contractors/);
 });
 
 test("portada: acción Magic UI accesible por teclado y controles sin desbordamiento", async ({

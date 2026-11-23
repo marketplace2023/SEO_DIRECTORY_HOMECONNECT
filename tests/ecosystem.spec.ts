@@ -62,9 +62,17 @@ async function propose(page: Page, amount: string) {
     .fill(
       "Incluye preparación, materiales y limpieza. Visita previa acordada.",
     );
+  const persisted = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/demo/commands") &&
+      response.request().method() === "POST" &&
+      response.request().postDataJSON()?.type === "proposal",
+  );
   await page
     .getByRole("button", { name: "Enviar propuesta de prueba" })
     .click();
+  expect((await persisted).status()).toBe(200);
+  await (await persisted).finished();
   await expect(
     page.getByRole("heading", { name: "Tu propuesta", exact: true }),
   ).toBeVisible();

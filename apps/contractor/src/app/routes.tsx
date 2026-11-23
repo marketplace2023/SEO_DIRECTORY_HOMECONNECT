@@ -19,6 +19,11 @@ const Overview = lazy(() =>
     default: m.OverviewPage,
   })),
 );
+const LocalSeoPage = lazy(() =>
+  import("@/modules/local-seo/local-seo-page").then((module) => ({
+    default: module.LocalSeoPage,
+  })),
+);
 const Opportunities = lazy(() =>
   import("../modules/opportunities/opportunities-page").then((m) => ({
     default: m.OpportunitiesPage,
@@ -55,6 +60,12 @@ const Account = lazy(() =>
   })),
 );
 export const contractorModules = [
+  {
+    key: "local-seo",
+    es: "Centro SEO local",
+    en: "Local SEO center",
+    icon: PiGlobeHemisphereWest,
+  },
   { key: "reviews", es: "Reseñas", en: "Reviews", icon: PiChatCircleDots },
   {
     key: "support",
@@ -112,7 +123,9 @@ export function ContractorRoutes({
     return <Missing language={language} />;
   return (
     <Suspense fallback={<p role="status">Cargando módulo…</p>}>
-      {tab === "reviews" ? (
+      {tab === "local-seo" ? (
+        <LocalSeoPage />
+      ) : tab === "reviews" ? (
         <ReviewsPage />
       ) : tab === "support" ? (
         <SupportPanel />

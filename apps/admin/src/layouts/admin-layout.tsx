@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { PiShieldCheck } from "react-icons/pi";
 import { useAuth } from "@/auth/auth-provider";
 import { useStore } from "@/domain/store";
@@ -7,6 +7,11 @@ import { PageTitle } from "@/components/ecosystem/primitives";
 import { navigate, type Route } from "@/lib/navigation";
 import { roleNames, type Language, type Role } from "@/domain/types";
 import { AdminRoutes, adminModules, managementSections } from "../app/routes";
+const LocalSeoPage = lazy(() =>
+  import("@/modules/local-seo/local-seo-page").then((m) => ({
+    default: m.LocalSeoPage,
+  })),
+);
 export function AdminLayout({
   route,
   language,
@@ -28,6 +33,23 @@ export function AdminLayout({
     (n, p) => n + p.credentials.filter((c) => c.status === "pending").length,
     0,
   );
+  if (user?.role === "seo")
+    return (
+      <DashboardFrame
+        application="admin"
+        title="Equipo SEO"
+        icon={PiShieldCheck}
+        language={language}
+        onLanguage={onLanguage}
+        items={[{ key: "local-seo", label: "SEO local", icon: PiShieldCheck }]}
+        active="local-seo"
+        path="/workspace/admin"
+      >
+        <Suspense fallback={<p role="status">Cargando centro SEO…</p>}>
+          <LocalSeoPage admin />
+        </Suspense>
+      </DashboardFrame>
+    );
   return (
     <DashboardFrame
       application="admin"

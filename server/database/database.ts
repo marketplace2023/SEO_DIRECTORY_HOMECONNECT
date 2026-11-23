@@ -31,6 +31,13 @@ export class Database {
         "utf8",
       ),
     );
+    await this.sql.exec(
+      readFileSync(
+        new URL("./migrations/003_local_seo.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    await this.sql.exec(readFileSync(new URL("./migrations/004_seo_management.sql", import.meta.url), "utf8"));
     await this.sql.transaction(async (tx) => {
       await tx.query(
         `INSERT INTO prototype_dataset(namespace,data) VALUES('__catalog__','{}') ON CONFLICT DO NOTHING`,

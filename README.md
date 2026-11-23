@@ -2,6 +2,10 @@
 
 Tres aplicaciones React + TypeScript en un monorepo, con servidores, rutas, módulos y compilaciones propios. Identidad inspirada en Yelp: rojo `#e00707`, blanco, grises, Open Sans y Poppins alojadas localmente.
 
+El prototipo dispone de infraestructura propia en AWS. Las URLs de los tres portales, publicación, accesos privados y respaldos se documentan en [despliegue AWS](docs/despliegue-aws.md).
+
+El [Centro SEO local](docs/centro-seo-local.md) incorpora NAP desde la ficha maestra, hasta 25 keywords activas por negocio, posts/reseñas/noticias, catálogo de directorios y listados, auditorías, tareas, cuadrículas con observaciones documentadas e informes. Administración y usuarios SEO asignados gestionan la estrategia; el contratista consulta en solo lectura. La medición automática externa requiere un proveedor todavía no conectado.
+
 El mercado inicial confirmado es **Georgia, Estados Unidos**. El [alcance realista para Georgia](docs/alcance-realista-georgia.md) contrasta Yelp y BuildZoom, documenta lo que existe, los bloqueantes del lanzamiento y las etapas propuestas. Las referencias históricas de SEO_GALLERY no sustituyen ese diagnóstico del estado actual.
 
 La implementación de **SEO local, confirmación de email y Google Business Profile** se describe en [seo-email-google.md](docs/seo-email-google.md). Incluye páginas HTML `/georgia`, gestión SEO en administración, buzón local de pruebas sin SMTP y conexión OAuth pendiente de credenciales/aprobación externas. No hay dominio ni proveedor de correo real configurados.
@@ -77,7 +81,7 @@ npm run build:contractor
 npm run build:admin
 ```
 
-Los resultados se generan por separado en `dist/web`, `apps/contractor/dist` y `apps/admin/dist`. Cada portal incluye sus recursos públicos. Para otras direcciones, exporta las variables descritas en `.env.example` antes de iniciar o compilar. `npm run preview` sirve solo el build de la web.
+Los resultados se generan por separado en `dist/web`, `apps/contractor/dist` y `apps/admin/dist`. Cada portal incluye sus recursos públicos. Para otras direcciones, configura los orígenes de `config/origins.ts` antes de iniciar o compilar; para AWS, utiliza el procedimiento de `docs/despliegue-aws.md`. `npm run preview` sirve solo el build de la web.
 
 Playwright comprueba navegación, mapa, recorridos de solicitudes y proyectos, sincronización entre aplicaciones, registro, login, roles, logout y móvil. Usa Chrome instalado y puertos 5194–5197.
 
