@@ -36,7 +36,7 @@ type Command =
     }
   | {
       type: "proposal";
-      value: Pick<Proposal, "requestId" | "amount" | "days" | "description">;
+      value: Pick<Proposal, "requestId" | "amount" | "days" | "description" | "contractorEstimateId">;
     }
   | { type: "accept"; proposalId: string }
   | { type: "cancel"; requestId: string }

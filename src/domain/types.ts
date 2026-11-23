@@ -93,6 +93,7 @@ export type QuoteRequest = {
 export type Proposal = {
   id: string;
   requestId: string;
+  contractorEstimateId?: string;
   professionalId: string;
   amount: number;
   currency: "USD";
@@ -173,5 +174,6 @@ export const money = (value: number, lang: Language) =>
   new Intl.NumberFormat(lang === "es" ? "es-VE" : "en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(value);
