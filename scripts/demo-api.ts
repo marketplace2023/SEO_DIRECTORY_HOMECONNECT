@@ -31,6 +31,7 @@ import {
 } from "../server/google/business-profile";
 import { seoRoutes } from "../server/seo/routes";
 import { localSeoRoutes } from "../server/local-seo/routes";
+import { contractorEstimateRoutes } from "../server/contractor-estimates";
 
 const port = Number(process.env.SERVINEXO_API_PORT || 5190);
 const file = resolve(
@@ -240,6 +241,15 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     send(200, accounts.seoUsers(session));
     return;
   }
+  const isEstimateRoute = url.pathname === "/api/contractor/estimates";
+  const estimateRoute = async (method: "GET" | "POST", body?: unknown) =>
+    contractorEstimateRoutes(url.pathname, method, body, database, accounts.user(session, token), session,
+      states.get(session) || createSeed(), send, async (next) => {
+        await database.saveState(session, next);
+        states.set(session, next);
+        publish(session, next);
+      });
+  if (isEstimateRoute && req.method === "GET" && await estimateRoute("GET")) return;
   if (
     req.method === "GET" &&
     url.pathname.startsWith("/api/local-seo/") &&
@@ -432,6 +442,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
     }
     const data = body ? JSON.parse(body) : {};
+    if (isEstimateRoute && await estimateRoute("POST", data)) return;
     if (url.pathname === "/api/local-seo/event") {
       const input = z
         .object({
@@ -800,7 +811,11 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
     if (url.pathname === "/api/demo/commands") {
       const action = value.parse(data);
-      fields[action.type].parse(data);
+      const validated = fields[action.type].parse(data);
+      if (action.type === "proposal") {
+        // A budget can be linked only by the authenticated estimate workflow.
+        action.value = (validated as { value: unknown }).value;
+      }
       if (!user) {
         send(401, { error: "Inicia sesión para realizar esta acción." });
         return;

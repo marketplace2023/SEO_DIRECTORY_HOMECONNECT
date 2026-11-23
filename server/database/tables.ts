@@ -1,5 +1,7 @@
 /** SQL names only. Native names refer to Odoo 18; column compatibility is not implied. */
 export const tables = {
+  contractorWorkItems: "contractor_work_item",
+  contractorEstimates: "contractor_estimate",
   localSeoKeywords: "local_seo_keyword",
   localSeoContents: "local_seo_content",
   localSeoDirectories: "local_seo_directory",

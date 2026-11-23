@@ -141,6 +141,7 @@ export const stateSchema: z.ZodType<DemoState> = z.object({
     z.object({
       id: text,
       requestId: text,
+      contractorEstimateId: z.uuid().optional(),
       professionalId: text,
       amount: z.number().positive(),
       currency: z.literal("USD"),
