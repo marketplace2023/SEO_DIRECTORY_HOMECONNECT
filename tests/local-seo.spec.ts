@@ -10,6 +10,7 @@ import {
 } from "../src/domain/local-seo";
 import { csvCell } from "../src/modules/local-seo/export";
 import { Database } from "../server/database/database";
+import { findSerpListings, scanSerpGrid } from "../server/local-seo/serpapi";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -66,11 +67,73 @@ test("SEO: comparación longitudinal exige misma fuente, objetivo, campaña y pu
   expect(comparableBaseline(run, [baseline])?.id).toBe("old");
   for (const incompatible of [
     { ...baseline, source: { ...baseline.source, label: "Otra fuente" } },
+    { ...baseline, source: { ...baseline.source, listingId: "otra-ficha" } },
     { ...baseline, campaignId: "other" },
     { ...baseline, targetId: "competitor" },
     { ...baseline, points: baseline.points.slice(0, 1) },
   ])
     expect(comparableBaseline(run, [incompatible])).toBeUndefined();
+});
+
+test("SerpApi conserva posiciones, identificadores y puntos fallidos por separado", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.SERPAPI_API_KEY;
+  const requests: URL[] = [];
+  const listing = {
+    title: "Example Plumbing",
+    place_id: "ChIJfixture",
+    data_cid: "17522713506209577164",
+    position: 2,
+  };
+  process.env.SERPAPI_API_KEY = "serp-test-key";
+  globalThis.fetch = async (input) => {
+    const url = new URL(String(input));
+    requests.push(url);
+    if (requests.length === 2) return new Response(null, { status: 500 });
+    if (url.searchParams.get("engine") === "google") {
+      return Response.json({
+        search_metadata: { status: "Success" },
+        local_results: { places: [{ ...listing, place_id: listing.data_cid }] },
+      });
+    }
+    const local =
+      requests.length === 3
+        ? [{ ...listing, place_id: "ChIJdifferent", data_cid: "123" }]
+        : [listing];
+    return Response.json({
+      search_metadata: { status: "Success" },
+      local_results: local,
+    });
+  };
+  try {
+    const [target] = await findSerpListings(
+      "Example Plumbing",
+      campaign.center,
+      "en",
+    );
+    expect(target).toMatchObject({
+      placeId: listing.place_id,
+      cid: listing.data_cid,
+    });
+    const maps = await scanSerpGrid(campaign, target);
+    expect(maps.measured).toHaveLength(8);
+    expect(maps.measured[0]).toEqual({ row: 0, column: 1, rank: null });
+    expect(maps.measured.at(-1)?.rank).toBe(2);
+    expect(
+      new Set(requests.slice(1, 10).map((url) => url.searchParams.get("ll")))
+        .size,
+    ).toBe(9);
+    const local = await scanSerpGrid(
+      { ...campaign, engine: "google_local", depth: 3 },
+      target,
+    );
+    expect(local.measured.every((point) => point.rank === 2)).toBe(true);
+    expect(local.listingId).toBe(listing.data_cid);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.SERPAPI_API_KEY;
+    else process.env.SERPAPI_API_KEY = originalKey;
+  }
 });
 
 test("SEO: NAP desconocido no es coincidencia y el CSV evita fórmulas ejecutables", () => {

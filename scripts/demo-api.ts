@@ -31,6 +31,7 @@ import {
 } from "../server/google/business-profile";
 import { seoRoutes } from "../server/seo/routes";
 import { localSeoRoutes } from "../server/local-seo/routes";
+import { serpApiConfigured } from "../server/local-seo/serpapi";
 import { contractorEstimateRoutes } from "../server/contractor-estimates";
 import { stripeWebhook } from "../server/contractor-checkout";
 
@@ -317,6 +318,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
     send(200, {
       google: googleConfiguration(),
+      serpApi: { configured: serpApiConfigured() },
       email: {
         mode: accounts.email.local ? "local" : "smtp",
         configured: !!process.env.SMTP_HOST && !!process.env.SMTP_FROM,
@@ -453,6 +455,13 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
     const body = bytes.toString("utf8");
     const data = body ? JSON.parse(body) : {};
+    if (["/api/local-seo/serp-lookup", "/api/local-seo/serp-scan"].includes(url.pathname)) {
+      const state = await seoState(session);
+      // These operations insert observations only and may wait on the provider.
+      releaseMutation();
+      await localSeoRoutes(url.pathname, "POST", url.searchParams, data, database, user, session, state, send);
+      return;
+    }
     if (isEstimateRoute && await estimateRoute("POST", data)) return;
     if (url.pathname === "/api/local-seo/event") {
       const input = z

@@ -30,7 +30,9 @@ API adicional bajo `/api/local-seo/`: GET `profiles`, `users`; POST `users`, `ma
 
 ### Dependencias y límites pendientes
 
-No hay proveedor de rankings contratado: los escaneos reales, workers, cuotas, reintentos y estados de error por consulta siguen pendientes. No se publica en GBP ni en directorios. No se crean reseñas, posiciones ni estadísticas ficticias. La infraestructura de escaneos se debe implementar junto al contrato del proveedor aprobado.
+El servidor activa las mediciones bajo demanda cuando se configura `SERPAPI_API_KEY` en su entorno. En **Local Grid / Local Pack**, administración y el equipo SEO autorizado crean una cuadrícula, eligen el negocio o competidor y confirman la ficha externa antes de medir. Google Maps admite hasta 20 posiciones en la primera página. Local Pack admite tres posiciones. La búsqueda de ficha usa una consulta y la cuadrícula usa hasta una consulta por punto. `SERPAPI_DAILY_LIMIT` fija el máximo diario por proceso y usa 100 como valor predeterminado. [Google Maps](https://serpapi.com/maps-local-results) · [Google Local Pack](https://serpapi.com/local-pack)
+
+El historial registra origen, fecha e identificador de ficha. Un punto con error queda sin medir. Un punto consultado en el que no aparece la ficha queda como «no encontrado» dentro de la profundidad de la campaña. Administración → Integraciones muestra el estado de configuración de la credencial.
 
 La configuración inicial es un perfil por contratista, máximo 25 keywords activas, centro y separación de cuadrícula, motores Maps/Local Pack y contenido publicado visible para contratistas. Los formularios nuevos de catálogo/contenido/datos maestros exigen HTTPS para enlaces externos. No se incluyen sucursales, automatizaciones, generación con IA, subida nueva de multimedia ni informes PDF. Las listas de interfaz paginan de diez en diez; los históricos de la API siguen requiriendo paginación de servidor y política de retención antes de cargas de producción extensas.
 

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Field, Panel } from "@/components/ecosystem/primitives";
+import { SerpScan } from "./serp-scan";
 import {
   comparableBaseline,
   gridPoints,
@@ -324,8 +325,9 @@ export function RankGrid({
           )}
           {run && !editing && (
             <p className="mb-5 text-xs leading-6 text-neutral-500">
-              Fuente declarada: {run.source.label}. Observado:{" "}
-              {date(run.observedAt)}.
+              Fuente: {run.source.label}.{" "}
+              {run.source.listingName && `Ficha: ${run.source.listingName}. `}
+              Observado: {date(run.observedAt)}.
               {run.source.evidenceUrl && (
                 <>
                   {" "}
@@ -357,6 +359,20 @@ export function RankGrid({
               ))}
             </NativeSelect>
           </Field>
+          {!readOnly &&
+            !editing &&
+            workspace.providers.automaticRankings &&
+            workspace.business && (
+              <SerpScan
+                key={`${campaign.id}:${targetId}`}
+                campaign={campaign}
+                targetId={targetId}
+                professionalId={workspace.business.id}
+                act={act}
+                busy={busy}
+                onSaved={() => setRunId("")}
+              />
+            )}
           <Suspense
             fallback={
               <div className="h-80 animate-pulse rounded-xl bg-neutral-100" />
@@ -370,9 +386,8 @@ export function RankGrid({
           </Suspense>
           <p className="my-4 text-xs leading-6 text-neutral-500">
             Norte arriba. Verde: 1–3; ámbar: 4–10; rojo: &gt;10; gris oscuro: no
-            encontrado dentro de la profundidad; —: sin medir. Las posiciones
-            son observaciones aportadas, no resultados consultados
-            automáticamente.
+            encontrado dentro de la profundidad; —: sin medir. Cada medición
+            conserva su fecha y fuente.
           </p>
           <div
             className="mx-auto grid max-w-xl gap-2"

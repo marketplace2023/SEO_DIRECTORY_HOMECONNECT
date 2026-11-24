@@ -41,6 +41,15 @@ export function IntegrationsPage() {
             </p>
           </article>
           <article className="eco-panel">
+            <h3>SerpApi</h3>
+            <strong>
+              {status.serpApi?.configured
+                ? "Credencial configurada"
+                : "Pendiente de credencial"}
+            </strong>
+            <p>Google Maps y Local Pack para el Centro SEO local.</p>
+          </article>
+          <article className="eco-panel">
             <h3>Dominio y SEO</h3>
             <strong>
               {status.seo.indexingEnabled
