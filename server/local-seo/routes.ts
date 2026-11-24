@@ -12,6 +12,13 @@ import type {
 } from "../../src/domain/local-seo";
 import { auditChecks } from "./audit";
 import {
+  findSerpListings,
+  listingSchema,
+  scanSerpGrid,
+  serpApiConfigured,
+  SerpApiError,
+} from "./serpapi";
+import {
   managementAction,
   directorySchema,
   normalizeKeyword,
@@ -40,6 +47,7 @@ const observedAt = z
     "La observación no puede estar en el futuro.",
   );
 const id = z.string().uuid();
+const serpRequests = new Set<string>();
 
 export async function localSeoRoutes(
   path: string,
@@ -184,6 +192,122 @@ export async function localSeoRoutes(
     campaigns: [],
     plans: [],
   };
+  if (
+    method === "POST" &&
+    ["/api/local-seo/serp-lookup", "/api/local-seo/serp-scan"].includes(path)
+  ) {
+    const input = z
+      .object({
+        campaignId: id,
+        targetId: z.string().max(100),
+        intent: z.enum(["business", "service"]).default("business"),
+        listing: listingSchema.optional(),
+      })
+      .safeParse(body);
+    if (!input.success) {
+      send(400, { error: "Revisa los datos de la campaña y de la ficha." });
+      return true;
+    }
+    const { campaignId, targetId, listing, intent } = input.data;
+    const campaign = project.campaigns.find((entry) => entry.id === campaignId);
+    const targetName =
+      targetId === "business"
+        ? person.name
+        : project.competitors.find((entry) => entry.id === targetId)?.name;
+    if (!campaign || !targetName || project.status === "inactive") {
+      send(404, { error: "Campaña o negocio no disponible para medir." });
+      return true;
+    }
+    const lock = JSON.stringify(params);
+    if (serpRequests.has(lock)) {
+      send(409, {
+        error: "Ya hay una consulta de SerpApi en curso para este negocio.",
+      });
+      return true;
+    }
+    serpRequests.add(lock);
+    try {
+      if (path.endsWith("serp-lookup")) {
+        const keyword =
+          intent === "service"
+            ? campaign.keyword
+            : [targetName, person.city, person.region]
+                .filter(Boolean)
+                .join(", ");
+        send(200, {
+          listings: await findSerpListings(
+            keyword,
+            campaign.center,
+            campaign.language,
+          ),
+        });
+      } else if (!listing) {
+        send(400, {
+          error: "Selecciona la ficha de Google Maps antes de medir.",
+        });
+      } else {
+        const now = new Date().toISOString();
+        const { measured, listingId } = await scanSerpGrid(campaign, listing);
+        const run: SeoRun = {
+          id: randomUUID(),
+          campaignId,
+          targetId,
+          observedAt: now,
+          createdAt: now,
+          points: measured,
+          source: {
+            kind: "serpapi",
+            label:
+              campaign.engine === "google_maps"
+                ? "SerpApi · Google Maps"
+                : "SerpApi · Google Local Pack",
+            evidenceUrl: "",
+            listingId,
+            listingName: listing.title,
+          },
+        };
+        const activity: SeoActivity = {
+          id: randomUUID(),
+          at: now,
+          actorId: user.id,
+          action: "measurement",
+          detail: `${run.source.label}: ${measured.length}/${campaign.size ** 2} puntos medidos para ${campaign.keyword}`,
+        };
+        await db.sql.transaction(async (tx) => {
+          if (targetId !== "business") {
+            const current = await tx.query<{ data: SeoProject }>(
+              "SELECT data FROM local_seo_project WHERE namespace=$1 AND id=$2",
+              params,
+            );
+            if (
+              !current.rows[0]?.data.competitors.some(
+                (entry) => entry.id === targetId,
+              )
+            )
+              throw new SerpApiError(
+                "El competidor dejó de estar disponible durante la medición.",
+                409,
+              );
+          }
+          await tx.query(
+            "INSERT INTO local_seo_rank_run(namespace,id,professional_id,data) VALUES($1,$2,$3,$4)",
+            [namespace, run.id, person.id, JSON.stringify(run)],
+          );
+          await tx.query(
+            "INSERT INTO local_seo_activity(namespace,id,professional_id,data) VALUES($1,$2,$3,$4)",
+            [namespace, activity.id, person.id, JSON.stringify(activity)],
+          );
+        });
+        send(200, { ok: true, run });
+      }
+    } catch (error) {
+      if (!(error instanceof SerpApiError)) throw error;
+      send(error.status, { error: error.message });
+    } finally {
+      serpRequests.delete(lock);
+    }
+    return true;
+  }
   const before = structuredClone(project);
   const selectRecords = async <T>(table: string) =>
     (
@@ -312,10 +436,11 @@ export async function localSeoRoutes(
         ).length,
       },
       providers: {
-        automaticRankings: false,
-        mode: "evidence_import",
-        message:
-          "Sin proveedor de rankings conectado. Registra observaciones o importa puntos con fuente y fecha. No se consulta Google ni se publican cambios externos.",
+        automaticRankings: serpApiConfigured(),
+        mode: serpApiConfigured() ? "serpapi" : "evidence_import",
+        message: serpApiConfigured()
+          ? "SerpApi disponible para medir Google Maps y Local Pack desde la cuadrícula."
+          : "Registra observaciones manuales o importa puntos con fuente y fecha.",
       },
     });
     return true;
@@ -573,6 +698,16 @@ export async function localSeoRoutes(
       const input = z
         .object({ kind: z.enum(["citations", "competitors", "plans"]), id })
         .parse(body);
+      if (
+        input.kind === "competitors" &&
+        serpRequests.has(JSON.stringify(params))
+      ) {
+        send(409, {
+          error:
+            "Espera a que termine la consulta de SerpApi antes de eliminar competidores.",
+        });
+        return true;
+      }
       if (
         input.kind === "competitors" &&
         (await rows<SeoRun>("local_seo_rank_run")).some(

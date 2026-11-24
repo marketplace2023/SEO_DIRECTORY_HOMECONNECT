@@ -2,7 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { tables, stateTables } from "./tables";
-import { categories, subcategories, services } from "../../src/data/catalog";
+import { builtInCatalog } from "../../src/data/catalog";
 import { cityLocation } from "../../src/domain/geography";
 import { stateSchema, hasValidRelations } from "../../src/domain/schema";
 import type { DemoState } from "../../src/domain/types";
@@ -46,9 +46,9 @@ export class Database {
         `INSERT INTO prototype_dataset(namespace,data) VALUES('__catalog__','{}') ON CONFLICT DO NOTHING`,
       );
       for (const [kind, table, rows] of [
-        ["category", tables.categories, categories],
-        ["subcategory", tables.categories, subcategories],
-        ["service", tables.services, services],
+        ["category", tables.categories, builtInCatalog.categories],
+        ["subcategory", tables.categories, builtInCatalog.subcategories],
+        ["service", tables.services, builtInCatalog.services],
       ] as const) {
         await tx.query(
           `DELETE FROM ${table} WHERE namespace='__catalog__' AND kind=$1`,

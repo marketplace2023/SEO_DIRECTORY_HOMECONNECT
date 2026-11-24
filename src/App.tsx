@@ -10,14 +10,11 @@ import { SiteFooter } from "@/components/site-footer";
 import { StoreProvider, useStore } from "@/domain/store";
 import { roleNames, type Language, type Role } from "@/domain/types";
 import { rolePortal, workspaceHref } from "@/lib/portals";
-import { categories, subcategories } from "@/data/catalog";
-import { CategoryPages } from "@/components/ecosystem/category-pages";
+import { categories, serviceName, subcategories, services } from "@/data/catalog";
 import { navigate, useRoute } from "@/lib/navigation";
 import {
-  CatalogPage,
   DirectoryPage,
   ProfilePage,
-  ServicePage,
   Missing,
 } from "@/components/ecosystem/public-pages";
 import { RequestPage } from "@/components/ecosystem/request-page";
@@ -46,6 +43,21 @@ import {
 const HomePage = lazy(() =>
   import("@/components/home-page").then((module) => ({
     default: module.HomePage,
+  })),
+);
+const CatalogPage = lazy(() =>
+  import("@/components/ecosystem/catalog-page").then((module) => ({
+    default: module.CatalogPage,
+  })),
+);
+const CategoryPages = lazy(() =>
+  import("@/components/ecosystem/category-pages").then((module) => ({
+    default: module.CategoryPages,
+  })),
+);
+const ServicePage = lazy(() =>
+  import("@/components/ecosystem/service-page").then((module) => ({
+    default: module.ServicePage,
   })),
 );
 const AreaExplorer = lazy(() =>
@@ -144,7 +156,11 @@ function Ecosystem() {
       );
       document.title = `${area?.name[language] || category?.name[language] || t("Categorías y subcategorías", "Categories and subcategories")} · HOME CONNECT`;
     }
-  }, [language, route.path]);
+    if (parts[0] === "services" && parts.length === 2) {
+      const title = serviceName(parts[1], language);
+      if (title !== parts[1]) document.title = `${title} · HOME CONNECT`;
+    }
+  }, [language, route.path, categories, subcategories, services]);
   const search = {
     language,
     query,

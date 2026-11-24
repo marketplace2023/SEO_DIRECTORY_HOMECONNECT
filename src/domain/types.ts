@@ -21,18 +21,27 @@ export type Category = {
   illustration: string;
   image: string;
   included: Localized[];
+  concept?: Localized;
+  when?: Localized;
 };
 export type Subcategory = {
   id: string;
   categoryId: string;
   name: Localized;
   image: string;
+  concept?: Localized;
+  when?: Localized;
 };
 export type Service = {
   id: string;
   categoryId: string;
   subcategoryId: string;
   name: Localized;
+  additionalSubcategoryIds?: string[];
+  scope?: Localized;
+  requirements?: Localized;
+  completion?: Localized;
+  separate?: Localized;
   mode:
     | "installation"
     | "repair"

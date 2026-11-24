@@ -9,7 +9,6 @@ import {
   PiMapPin,
   PiStarFill,
   PiSealCheckFill,
-  PiCheck,
   PiBuildings,
   PiGlobe,
   PiInstagramLogo,
@@ -48,8 +47,6 @@ import { searchParams } from "@/domain/search";
 import { useCart } from "@/domain/cart";
 import { ProfessionalCard } from "@/components/professional-card";
 
-import { CategoryScope } from "./category-scope";
-
 import { parseBounds } from "@/domain/geography";
 import {
   PageTitle,
@@ -71,8 +68,6 @@ const socialIcons = {
   other: PiLinkSimple,
 };
 
-export { CatalogPage } from "./catalog-page";
-
 export function ServiceTile({
   serviceId,
   language,
@@ -91,103 +86,6 @@ export function ServiceTile({
       <h3>{service.name[language]}</h3>
       <PiArrowUpRight />
     </button>
-  );
-}
-export function ServicePage({
-  id,
-  language,
-}: {
-  id: string;
-  language: Language;
-}) {
-  const { state } = useStore();
-  const t = copy(language);
-  const service = services.find((s) => s.id === id);
-  if (!service) return <Missing language={language} />;
-  const people = state.professionals.filter(
-    (p) => p.publication === "published" && p.serviceIds.includes(id),
-  );
-  return (
-    <>
-      <PageTitle
-        eyebrow={categoryName(service.categoryId, language)}
-        title={service.name[language]}
-        description={t(
-          "Cada espacio necesita una solución distinta. Describe el trabajo, compara propuestas y acuerda los detalles con tu profesional.",
-          "Every space needs a different solution. Describe the work, compare proposals and agree on the details with your professional.",
-        )}
-        action={
-          <Button
-            onClick={() =>
-              navigate("/quote", new URLSearchParams({ service: id }))
-            }
-          >
-            {t("Solicitar presupuesto", "Request a quote")}
-            <PiArrowUpRight />
-          </Button>
-        }
-      />
-      <div className="service-detail">
-        <Panel title={t("Antes de empezar", "Before you start")}>
-          <ul className="eco-checklist">
-            {[
-              t(
-                "Describe el estado actual y el resultado que buscas.",
-                "Describe the current condition and the result you want.",
-              ),
-              t(
-                "Indica la ubicación, dimensiones y fecha orientativa.",
-                "Include the location, dimensions and preferred date.",
-              ),
-              t(
-                "Confirma materiales, alcance y condiciones en la propuesta.",
-                "Confirm materials, scope and terms in the proposal.",
-              ),
-            ].map((item) => (
-              <li key={item}>
-                <PiCheck />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <p className="eco-note">
-            {t(
-              "El presupuesto depende del alcance. No se realizan cobros en este prototipo.",
-              "Pricing depends on scope. This prototype does not process payments.",
-            )}
-          </p>
-        </Panel>
-        <Panel
-          title={t(
-            "Profesionales para este servicio",
-            "Professionals for this service",
-          )}
-        >
-          {people.length ? (
-            <div className="eco-people-grid">
-              {people.map((p) => (
-                <PersonCard key={p.id} person={p} language={language} />
-              ))}
-            </div>
-          ) : (
-            <Empty
-              title={t(
-                "Aún no hay perfiles de muestra en esta especialidad",
-                "No sample professionals in this specialty yet",
-              )}
-              description={t(
-                "Puedes publicar tu solicitud para explorar el flujo de proyectos.",
-                "You can post a request to explore the project workflow.",
-              )}
-            />
-          )}
-        </Panel>
-      </div>
-      <CategoryScope
-        category={categories.find((c) => c.id === service.categoryId)!}
-        language={language}
-      />
-    </>
   );
 }
 export function PersonCard({

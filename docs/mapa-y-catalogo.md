@@ -27,9 +27,13 @@ Cada categoría presenta:
 - Disponibilidad de perfiles publicados en Georgia, separada de la existencia de la categoría.
 - Acceso al mapa filtrado y a sus servicios.
 
-La portada utiliza las fotografías de categorías y ofrece un selector de categoría para explorar sus subcategorías con imagen y servicios. Administración → Catálogo permite buscar categorías o subcategorías, ver las miniaturas, seleccionar una categoría y consultar su fotografía, sus dos subcategorías con imagen y los servicios asociados. Las fichas de servicios muestran la explicación de su área. Las páginas locales HTML por ciudad y especialidad reutilizan el contenido aprobado del catálogo y sus fotografías, sin depender de ejecutar React. Las páginas SEO siguen requiriendo publicación, oferta y las condiciones de indexación ya documentadas.
+La portada utiliza las fotografías de categorías y ofrece un selector de categoría para explorar sus subcategorías con imagen y servicios. Administración → Catálogo permite buscar categorías o subcategorías, ver las miniaturas, seleccionar una categoría y consultar su fotografía, sus dos subcategorías con imagen y los servicios asociados.
 
-El catálogo canónico continúa siendo código versionado: `src/data/catalog.ts` y `src/data/category-content.ts`. El arranque guarda esa versión en `product_category` y `product_template`. No se incorpora un editor administrativo que compita con esa fuente. Revisar, versionar y volver a desplegar los cambios editoriales es el flujo vigente.
+Las páginas de categoría agrupan las tarjetas de servicio por subcategoría. Las subcategorías explican cuándo conviene acudir a esa área. Cada ficha en `/#/services/{id}` muestra su alcance, qué preparar al cotizar, qué acordar por separado, entregables, proceso de contratación y servicios relacionados. La solicitud abre con el servicio seleccionado. Los alcances bilingües se editan en `src/data/service-scopes.ts` y los casos de uso en `src/data/category-context.ts`.
+
+Las páginas locales HTML por ciudad y especialidad reutilizan el contenido aprobado del catálogo y sus fotografías, sin depender de ejecutar React. Las páginas SEO siguen requiriendo publicación, oferta y las condiciones de indexación ya documentadas.
+
+Administración → Catálogo permite crear y editar categorías, subcategorías y servicios con textos en español e inglés. Las altas y ajustes se guardan en `product_category` y `product_template` y se aplican sobre el catálogo incluido en el repositorio. Un servicio conserva su subcategoría principal y puede aparecer en otras subcategorías relacionadas sin duplicar su ficha. La cotización usa la clasificación principal del servicio.
 
 Las 144 fotografías originales están en `public/CATEGORY_PICS`: `{id-categoria}.webp` y `{id-subcategoria}.webp`. Esos archivos se conservan intactos. Se reprodujeron franjas blancas al decodificarlos en Chrome incluso en una página vacía, con bytes idénticos al original y sin estilos; por eso la interfaz utiliza versiones JPEG sRGB en `public/CATEGORY_PICS/compatible/{id}.jpg`.
 

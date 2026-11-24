@@ -1,9 +1,10 @@
 import { test, expect } from "./fixtures";
-import { categories, subcategories } from "../src/data/catalog";
+import { categories, services, subcategories } from "../src/data/catalog";
 import {
   categoryGuides,
   subcategoryConcepts,
 } from "../src/data/category-guides";
+import { serviceGuide, subcategoryWhen } from "../src/data/service-guides";
 
 test.use({ autoLogin: false });
 
@@ -25,12 +26,91 @@ test("guías editoriales completas para todas las categorías y subcategorías",
     expect(new Set(areas).size).toBe(96);
     expect(concepts.every((text) => text.trim().length > 0)).toBe(true);
     expect(areas.every((text) => text.trim().length > 0)).toBe(true);
+    const scenarios = subcategories.map(
+      (area) => subcategoryWhen(area.id)?.[language],
+    );
+    expect(scenarios.every((text) => text?.trim())).toBe(true);
+    expect(new Set(scenarios).size).toBe(subcategories.length);
+    const details = services.map(serviceGuide);
+    expect(
+      details.every(
+        (service) =>
+          service.scope?.[language] &&
+          service.requirements?.[language] &&
+          service.completion[language],
+      ),
+    ).toBe(true);
+    expect(
+      new Set(details.map((service) => service.scope?.[language])).size,
+    ).toBe(services.length);
     expect(
       Object.values(categoryGuides).every(
         (guide) => guide.when[language].trim().length > 0,
       ),
     ).toBe(true);
   }
+});
+
+test("categoría y fichas exponen alcances por servicio y conservan la selección al cotizar", async ({
+  page,
+}) => {
+  await page.goto("/#/categories/hvac");
+  const equipment = page.locator(
+    '[data-category-subcategory="hvac-installation"]',
+  );
+  await expect(equipment).toContainText("prueba de enfriamiento");
+  await equipment.getByRole("link", { name: "Explorar subcategoría" }).click();
+  await expect(page.locator("[data-category-when]")).toContainText(
+    "instalas o sustituyes un equipo",
+  );
+  await page
+    .getByRole("link", {
+      name: "Instalación de aire acondicionado",
+      exact: true,
+    })
+    .click();
+  await expect(page).toHaveTitle(
+    "Instalación de aire acondicionado · HOME CONNECT",
+  );
+  await expect(page.locator("[data-service-scope]")).toContainText(
+    "prueba de enfriamiento",
+  );
+  await expect(
+    page.getByText(/Adaptar ductos, añadir un circuito/),
+  ).toBeVisible();
+  await expect(page.locator("[data-service-deliverable]")).toContainText(
+    "termostato",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Proceso de contratación" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Profesionales para este servicio" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Ruta del servicio" })
+      .getByRole("link", { name: "Equipos y ventilación" }),
+  ).toHaveAttribute("href", "#/categories/hvac/hvac-installation");
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+
+  await page.locator(".language-switch select").selectOption("en");
+  await expect(page.locator("[data-service-scope]")).toContainText(
+    "testing cooling",
+  );
+  await page
+    .locator("[data-service-page]")
+    .getByRole("link", { name: "Request a quote" })
+    .click();
+  await expect(page).toHaveURL(/#\/quote\?service=hvac-1$/);
+  await expect(
+    page.getByRole("combobox", { name: "Service", exact: true }),
+  ).toHaveValue("hvac-1");
 });
 
 test("HVAC explica el concepto, cuándo se necesita y sus dos áreas sin concatenar servicios", async ({

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Field, Panel } from "@/components/ecosystem/primitives";
+import { SerpScan } from "./serp-scan";
 import {
   comparableBaseline,
   gridPoints,
@@ -65,6 +66,14 @@ export function RankGrid({
   }, [campaign?.id, targetId]);
   const points = campaign ? gridPoints(campaign) : [];
   const observed = editing ? draft : run?.points || [];
+  const selectedPoint = points[selected];
+  const evidence =
+    !editing &&
+    observed.find(
+      (item) =>
+        item.row === selectedPoint?.row &&
+        item.column === selectedPoint?.column,
+    )?.evidence;
   const metrics = rankMetrics(run);
   const foundRanks =
     run?.points.flatMap((point) => (point.rank === null ? [] : [point.rank])) ||
@@ -324,8 +333,9 @@ export function RankGrid({
           )}
           {run && !editing && (
             <p className="mb-5 text-xs leading-6 text-neutral-500">
-              Fuente declarada: {run.source.label}. Observado:{" "}
-              {date(run.observedAt)}.
+              Fuente: {run.source.label}.{" "}
+              {run.source.listingName && `Ficha: ${run.source.listingName}. `}
+              Observado: {date(run.observedAt)}.
               {run.source.evidenceUrl && (
                 <>
                   {" "}
@@ -357,6 +367,20 @@ export function RankGrid({
               ))}
             </NativeSelect>
           </Field>
+          {!readOnly &&
+            !editing &&
+            workspace.providers.automaticRankings &&
+            workspace.business && (
+              <SerpScan
+                key={`${campaign.id}:${targetId}`}
+                campaign={campaign}
+                targetId={targetId}
+                professionalId={workspace.business.id}
+                act={act}
+                busy={busy}
+                onSaved={() => setRunId("")}
+              />
+            )}
           <Suspense
             fallback={
               <div className="h-80 animate-pulse rounded-xl bg-neutral-100" />
@@ -370,9 +394,8 @@ export function RankGrid({
           </Suspense>
           <p className="my-4 text-xs leading-6 text-neutral-500">
             Norte arriba. Verde: 1–3; ámbar: 4–10; rojo: &gt;10; gris oscuro: no
-            encontrado dentro de la profundidad; —: sin medir. Las posiciones
-            son observaciones aportadas, no resultados consultados
-            automáticamente.
+            encontrado dentro de la profundidad; —: sin medir. Cada medición
+            conserva su fecha y fuente.
           </p>
           <div
             className="mx-auto grid max-w-xl gap-2"
@@ -418,6 +441,49 @@ export function RankGrid({
             {points[selected]?.column} · {points[selected]?.latitude.toFixed(5)}
             , {points[selected]?.longitude.toFixed(5)}
           </p>
+          {evidence && (
+            <section
+              aria-labelledby="point-evidence"
+              className="mt-5 rounded-xl border border-neutral-200 p-4"
+            >
+              <h3 id="point-evidence" className="font-semibold">
+                Competidores en este punto
+              </h3>
+              {evidence.searchId && (
+                <p className="mt-1 break-all text-xs text-neutral-600">
+                  Consulta SerpApi · {evidence.searchId}
+                </p>
+              )}
+              {evidence.competitors.length ? (
+                <ul className="mt-3 divide-y divide-neutral-200 text-sm">
+                  {evidence.competitors.map((item) => (
+                    <li
+                      key={`${item.position}:${item.title}`}
+                      className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 py-2"
+                    >
+                      <span className="font-semibold tabular-nums">
+                        #{item.position}
+                      </span>
+                      <span>
+                        {item.title}
+                        {item.rating !== undefined && (
+                          <span className="ml-2 text-xs text-neutral-600">
+                            {item.rating}/5
+                            {item.reviews !== undefined &&
+                              ` · ${item.reviews} reseñas`}
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-neutral-600">
+                  Sin competidores en los resultados de este punto.
+                </p>
+              )}
+            </section>
+          )}
           {!readOnly && (
             <div className="my-5 flex flex-wrap gap-3">
               <Button

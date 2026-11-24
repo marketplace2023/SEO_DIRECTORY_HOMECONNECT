@@ -47,16 +47,29 @@ export type SeoCampaign = {
   depth: number;
   createdAt: string;
 };
-export type SeoPoint = { row: number; column: number; rank: number | null };
+export type SeoCompetitorResult = {
+  title: string;
+  position: number;
+  rating?: number;
+  reviews?: number;
+};
+export type SeoPoint = {
+  row: number;
+  column: number;
+  rank: number | null;
+  evidence?: { searchId?: string; competitors: SeoCompetitorResult[] };
+};
 export type SeoRun = {
   id: string;
   campaignId: string;
   targetId: string;
   observedAt: string;
   source: {
-    kind: "manual" | "brightlocal_export" | "other_export";
+    kind: "manual" | "brightlocal_export" | "other_export" | "serpapi";
     label: string;
     evidenceUrl: string;
+    listingId?: string;
+    listingName?: string;
   };
   points: SeoPoint[];
   createdAt: string;
@@ -213,8 +226,8 @@ export type SeoWorkspace = {
     quoteRequests: number;
   };
   providers: {
-    automaticRankings: false;
-    mode: "evidence_import";
+    automaticRankings: boolean;
+    mode: "evidence_import" | "serpapi";
     message: string;
   };
 };
@@ -304,6 +317,7 @@ export function comparableBaseline(latest: SeoRun, runs: SeoRun[]) {
         run.targetId === latest.targetId &&
         run.source.kind === latest.source.kind &&
         run.source.label === latest.source.label &&
+        run.source.listingId === latest.source.listingId &&
         run.observedAt < latest.observedAt &&
         run.points
           .map((p) => `${p.row}:${p.column}`)

@@ -213,11 +213,9 @@ function Workspace({ professional }: { professional: string }) {
         </p>
       )}
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-        Medición automática pendiente de proveedor.{" "}
         {manage
-          ? "Puedes planificar cuadrículas y documentar observaciones manuales o importadas."
-          : "Aquí se mostrarán las mediciones registradas para tu negocio."}{" "}
-        No se realizan búsquedas automáticas ni publicaciones externas.
+          ? data.providers.message
+          : "Aquí se muestran las mediciones registradas para tu negocio."}
       </div>
       {error && (
         <p

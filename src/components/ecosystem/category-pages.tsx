@@ -6,8 +6,15 @@ import {
   PiInfo,
   PiMagnifyingGlass,
 } from "react-icons/pi";
-import { categories, subcategories, services } from "@/data/catalog";
+import {
+  categories,
+  subcategories,
+  services,
+  serviceInCategory,
+  serviceInSubcategory,
+} from "@/data/catalog";
 import { categoryGuides, subcategoryConcepts } from "@/data/category-guides";
+import { subcategoryWhen } from "@/data/service-guides";
 import { normalize, type Language, type Subcategory } from "@/domain/types";
 import type { Route } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
@@ -17,12 +24,13 @@ import { MagicCard } from "@/components/ui/magic-card";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { Empty, copy } from "./primitives";
 import { Missing } from "./public-pages";
+import { ServiceGuideCard } from "./service-guide";
 
 export const categoryHref = (id: string, subcategory?: string) =>
   `#/categories/${id}${subcategory ? `/${subcategory}` : ""}`;
 
 function areaDescription(area: Subcategory, language: Language) {
-  return subcategoryConcepts[area.id][language];
+  return (area.concept ?? subcategoryConcepts[area.id] ?? area.name)[language];
 }
 
 export function CategoryPages({
@@ -49,12 +57,12 @@ export function CategoryPages({
       [
         category.name[language],
         category.description[language],
-        categoryGuides[category.id].concept[language],
+        (category.concept ?? categoryGuides[category.id]?.concept)?.[language],
         ...subcategories
           .filter((area) => area.categoryId === category.id)
           .map((area) => area.name[language]),
         ...services
-          .filter((service) => service.categoryId === category.id)
+          .filter((service) => serviceInCategory(service, category.id))
           .map((service) => service.name[language]),
       ].join(" "),
     ).includes(normalize(query)),
@@ -66,16 +74,20 @@ export function CategoryPages({
   const description = category
     ? area
       ? areaDescription(area, language)
-      : categoryGuides[category.id].concept[language]
+      : (category.concept ??
+          categoryGuides[category.id]?.concept ??
+          category.description)[language]
     : t(
         "Conoce cada oficio, descubre qué incluye y encuentra el área que necesita tu hogar.",
         "Learn about each trade, discover what it covers and find the area your home needs.",
       );
   const selectedServices = services.filter(
     (service) =>
-      service.categoryId === category?.id &&
-      (!area || service.subcategoryId === area.id),
+      !!category &&
+      serviceInCategory(service, category.id) &&
+      (!area || serviceInSubcategory(service, area.id)),
   );
+  const context = area && (area.when ?? subcategoryWhen(area.id));
   return (
     <div
       className="space-y-9 pb-10 md:space-y-12"
@@ -155,9 +167,9 @@ export function CategoryPages({
             >
               {description}
             </p>
-            <p className="mt-5 text-sm text-neutral-500">
+            <p className="mt-5 text-sm text-neutral-500 tabular-nums">
               {category
-                ? `${area ? 1 : areas.length} ${t(area ? "subcategoría" : "subcategorías", area ? "subcategory" : "subcategories")} · ${selectedServices.length} ${t("servicios", "services")}`
+                ? `${area ? "" : `${areas.length} ${t("subcategorías", "subcategories")} · `}${selectedServices.length} ${t("servicios", "services")}`
                 : `${categories.length} ${t("categorías", "categories")} · ${subcategories.length} ${t("subcategorías", "subcategories")}`}
             </p>
             {category && (
@@ -244,6 +256,14 @@ export function CategoryPages({
                   <p className="mt-3 text-sm leading-6 text-neutral-500">
                     {category.description[language]}
                   </p>
+                  <p className="mt-3 text-xs font-semibold text-neutral-700 tabular-nums">
+                    {
+                      services.filter((service) =>
+                        serviceInCategory(service, category.id),
+                      ).length
+                    }{" "}
+                    {t("servicios", "services")}
+                  </p>
                   <ul className="mt-5 divide-y divide-neutral-100 border-t border-neutral-100">
                     {subcategories
                       .filter((area) => area.categoryId === category.id)
@@ -304,8 +324,16 @@ export function CategoryPages({
                 "When should you call a professional?",
               )}
             </h2>
-            <p className="text-sm leading-7 text-neutral-600">
-              {categoryGuides[category.id].when[language]}
+            <p
+              className="max-w-prose text-sm leading-7 text-neutral-600"
+              data-category-when
+            >
+              {
+                (context ||
+                  category.when ||
+                  categoryGuides[category.id]?.when ||
+                  category.description)[language]
+              }
             </p>
           </section>
           {area ? (
@@ -321,20 +349,11 @@ export function CategoryPages({
               </h2>
               <div className="grid gap-4 md:grid-cols-2">
                 {selectedServices.map((service) => (
-                  <Card key={service.id} className="py-0 shadow-none">
-                    <CardContent className="p-0">
-                      <a
-                        href={`#/services/${service.id}`}
-                        className="flex min-h-24 items-center justify-between gap-6 p-6 text-sm font-semibold hover:text-primary"
-                      >
-                        <span>{service.name[language]}</span>
-                        <PiArrowUpRight
-                          aria-hidden="true"
-                          className="size-5 shrink-0 text-primary"
-                        />
-                      </a>
-                    </CardContent>
-                  </Card>
+                  <ServiceGuideCard
+                    key={service.id}
+                    service={service}
+                    language={language}
+                  />
                 ))}
               </div>
             </section>
@@ -348,31 +367,23 @@ export function CategoryPages({
                   {t("Subcategorías de", "Subcategories of")}{" "}
                   {category.name[language].toLowerCase()}
                 </h2>
-                <p className="mt-3 text-sm leading-6 text-neutral-500">
-                  {t(
-                    "Cada área reúne trabajos relacionados. Entra para conocer sus servicios.",
-                    "Each area groups related work. Explore it to see its services.",
-                  )}
-                </p>
               </div>
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6">
                 {areas.map((area) => (
                   <Card
                     key={area.id}
-                    className="gap-0 overflow-hidden py-0 shadow-none"
+                    className="gap-0 overflow-hidden py-0 shadow-none lg:grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]"
                     data-category-subcategory={area.id}
                   >
-                    <a href={categoryHref(category.id, area.id)}>
+                    <CardContent className="space-y-4 bg-[#faf8f5] p-5 sm:p-6">
                       <img
                         src={area.image}
                         alt={area.name[language]}
                         width={640}
                         height={360}
                         loading="lazy"
-                        className="aspect-video w-full object-cover"
+                        className="aspect-[2.1] max-h-56 w-full rounded-lg object-cover"
                       />
-                    </a>
-                    <CardContent className="p-6 sm:p-7">
                       <h3 className="text-xl font-semibold tracking-tight">
                         <a
                           href={categoryHref(category.id, area.id)}
@@ -381,20 +392,32 @@ export function CategoryPages({
                           {area.name[language]}
                         </a>
                       </h3>
-                      <p className="mt-3 text-sm leading-7 text-neutral-500">
+                      <p className="max-w-prose text-sm leading-7 text-neutral-600">
                         {areaDescription(area, language)}
                       </p>
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="mt-6 h-11 w-full rounded-lg"
-                      >
+                      <Button asChild variant="link" className="px-0">
                         <a href={categoryHref(category.id, area.id)}>
                           {t("Explorar subcategoría", "Explore subcategory")}
                           <PiArrowRight aria-hidden="true" />
                         </a>
                       </Button>
                     </CardContent>
+                    <div className="divide-y divide-neutral-200 border-t border-neutral-200 px-2 py-3 sm:px-4 lg:border-t-0 lg:border-l">
+                      <h4 className="px-4 py-3 text-base font-bold sm:px-5">
+                        {t("Servicios", "Services")}
+                      </h4>
+                      {selectedServices
+                        .filter((service) =>
+                          serviceInSubcategory(service, area.id),
+                        )
+                        .map((service) => (
+                          <ServiceGuideCard
+                            key={service.id}
+                            service={service}
+                            language={language}
+                          />
+                        ))}
+                    </div>
                   </Card>
                 ))}
               </div>

@@ -388,7 +388,7 @@ const rows = [
     "Ajuste de herrajes de vidrio|Glass hardware adjustment",
   ],
 ] as const;
-export const categories: Category[] = rows.map(([id, es, en], i) => ({
+export let categories: Category[] = rows.map(([id, es, en], i) => ({
   id,
   name: { es, en },
   reference: i + 1,
@@ -401,7 +401,7 @@ export const categories: Category[] = rows.map(([id, es, en], i) => ({
     .slice(3)
     .map((text) => bilingual(text)),
 }));
-export const subcategories: Subcategory[] = rows.flatMap(([id]) => [
+export let subcategories: Subcategory[] = rows.flatMap(([id]) => [
   {
     id: `${id}-installation`,
     image: `/CATEGORY_PICS/compatible/${id}-installation.jpg`,
@@ -415,7 +415,7 @@ export const subcategories: Subcategory[] = rows.flatMap(([id]) => [
     name: categoryContent[id].groups[1],
   },
 ]);
-export const services: Service[] = rows.flatMap(([categoryId, , , ...names]) =>
+export let services: Service[] = rows.flatMap(([categoryId, , , ...names]) =>
   [
     ...names.map((name) => bilingual(name)),
     ...categoryContent[categoryId].extra,
@@ -429,6 +429,40 @@ export const services: Service[] = rows.flatMap(([categoryId, , , ...names]) =>
     };
   }),
 );
+export type Catalog = {
+  categories: Category[];
+  subcategories: Subcategory[];
+  services: Service[];
+};
+export const builtInCatalog: Catalog = { categories, subcategories, services };
+
+export function currentCatalog(): Catalog {
+  return { categories, subcategories, services };
+}
+
+export function installCatalog(catalog: Catalog) {
+  categories = catalog.categories;
+  subcategories = catalog.subcategories;
+  services = catalog.services;
+}
+
+export function serviceInSubcategory(service: Service, id: string) {
+  return (
+    service.subcategoryId === id ||
+    !!service.additionalSubcategoryIds?.includes(id)
+  );
+}
+
+export function serviceInCategory(service: Service, id: string) {
+  return (
+    service.categoryId === id ||
+    subcategories.some(
+      (area) =>
+        area.categoryId === id &&
+        service.additionalSubcategoryIds?.includes(area.id),
+    )
+  );
+}
 export const categoryName = (id: string, language: Language) =>
   categories.find((c) => c.id === id)?.name[language] ?? id;
 export const serviceName = (id: string, language: Language) =>
