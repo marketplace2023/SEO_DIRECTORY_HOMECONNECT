@@ -66,6 +66,14 @@ export function RankGrid({
   }, [campaign?.id, targetId]);
   const points = campaign ? gridPoints(campaign) : [];
   const observed = editing ? draft : run?.points || [];
+  const selectedPoint = points[selected];
+  const evidence =
+    !editing &&
+    observed.find(
+      (item) =>
+        item.row === selectedPoint?.row &&
+        item.column === selectedPoint?.column,
+    )?.evidence;
   const metrics = rankMetrics(run);
   const foundRanks =
     run?.points.flatMap((point) => (point.rank === null ? [] : [point.rank])) ||
@@ -433,6 +441,49 @@ export function RankGrid({
             {points[selected]?.column} · {points[selected]?.latitude.toFixed(5)}
             , {points[selected]?.longitude.toFixed(5)}
           </p>
+          {evidence && (
+            <section
+              aria-labelledby="point-evidence"
+              className="mt-5 rounded-xl border border-neutral-200 p-4"
+            >
+              <h3 id="point-evidence" className="font-semibold">
+                Competidores en este punto
+              </h3>
+              {evidence.searchId && (
+                <p className="mt-1 break-all text-xs text-neutral-600">
+                  Consulta SerpApi · {evidence.searchId}
+                </p>
+              )}
+              {evidence.competitors.length ? (
+                <ul className="mt-3 divide-y divide-neutral-200 text-sm">
+                  {evidence.competitors.map((item) => (
+                    <li
+                      key={`${item.position}:${item.title}`}
+                      className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 py-2"
+                    >
+                      <span className="font-semibold tabular-nums">
+                        #{item.position}
+                      </span>
+                      <span>
+                        {item.title}
+                        {item.rating !== undefined && (
+                          <span className="ml-2 text-xs text-neutral-600">
+                            {item.rating}/5
+                            {item.reviews !== undefined &&
+                              ` · ${item.reviews} reseñas`}
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-neutral-600">
+                  Sin competidores en los resultados de este punto.
+                </p>
+              )}
+            </section>
+          )}
           {!readOnly && (
             <div className="my-5 flex flex-wrap gap-3">
               <Button

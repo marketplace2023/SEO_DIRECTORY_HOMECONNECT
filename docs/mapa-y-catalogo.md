@@ -33,7 +33,7 @@ Las páginas de categoría agrupan las tarjetas de servicio por subcategoría. L
 
 Las páginas locales HTML por ciudad y especialidad reutilizan el contenido aprobado del catálogo y sus fotografías, sin depender de ejecutar React. Las páginas SEO siguen requiriendo publicación, oferta y las condiciones de indexación ya documentadas.
 
-El catálogo canónico continúa siendo código versionado: `src/data/catalog.ts` y `src/data/category-content.ts`. El arranque guarda esa versión en `product_category` y `product_template`. No se incorpora un editor administrativo que compita con esa fuente. Revisar, versionar y volver a desplegar los cambios editoriales es el flujo vigente.
+Administración → Catálogo permite crear y editar categorías, subcategorías y servicios con textos en español e inglés. Las altas y ajustes se guardan en `product_category` y `product_template` y se aplican sobre el catálogo incluido en el repositorio. Un servicio conserva su subcategoría principal y puede aparecer en otras subcategorías relacionadas sin duplicar su ficha. La cotización usa la clasificación principal del servicio.
 
 Las 144 fotografías originales están en `public/CATEGORY_PICS`: `{id-categoria}.webp` y `{id-subcategoria}.webp`. Esos archivos se conservan intactos. Se reprodujeron franjas blancas al decodificarlos en Chrome incluso en una página vacía, con bytes idénticos al original y sin estilos; por eso la interfaz utiliza versiones JPEG sRGB en `public/CATEGORY_PICS/compatible/{id}.jpg`.
 

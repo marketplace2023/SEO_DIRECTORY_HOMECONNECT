@@ -34,6 +34,8 @@ El servidor activa las mediciones bajo demanda cuando se configura `SERPAPI_API_
 
 El historial registra origen, fecha e identificador de ficha. Un punto con error queda sin medir. Un punto consultado en el que no aparece la ficha queda como «no encontrado» dentro de la profundidad de la campaña. Administración → Integraciones muestra el estado de configuración de la credencial.
 
+En **Medir con SerpApi**, la búsqueda por nombre ayuda a identificar la ficha. La búsqueda por servicio muestra los negocios que aparecen para la palabra clave en el centro de la campaña. Al seleccionar un punto de una medición automática se muestran el identificador de la consulta y hasta diez competidores observados, con posiciones y valoraciones si están disponibles.
+
 La configuración inicial es un perfil por contratista, máximo 25 keywords activas, centro y separación de cuadrícula, motores Maps/Local Pack y contenido publicado visible para contratistas. Los formularios nuevos de catálogo/contenido/datos maestros exigen HTTPS para enlaces externos. No se incluyen sucursales, automatizaciones, generación con IA, subida nueva de multimedia ni informes PDF. Las listas de interfaz paginan de diez en diez; los históricos de la API siguen requiriendo paginación de servidor y política de retención antes de cargas de producción extensas.
 
 ## Registro histórico · entrega inicial del 19 de noviembre

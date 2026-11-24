@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { categories, services, subcategories } from "@/data/catalog";
+import {
+  categories,
+  services,
+  subcategories,
+  serviceInSubcategory,
+} from "@/data/catalog";
 import { Panel, Stat, copy, Empty } from "@/components/ecosystem/primitives";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,11 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { normalize, type Language } from "@/domain/types";
+import { CatalogEditor, type EditCatalogItem } from "./catalog-editor";
 
 export function CatalogPage({ language }: { language: Language }) {
   const [query, setQuery] = useState(""),
     [selected, setSelected] = useState(categories[0].id),
     t = copy(language);
+  const [editor, setEditor] = useState<EditCatalogItem>();
+  const [saved, setSaved] = useState(false);
   const visible = categories.filter((c) =>
     normalize(
       [
@@ -27,6 +35,48 @@ export function CatalogPage({ language }: { language: Language }) {
   const category = visible.find((c) => c.id === selected) || visible[0];
   return (
     <Panel title={t("Catálogo normalizado", "Normalized catalog")}>
+      <div className="mb-5 flex flex-wrap gap-2">
+        <Button type="button" onClick={() => setEditor({ kind: "category" })}>
+          {t("Nueva categoría", "New category")}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() =>
+            setEditor({ kind: "subcategory", parent: category?.id })
+          }
+        >
+          {t("Nueva subcategoría", "New subcategory")}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setEditor({ kind: "service", parent: category?.id })}
+        >
+          {t("Nuevo servicio", "New service")}
+        </Button>
+      </div>
+      {saved && (
+        <p role="status" className="mb-4 text-sm text-green-800">
+          {t(
+            "Cambios publicados en el catálogo.",
+            "Changes published to the catalog.",
+          )}
+        </p>
+      )}
+      {editor && (
+        <CatalogEditor
+          item={editor}
+          language={language}
+          onClose={() => setEditor(undefined)}
+          onSaved={(id) => {
+            setEditor(undefined);
+            setSelected(id);
+            setQuery("");
+            setSaved(true);
+          }}
+        />
+      )}
       <div className="eco-stats-grid">
         <Stat value={categories.length} label={t("Categorías", "Categories")} />
         <Stat
@@ -102,6 +152,16 @@ export function CatalogPage({ language }: { language: Language }) {
                 <p className="mt-3 break-all font-mono text-[10px] text-neutral-400">
                   {category.image}
                 </p>
+                <Button
+                  className="mt-3"
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    setEditor({ kind: "category", id: category.id })
+                  }
+                >
+                  {t("Editar categoría", "Edit category")}
+                </Button>
               </div>
             </div>
             <h3 className="mt-8 mb-4 text-base font-semibold">
@@ -132,9 +192,22 @@ export function CatalogPage({ language }: { language: Language }) {
                       <code className="mt-1 block break-all text-[10px] text-neutral-400">
                         {sub.id}
                       </code>
+                      <Button
+                        className="mt-3"
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setEditor({ kind: "subcategory", id: sub.id })
+                        }
+                      >
+                        {t("Editar subcategoría", "Edit subcategory")}
+                      </Button>
                       <ul className="mt-4 space-y-3">
                         {services
-                          .filter((service) => service.subcategoryId === sub.id)
+                          .filter((service) =>
+                            serviceInSubcategory(service, sub.id),
+                          )
                           .map((service) => (
                             <li
                               key={service.id}
@@ -144,6 +217,17 @@ export function CatalogPage({ language }: { language: Language }) {
                               <code className="block text-[10px] text-neutral-400">
                                 {service.id}
                               </code>
+                              <Button
+                                type="button"
+                                variant="link"
+                                className="h-auto px-0"
+                                aria-label={`${t("Editar", "Edit")} ${service.name[language]}`}
+                                onClick={() =>
+                                  setEditor({ kind: "service", id: service.id })
+                                }
+                              >
+                                {t("Editar servicio", "Edit service")}
+                              </Button>
                             </li>
                           ))}
                       </ul>
@@ -156,12 +240,6 @@ export function CatalogPage({ language }: { language: Language }) {
           <Empty title={t("No hay coincidencias.", "No matches.")} />
         )}
       </div>
-      <p className="eco-note mt-5">
-        {t(
-          "Consulta del catálogo maestro y de las imágenes de CATEGORY_PICS. Los cambios de catálogo todavía no se editan desde el panel.",
-          "Master catalog and CATEGORY_PICS images. Catalog changes are not yet editable from this panel.",
-        )}
-      </p>
     </Panel>
   );
 }

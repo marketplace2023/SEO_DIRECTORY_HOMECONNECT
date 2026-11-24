@@ -135,9 +135,15 @@ export function serviceGuide(service: Service) {
   const requirements =
     detail?.requirements ?? categoryContexts[service.categoryId]?.[2];
   return {
-    scope: serviceScope(service.id),
-    requirements: requirements ? bilingual(requirements) : undefined,
-    completion: bilingual(detail?.completion ?? completionByMode[service.mode]),
-    separate: detail?.separate ? bilingual(detail.separate) : undefined,
+    scope: service.scope ?? serviceScope(service.id),
+    requirements:
+      service.requirements ??
+      (requirements ? bilingual(requirements) : undefined),
+    completion:
+      service.completion ??
+      bilingual(detail?.completion ?? completionByMode[service.mode]),
+    separate:
+      service.separate ??
+      (detail?.separate ? bilingual(detail.separate) : undefined),
   };
 }

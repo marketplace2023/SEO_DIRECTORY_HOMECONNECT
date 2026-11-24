@@ -20,7 +20,7 @@ export function ServiceGuideCard({
 }) {
   const name = service.name[language];
   const descriptionId = useId();
-  const description = serviceScope(service.id)?.[language];
+  const description = (service.scope ?? serviceScope(service.id))?.[language];
   return (
     <Card className="group gap-0 rounded-lg border-transparent bg-transparent py-0 shadow-none transition-colors hover:bg-primary/5">
       <a

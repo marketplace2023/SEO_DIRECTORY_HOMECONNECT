@@ -101,7 +101,7 @@ test("SerpApi conserva posiciones, identificadores y puntos fallidos por separad
         ? [{ ...listing, place_id: "ChIJdifferent", data_cid: "123" }]
         : [listing];
     return Response.json({
-      search_metadata: { status: "Success" },
+      search_metadata: { status: "Success", id: `search-${requests.length}` },
       local_results: local,
     });
   };
@@ -117,7 +117,16 @@ test("SerpApi conserva posiciones, identificadores y puntos fallidos por separad
     });
     const maps = await scanSerpGrid(campaign, target);
     expect(maps.measured).toHaveLength(8);
-    expect(maps.measured[0]).toEqual({ row: 0, column: 1, rank: null });
+    expect(maps.measured[0]).toMatchObject({
+      row: 0,
+      column: 1,
+      rank: null,
+      evidence: {
+        searchId: "search-3",
+        competitors: [{ title: listing.title, position: 2 }],
+      },
+    });
+    expect(maps.measured.at(-1)?.evidence?.competitors).toEqual([]);
     expect(maps.measured.at(-1)?.rank).toBe(2);
     expect(
       new Set(requests.slice(1, 10).map((url) => url.searchParams.get("ll")))

@@ -32,6 +32,7 @@ import {
 import { seoRoutes } from "../server/seo/routes";
 import { localSeoRoutes } from "../server/local-seo/routes";
 import { serpApiConfigured } from "../server/local-seo/serpapi";
+import { catalogRoutes, loadStoredCatalog } from "../server/catalog";
 import { contractorEstimateRoutes } from "../server/contractor-estimates";
 import { stripeWebhook } from "../server/contractor-checkout";
 
@@ -43,6 +44,7 @@ const database = new Database(
   resolve(process.env.DATABASE_DIR || file.replace(/\.json$/, ".pgdata")),
 );
 await database.initialize();
+await loadStoredCatalog(database);
 await database.importLegacy(file);
 const accounts = new Accounts(database, await database.loadAccounts());
 const origins = new Set([
@@ -241,6 +243,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return;
     }
     send(200, accounts.seoUsers(session));
+    return;
+  }
+  if (req.method === "GET" && url.pathname === "/api/catalog") {
+    await catalogRoutes("GET", undefined, database, user, send);
     return;
   }
   const isEstimateRoute = ["/api/contractor/estimates", "/api/owner/estimate"].includes(url.pathname);
@@ -455,6 +461,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
     const body = bytes.toString("utf8");
     const data = body ? JSON.parse(body) : {};
+    if (url.pathname === "/api/catalog") {
+      await catalogRoutes("POST", data, database, user, send);
+      return;
+    }
     if (["/api/local-seo/serp-lookup", "/api/local-seo/serp-scan"].includes(url.pathname)) {
       const state = await seoState(session);
       // These operations insert observations only and may wait on the provider.

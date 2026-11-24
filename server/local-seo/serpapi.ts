@@ -38,10 +38,14 @@ const resultSchema = z.object({
   address: z.string().optional(),
   place_id: z.string().optional(),
   data_cid: z.string().optional(),
+  rating: z.number().min(0).max(5).optional().catch(undefined),
+  reviews: z.number().int().nonnegative().optional().catch(undefined),
 });
 const payloadSchema = z.object({
   error: z.string().optional(),
-  search_metadata: z.object({ status: z.string() }).optional(),
+  search_metadata: z
+    .object({ status: z.string(), id: z.string().max(120).optional() })
+    .optional(),
   search_information: z
     .object({ local_results_state: z.string().optional() })
     .optional(),
@@ -157,7 +161,15 @@ export async function findSerpListings(
       cid: result.data_cid,
     });
     return listing.success && (listing.data.placeId || listing.data.cid)
-      ? [{ ...listing.data, address: result.address?.slice(0, 300) }]
+      ? [
+          {
+            ...listing.data,
+            address: result.address?.slice(0, 300),
+            position: result.position,
+            rating: result.rating,
+            reviews: result.reviews,
+          },
+        ]
       : [];
   });
 }
@@ -219,17 +231,29 @@ export async function scanSerpGrid(campaign: SeoCampaign, listing: Listing) {
               const parsed = resultSchema.safeParse(row);
               return parsed.success ? [parsed.data] : [];
             });
-        const rank =
-          results.find((result) => {
-            const matches = maps
-              ? (listing.placeId && result.place_id === listing.placeId) ||
-                (listing.cid && result.data_cid === listing.cid)
-              : result.place_id === listing.cid;
-            return (
-              matches && result.position && result.position <= campaign.depth
-            );
-          })?.position ?? null;
-        return { row: point.row, column: point.column, rank };
+        const matches = (result: z.infer<typeof resultSchema>) =>
+          maps
+            ? (listing.placeId && result.place_id === listing.placeId) ||
+              (listing.cid && result.data_cid === listing.cid)
+            : result.place_id === listing.cid;
+        const ranked = results.filter(
+          (result) => result.position && result.position <= campaign.depth,
+        );
+        const rank = ranked.find(matches)?.position ?? null;
+        const competitors = ranked
+          .filter((result) => !matches(result))
+          .slice(0, 10)
+          .flatMap(({ title, position, rating, reviews }) =>
+            title && position
+              ? [{ title: title.slice(0, 300), position, rating, reviews }]
+              : [],
+          );
+        return {
+          row: point.row,
+          column: point.column,
+          rank,
+          evidence: { searchId: payload.search_metadata?.id, competitors },
+        };
       }),
     );
     for (const result of batch) {

@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { PiArrowUpRight } from "react-icons/pi";
-import { categories, subcategories, services } from "@/data/catalog";
+import {
+  categories,
+  subcategories,
+  services,
+  serviceInSubcategory,
+} from "@/data/catalog";
 import type { Language } from "@/domain/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -73,7 +78,7 @@ export function HomeSubcategories({ language }: { language: Language }) {
                 </h3>
                 <p className="mt-2 text-xs leading-6 text-neutral-500">
                   {services
-                    .filter((service) => service.subcategoryId === sub.id)
+                    .filter((service) => serviceInSubcategory(service, sub.id))
                     .map((service) => service.name[language])
                     .join(" · ")}
                 </p>

@@ -8,7 +8,13 @@ import {
   PiMapPin,
   PiSquaresFour,
 } from "react-icons/pi";
-import { categories, services, subcategories } from "@/data/catalog";
+import {
+  categories,
+  services,
+  subcategories,
+  serviceInCategory,
+  serviceInSubcategory,
+} from "@/data/catalog";
 import { serviceScope } from "@/data/service-guides";
 import { normalize, type Language } from "@/domain/types";
 import { useStore } from "@/domain/store";
@@ -164,8 +170,8 @@ export function CatalogPage({
                       {groups.length} {t("áreas de trabajo", "work areas")}
                       <span className="mx-2 text-neutral-300">/</span>
                       {
-                        services.filter(
-                          (service) => service.categoryId === selected.id,
+                        services.filter((service) =>
+                          serviceInCategory(service, selected.id),
                         ).length
                       }{" "}
                       {t("servicios", "services")}
@@ -344,8 +350,8 @@ export function CatalogPage({
                 data-catalog-areas
               >
                 {groups.map((group, index) => {
-                  const items = services.filter(
-                    (service) => service.subcategoryId === group.id,
+                  const items = services.filter((service) =>
+                    serviceInSubcategory(service, group.id),
                   );
                   return (
                     <MagicCard
@@ -396,7 +402,10 @@ export function CatalogPage({
                                       {service.name[language]}
                                     </strong>
                                     <span className="static! mt-0! text-sm! leading-6! text-neutral-600!">
-                                      {serviceScope(service.id)?.[language]}
+                                      {
+                                        (service.scope ??
+                                          serviceScope(service.id))?.[language]
+                                      }
                                     </span>
                                   </span>
                                   <PiArrowUpRight

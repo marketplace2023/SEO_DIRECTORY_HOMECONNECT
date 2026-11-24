@@ -47,7 +47,18 @@ export type SeoCampaign = {
   depth: number;
   createdAt: string;
 };
-export type SeoPoint = { row: number; column: number; rank: number | null };
+export type SeoCompetitorResult = {
+  title: string;
+  position: number;
+  rating?: number;
+  reviews?: number;
+};
+export type SeoPoint = {
+  row: number;
+  column: number;
+  rank: number | null;
+  evidence?: { searchId?: string; competitors: SeoCompetitorResult[] };
+};
 export type SeoRun = {
   id: string;
   campaignId: string;

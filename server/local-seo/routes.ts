@@ -200,6 +200,7 @@ export async function localSeoRoutes(
       .object({
         campaignId: id,
         targetId: z.string().max(100),
+        intent: z.enum(["business", "service"]).default("business"),
         listing: listingSchema.optional(),
       })
       .safeParse(body);
@@ -207,7 +208,7 @@ export async function localSeoRoutes(
       send(400, { error: "Revisa los datos de la campaña y de la ficha." });
       return true;
     }
-    const { campaignId, targetId, listing } = input.data;
+    const { campaignId, targetId, listing, intent } = input.data;
     const campaign = project.campaigns.find((entry) => entry.id === campaignId);
     const targetName =
       targetId === "business"
@@ -227,9 +228,12 @@ export async function localSeoRoutes(
     serpRequests.add(lock);
     try {
       if (path.endsWith("serp-lookup")) {
-        const keyword = [targetName, person.city, person.region]
-          .filter(Boolean)
-          .join(", ");
+        const keyword =
+          intent === "service"
+            ? campaign.keyword
+            : [targetName, person.city, person.region]
+                .filter(Boolean)
+                .join(", ");
         send(200, {
           listings: await findSerpListings(
             keyword,

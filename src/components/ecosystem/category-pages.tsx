@@ -6,7 +6,13 @@ import {
   PiInfo,
   PiMagnifyingGlass,
 } from "react-icons/pi";
-import { categories, subcategories, services } from "@/data/catalog";
+import {
+  categories,
+  subcategories,
+  services,
+  serviceInCategory,
+  serviceInSubcategory,
+} from "@/data/catalog";
 import { categoryGuides, subcategoryConcepts } from "@/data/category-guides";
 import { subcategoryWhen } from "@/data/service-guides";
 import { normalize, type Language, type Subcategory } from "@/domain/types";
@@ -24,7 +30,7 @@ export const categoryHref = (id: string, subcategory?: string) =>
   `#/categories/${id}${subcategory ? `/${subcategory}` : ""}`;
 
 function areaDescription(area: Subcategory, language: Language) {
-  return subcategoryConcepts[area.id][language];
+  return (area.concept ?? subcategoryConcepts[area.id] ?? area.name)[language];
 }
 
 export function CategoryPages({
@@ -51,12 +57,12 @@ export function CategoryPages({
       [
         category.name[language],
         category.description[language],
-        categoryGuides[category.id].concept[language],
+        (category.concept ?? categoryGuides[category.id]?.concept)?.[language],
         ...subcategories
           .filter((area) => area.categoryId === category.id)
           .map((area) => area.name[language]),
         ...services
-          .filter((service) => service.categoryId === category.id)
+          .filter((service) => serviceInCategory(service, category.id))
           .map((service) => service.name[language]),
       ].join(" "),
     ).includes(normalize(query)),
@@ -68,17 +74,20 @@ export function CategoryPages({
   const description = category
     ? area
       ? areaDescription(area, language)
-      : categoryGuides[category.id].concept[language]
+      : (category.concept ??
+          categoryGuides[category.id]?.concept ??
+          category.description)[language]
     : t(
         "Conoce cada oficio, descubre qué incluye y encuentra el área que necesita tu hogar.",
         "Learn about each trade, discover what it covers and find the area your home needs.",
       );
   const selectedServices = services.filter(
     (service) =>
-      service.categoryId === category?.id &&
-      (!area || service.subcategoryId === area.id),
+      !!category &&
+      serviceInCategory(service, category.id) &&
+      (!area || serviceInSubcategory(service, area.id)),
   );
-  const context = area && subcategoryWhen(area.id);
+  const context = area && (area.when ?? subcategoryWhen(area.id));
   return (
     <div
       className="space-y-9 pb-10 md:space-y-12"
@@ -249,8 +258,8 @@ export function CategoryPages({
                   </p>
                   <p className="mt-3 text-xs font-semibold text-neutral-700 tabular-nums">
                     {
-                      services.filter(
-                        (service) => service.categoryId === category.id,
+                      services.filter((service) =>
+                        serviceInCategory(service, category.id),
                       ).length
                     }{" "}
                     {t("servicios", "services")}
@@ -319,8 +328,12 @@ export function CategoryPages({
               className="max-w-prose text-sm leading-7 text-neutral-600"
               data-category-when
             >
-              {context?.[language] ??
-                categoryGuides[category.id].when[language]}
+              {
+                (context ||
+                  category.when ||
+                  categoryGuides[category.id]?.when ||
+                  category.description)[language]
+              }
             </p>
           </section>
           {area ? (
@@ -394,7 +407,9 @@ export function CategoryPages({
                         {t("Servicios", "Services")}
                       </h4>
                       {selectedServices
-                        .filter((service) => service.subcategoryId === area.id)
+                        .filter((service) =>
+                          serviceInSubcategory(service, area.id),
+                        )
                         .map((service) => (
                           <ServiceGuideCard
                             key={service.id}
