@@ -44,6 +44,9 @@ export function CartPage({ language }: { language: Language }) {
           (row) => row.id === proposal.professionalId,
         );
         const website = person?.socialLinks?.website;
+        const project = proposal.contractorEstimateId
+          ? state.projects.find((item) => item.proposalId === proposal.id)
+          : undefined;
         return (
           <Panel key={proposal.id} title={request.title}>
             <span className="eco-badge accepted">
@@ -54,7 +57,13 @@ export function CartPage({ language }: { language: Language }) {
               <strong>{money(proposal.amount, language, 2)}</strong>
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              {website && isPublicWebUrl(website) ? (
+              {project ? (
+                <Button asChild>
+                  <a href={`#/workspace/owner/projects/${project.id}`}>
+                    {t("Ver facturas de obra", "View project invoices")}
+                  </a>
+                </Button>
+              ) : website && isPublicWebUrl(website) ? (
                 <Button asChild>
                   <a href={website} target="_blank" rel="noopener noreferrer">
                     {t(
