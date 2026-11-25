@@ -22,18 +22,27 @@ export type Category = {
   illustration: string;
   image: string;
   included: Localized[];
+  concept?: Localized;
+  when?: Localized;
 };
 export type Subcategory = {
   id: string;
   categoryId: string;
   name: Localized;
   image: string;
+  concept?: Localized;
+  when?: Localized;
 };
 export type Service = {
   id: string;
   categoryId: string;
   subcategoryId: string;
   name: Localized;
+  additionalSubcategoryIds?: string[];
+  scope?: Localized;
+  requirements?: Localized;
+  completion?: Localized;
+  separate?: Localized;
   mode:
     | "installation"
     | "repair"
@@ -46,6 +55,10 @@ export type Professional = {
   id: string;
   fur: string;
   name: string;
+  address?: string;
+  phone?: string;
+  postalCode?: string;
+  serviceAreaBusiness?: boolean;
   categoryId: string;
   serviceIds: string[];
   city: string;
@@ -93,6 +106,7 @@ export type QuoteRequest = {
 export type Proposal = {
   id: string;
   requestId: string;
+  contractorEstimateId?: string;
   professionalId: string;
   amount: number;
   currency: "USD";
@@ -172,10 +186,10 @@ export const normalize = (text: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-export const money = (value: number, lang: Language, fractionDigits = 0) =>
+export const money = (value: number, lang: Language, fractionDigits?: number) =>
   new Intl.NumberFormat(lang === "es" ? "es-VE" : "en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
+    minimumFractionDigits: fractionDigits ?? 0,
+    maximumFractionDigits: fractionDigits ?? 2,
   }).format(value);

@@ -8,7 +8,14 @@ import {
   PiMapPin,
   PiSquaresFour,
 } from "react-icons/pi";
-import { categories, services, subcategories } from "@/data/catalog";
+import {
+  categories,
+  services,
+  subcategories,
+  serviceInCategory,
+  serviceInSubcategory,
+} from "@/data/catalog";
+import { serviceScope } from "@/data/service-guides";
 import { normalize, type Language } from "@/domain/types";
 import { useStore } from "@/domain/store";
 import { navigate, type Route } from "@/lib/navigation";
@@ -171,8 +178,8 @@ export function CatalogPage({
                       {groups.length} {t("áreas de trabajo", "work areas")}
                       <span className="mx-2 text-neutral-300">/</span>
                       {
-                        services.filter(
-                          (service) => service.categoryId === selected.id,
+                        services.filter((service) =>
+                          serviceInCategory(service, selected.id),
                         ).length
                       }{" "}
                       {t("servicios", "services")}
@@ -357,8 +364,8 @@ export function CatalogPage({
                 data-catalog-areas
               >
                 {groups.map((group, index) => {
-                  const items = services.filter(
-                    (service) => service.subcategoryId === group.id,
+                  const items = services.filter((service) =>
+                    serviceInSubcategory(service, group.id),
                   );
                   return (
                     <MagicCard
@@ -400,17 +407,28 @@ export function CatalogPage({
                               return (
                                 <li key={service.id}>
                                   <button
+                                    aria-label={service.name[language]}
                                     className="service-tile group/row relative flex min-h-0! w-full items-center justify-between gap-4 rounded-none! border-0! bg-transparent! px-0! py-4! text-left hover:text-primary"
                                     onClick={() =>
                                       navigate(`/services/${service.id}`)
                                     }
                                   >
-                                    <span className="inline-flex items-center gap-2 text-[13px]! leading-5! font-medium text-neutral-700! group-hover/row:text-primary!">
-                                      <ServiceIcon
-                                        className="size-5 shrink-0 text-primary"
-                                        aria-hidden="true"
-                                      />
-                                      {service.name[language]}
+                                    <span className="static! flex min-w-0 flex-col gap-1">
+                                      <strong className="text-sm leading-5 font-semibold text-neutral-800 group-hover/row:text-primary">
+                                        <ServiceIcon
+                                          className="mr-2 inline size-5 text-primary"
+                                          aria-hidden="true"
+                                        />
+                                        {service.name[language]}
+                                      </strong>
+                                      <span className="static! mt-0! text-sm! leading-6! text-neutral-600!">
+                                        {
+                                          (service.scope ??
+                                            serviceScope(service.id))?.[
+                                            language
+                                          ]
+                                        }
+                                      </span>
                                     </span>
                                     <PiArrowUpRight
                                       aria-hidden="true"

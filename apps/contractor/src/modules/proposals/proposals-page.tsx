@@ -1,9 +1,11 @@
 import { PiArrowUpRight } from "react-icons/pi";
 import { useStore } from "@/domain/store";
+import { useAuth } from "@/auth/auth-provider";
 import { Panel, Empty, copy } from "@/components/ecosystem/primitives";
 import { Button } from "@/components/ui/button";
 import { navigate } from "@/lib/navigation";
 import { money, type Language } from "@/domain/types";
+import { EstimateWorkspacePanel } from "./estimate-workspace";
 import { EstimatingWorkflow } from "./estimating-workflow";
 
 export function ProposalsPage({
@@ -13,6 +15,7 @@ export function ProposalsPage({
   language: Language;
   requestId?: string;
 }) {
+  const { user } = useAuth();
   const { state, professionalId } = useStore(),
     t = copy(language);
   const proposals = state.proposals.filter(
@@ -21,6 +24,9 @@ export function ProposalsPage({
   return (
     <div className="grid gap-5">
       <EstimatingWorkflow language={language} requestId={requestId} />
+      {user?.professionalId === professionalId && (
+        <EstimateWorkspacePanel key={professionalId} language={language} />
+      )}
       <Panel title={t("Mis propuestas", "My proposals")}>
         {proposals.length ? (
           proposals.map((proposal) => (

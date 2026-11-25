@@ -59,4 +59,17 @@ npm run build
 
 Cada salida de build se sirve como un sitio separado. Configura sus direcciones y la del servicio antes de compilar usando las variables de `.env.example`. Cada portal copia imágenes, mapas, favicon y seed a su propio build. Las URLs antiguas `/contractor/` y `/admin/` de la web redirigen a los servidores correspondientes durante desarrollo.
 
+### Cobros de obra con Stripe Connect
+
+Los pagos recibidos fuera de HOME CONNECT se pueden registrar desde el portal del contratista. El pago con tarjeta aparece en el proyecto del cliente cuando el contratista tiene una cuenta de Stripe Connect configurada en la API.
+
+| Variable de la API | Valor |
+| --- | --- |
+| `PUBLIC_SITE_URL` | Origen público HTTPS de la web principal, al que vuelve el cliente después de Checkout. |
+| `STRIPE_SECRET_KEY` | Clave de servidor de la plataforma Stripe, del entorno de pruebas o producción. |
+| `STRIPE_CONTRACTOR_ACCOUNTS` | Objeto JSON que mapea el identificador interno de cada profesional a su cuenta conectada `acct_…`. |
+| `STRIPE_WEBHOOK_SECRET` | Secreto de firma del destino de eventos de Stripe Connect. |
+
+El destino de eventos de las cuentas conectadas apunta a `POST /api/stripe/webhook` en la API pública y recibe `checkout.session.completed`. Usa el mismo entorno para la clave de servidor, la cuenta conectada y el secreto del destino. [Cobros directos con Checkout](https://docs.stripe.com/connect/direct-charges?platform=web&ui=stripe-hosted) · [Eventos de cuentas conectadas](https://docs.stripe.com/connect/webhooks?accounts-namespace=v1)
+
 La nomenclatura SQL vigente y su alcance se detallan en [nombres-tablas.md](nombres-tablas.md).

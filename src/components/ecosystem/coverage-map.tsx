@@ -29,6 +29,8 @@ import { useStore } from "@/domain/store";
 import {
   categories,
   categoryName,
+  serviceInCategory,
+  serviceInSubcategory,
   services,
   subcategories,
 } from "@/data/catalog";
@@ -158,7 +160,11 @@ function MapBehavior({
   return null;
 }
 
-export type CatalogMapScope = { categoryId: string; serviceId?: string };
+export type CatalogMapScope = {
+  categoryId: string;
+  subcategoryId?: string;
+  serviceId?: string;
+};
 
 export function CoverageMap({
   language,
@@ -179,6 +185,7 @@ export function CoverageMap({
   const params = new URLSearchParams(local ? localParams : route.params);
   if (scope) {
     params.set("category", scope.categoryId);
+    if (scope.subcategoryId) params.set("subcategory", scope.subcategoryId);
     if (scope.serviceId) params.set("service", scope.serviceId);
   }
   const filters = filtersFromParams(params);
@@ -487,7 +494,10 @@ export function CoverageMap({
               {services
                 .filter(
                   (s) =>
-                    !filters.categoryId || s.categoryId === filters.categoryId,
+                    (!filters.categoryId ||
+                      serviceInCategory(s, filters.categoryId)) &&
+                    (!filters.subcategoryId ||
+                      serviceInSubcategory(s, filters.subcategoryId)),
                 )
                 .map((s) => (
                   <option key={s.id} value={s.id}>
@@ -497,7 +507,7 @@ export function CoverageMap({
             </select>
           </Field>
         )}
-        {!scope?.serviceId && (
+        {!scope?.serviceId && !scope?.subcategoryId && (
           <Field label={t("Subcategoría", "Subcategory")}>
             <select
               value={filters.subcategoryId}

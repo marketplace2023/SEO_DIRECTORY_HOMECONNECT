@@ -21,6 +21,7 @@ import { categoryName, serviceName } from "@/data/catalog";
 import { navigate } from "@/lib/navigation";
 import { Panel, Empty, copy } from "./primitives";
 import { Missing } from "./public-pages";
+import { ClientEstimatePanel } from "./client-estimate";
 
 function OpportunityClock({
   release,
@@ -482,6 +483,10 @@ export function Projects({
   const project = projects.find((p) => p.id === id);
   if (id && !project) return <Missing language={language} />;
   if (project) {
+    const hasEstimate = Boolean(
+      state.proposals.find((proposal) => proposal.id === project.proposalId)
+        ?.contractorEstimateId,
+    );
     const professional = state.professionals.find(
       (p) => p.id === project.professionalId,
     );
@@ -537,7 +542,7 @@ export function Projects({
                 )}
           </p>
         </Panel>
-        <div>
+        <div className="space-y-4">
           {!contractor && project.status === "completed" && (
             <ProjectFeedback projectId={project.id} />
           )}
@@ -554,7 +559,9 @@ export function Projects({
               <div>
                 <dt>{t("Pago", "Payment")}</dt>
                 <dd>
-                  {contractor ? (
+                  {hasEstimate ? (
+                    t("Según facturas de obra", "As shown on project invoices")
+                  ) : contractor ? (
                     t("En la web del contratista", "On the contractor website")
                   ) : (
                     <a className="text-link" href="#/cart">
@@ -575,6 +582,13 @@ export function Projects({
               {t("Ver solicitud y propuesta", "View request and proposal")}
             </Button>
           </Panel>
+          {!contractor && hasEstimate && (
+            <ClientEstimatePanel
+              key={project.id}
+              projectId={project.id}
+              language={language}
+            />
+          )}
         </div>
       </div>
     );

@@ -78,6 +78,16 @@ export function SiteHeader({
                 type="button"
                 aria-expanded={servicesOpen}
                 aria-controls="header-services-menu"
+                aria-current={
+                  path.startsWith("/categories") || path === "/catalog"
+                    ? "page"
+                    : undefined
+                }
+                className={
+                  path.startsWith("/categories") || path === "/catalog"
+                    ? "is-active"
+                    : undefined
+                }
                 onClick={() => setServicesOpen(!servicesOpen)}
               >
                 {es ? "Servicios" : "Services"}
@@ -87,19 +97,19 @@ export function SiteHeader({
                 <div className="header-services-menu" id="header-services-menu">
                   <a
                     className="header-all-services"
-                    href="#/catalog"
+                    href="#/categories"
                     onClick={() => setServicesOpen(false)}
                   >
                     {es
-                      ? `Ver las ${categories.length} especialidades`
-                      : `View all ${categories.length} specialties`}
+                      ? "Categorías y subcategorías"
+                      : "Categories and subcategories"}
                     <PiArrowUpRight />
                   </a>
                   <div>
                     {categories.map((category) => (
                       <a
                         key={category.id}
-                        href={`#/catalog?category=${category.id}`}
+                        href={`#/categories/${category.id}`}
                         onClick={() => setServicesOpen(false)}
                       >
                         {category.name[language]}

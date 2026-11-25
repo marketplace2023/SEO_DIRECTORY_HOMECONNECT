@@ -50,7 +50,7 @@ type Command =
     }
   | {
       type: "proposal";
-      value: Pick<Proposal, "requestId" | "amount" | "days" | "description">;
+      value: Pick<Proposal, "requestId" | "amount" | "days" | "description" | "contractorEstimateId">;
     }
   | { type: "part"; partId?: string; value: z.input<typeof partInput> }
   | { type: "measurement"; value: z.input<typeof measurementInput> }
@@ -281,7 +281,7 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
     case "proposal": {
       let value: Pick<
         Proposal,
-        "requestId" | "amount" | "days" | "description" | "lines"
+        "requestId" | "amount" | "days" | "description" | "lines" | "contractorEstimateId"
       >;
       if (action.type === "budget") {
         const input = budgetInput.safeParse(action.value);
@@ -298,7 +298,7 @@ export function reducer(state: DemoState, action: StoreAction): DemoState {
         value = { requestId, days, description, amount: cents / 100, lines };
       } else {
         const { requestId, amount, days, description } = action.value;
-        value = { requestId, amount, days, description };
+        value = { requestId, amount, days, description, contractorEstimateId: action.value.contractorEstimateId };
       }
       if (
         action.actor !== "contractor" ||

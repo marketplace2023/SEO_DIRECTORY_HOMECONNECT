@@ -31,6 +31,13 @@ export function IntegrationsPage() {
           ],
         },
         {
+          name: "SerpApi",
+          state: status.serpApi?.configured
+            ? "Credencial configurada"
+            : "Pendiente de credencial",
+          details: ["Google Maps y Local Pack para el Centro SEO local."],
+        },
+        {
           name: "Dominio y SEO",
           state: status.seo.indexingEnabled
             ? "Indexación habilitada"

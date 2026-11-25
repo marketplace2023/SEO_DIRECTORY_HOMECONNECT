@@ -120,6 +120,10 @@ export const stateSchema: z.ZodType<DemoState> = z.object({
       id: text,
       fur: text,
       name: text,
+      address: text.optional(),
+      phone: text.optional(),
+      postalCode: text.optional(),
+      serviceAreaBusiness: z.boolean().optional(),
       categoryId: text,
       socialLinks: socialLinksSchema.optional(),
       serviceIds: z.array(text),
@@ -168,6 +172,7 @@ export const stateSchema: z.ZodType<DemoState> = z.object({
     z.object({
       id: text,
       requestId: text,
+      contractorEstimateId: z.uuid().optional(),
       professionalId: text,
       amount: z.number().positive(),
       currency: z.literal("USD"),

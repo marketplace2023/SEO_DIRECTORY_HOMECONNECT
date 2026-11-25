@@ -1,10 +1,9 @@
 import { isUsProfessional } from "@/domain/us-area";
-import { MapSurface } from "./map-surface";
-import { CatalogProjectCta } from "./catalog-project-cta";
 import { socialIcons } from "./contact-account-dialog";
 import { ProfessionalFilters } from "./professional-filters";
 import { PublicReviews } from "./pilot-panels";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { trackSeoEvent } from "@/lib/seo-events";
 import {
   PiArrowUpRight,
   PiArrowLeft,
@@ -13,7 +12,6 @@ import {
   PiMapPin,
   PiStarFill,
   PiSealCheckFill,
-  PiCheck,
   PiBuildings,
 } from "react-icons/pi";
 import {
@@ -21,7 +19,6 @@ import {
   subcategories,
   services,
   categoryName,
-  serviceName,
 } from "@/data/catalog";
 import { useStore } from "@/domain/store";
 import {
@@ -48,8 +45,6 @@ import { searchParams } from "@/domain/search";
 import { useCart } from "@/domain/cart";
 import { ProfessionalCard } from "@/components/professional-card";
 import { serviceIcon } from "@/components/category-icons";
-
-import { CategoryScope } from "./category-scope";
 
 import { parseBounds } from "@/domain/geography";
 import {
@@ -85,83 +80,6 @@ export function ServiceTile({
       <h3>{service.name[language]}</h3>
       <PiArrowUpRight />
     </button>
-  );
-}
-export function ServicePage({
-  id,
-  language,
-}: {
-  id: string;
-  language: Language;
-}) {
-  const t = copy(language);
-  const service = services.find((s) => s.id === id);
-  if (!service) return <Missing language={language} />;
-  return (
-    <>
-      <PageTitle
-        eyebrow={categoryName(service.categoryId, language)}
-        title={service.name[language]}
-        description={t(
-          "Cada espacio necesita una solución distinta. Describe el trabajo, compara propuestas y acuerda los detalles con tu profesional.",
-          "Every space needs a different solution. Describe the work, compare proposals and agree on the details with your professional.",
-        )}
-        action={
-          <Button
-            onClick={() =>
-              navigate("/quote", new URLSearchParams({ service: id }))
-            }
-          >
-            {t("Solicitar presupuesto", "Request a quote")}
-            <PiArrowUpRight />
-          </Button>
-        }
-      />
-      <MapSurface
-        language={language}
-        scope={{ categoryId: service.categoryId, serviceId: id }}
-      />
-      <CatalogProjectCta
-        language={language}
-        categoryId={service.categoryId}
-        serviceId={id}
-      />
-      <div className="mt-6">
-        <Panel title={t("Antes de empezar", "Before you start")}>
-          <ul className="eco-checklist">
-            {[
-              t(
-                "Describe el estado actual y el resultado que buscas.",
-                "Describe the current condition and the result you want.",
-              ),
-              t(
-                "Indica la ubicación, dimensiones y fecha orientativa.",
-                "Include the location, dimensions and preferred date.",
-              ),
-              t(
-                "Confirma materiales, alcance y condiciones en la propuesta.",
-                "Confirm materials, scope and terms in the proposal.",
-              ),
-            ].map((item) => (
-              <li key={item}>
-                <PiCheck />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <p className="eco-note">
-            {t(
-              "El presupuesto depende del alcance. No se realizan cobros en este prototipo.",
-              "Pricing depends on scope. This prototype does not process payments.",
-            )}
-          </p>
-        </Panel>
-      </div>
-      <CategoryScope
-        category={categories.find((c) => c.id === service.categoryId)!}
-        language={language}
-      />
-    </>
   );
 }
 export function PersonCard({
@@ -423,11 +341,24 @@ export function ProfilePage({
 }) {
   const { state, role, send } = useStore();
   const cart = useCart();
-  const { checking } = useAuth();
+  const { checking, user: profileUser } = useAuth();
   const t = copy(language);
   const person = state.professionals.find(
     (p) => p.id === id && p.publication === "published" && isUsProfessional(p),
   );
+  const viewed = useRef("");
+  useEffect(() => {
+    if (
+      !checking &&
+      person &&
+      profileUser?.role !== "admin" &&
+      profileUser?.professionalId !== person.id &&
+      viewed.current !== person.id
+    ) {
+      viewed.current = person.id;
+      trackSeoEvent(person.id, "profile_view");
+    }
+  }, [checking, person?.id, profileUser?.role, profileUser?.professionalId]);
   if (!person) return <Missing language={language} />;
   const favorite = state.favorites.includes(id);
   const socialLinks = socialPlatforms.map(([key, es, en]) => {
@@ -605,6 +536,10 @@ export function ProfilePage({
                   <a
                     key={key}
                     href={url}
+                    onClick={() => {
+                      if (key === "website")
+                        trackSeoEvent(person.id, "website_click");
+                    }}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="profile-social-item"

@@ -35,6 +35,11 @@ import {
   googleConfiguration,
 } from "../server/google/business-profile";
 import { seoRoutes } from "../server/seo/routes";
+import { localSeoRoutes } from "../server/local-seo/routes";
+import { serpApiConfigured } from "../server/local-seo/serpapi";
+import { catalogRoutes, loadStoredCatalog } from "../server/catalog";
+import { contractorEstimateRoutes } from "../server/contractor-estimates";
+import { stripeWebhook } from "../server/contractor-checkout";
 
 const port = Number(process.env.SERVINEXO_API_PORT || 5190);
 const file = resolve(
@@ -44,6 +49,7 @@ const database = new Database(
   resolve(process.env.DATABASE_DIR || file.replace(/\.json$/, ".pgdata")),
 );
 await database.initialize();
+await loadStoredCatalog(database);
 await database.importLegacy(file);
 const closedAccounts = await database.sql.query<{
   namespace: string;
@@ -77,6 +83,14 @@ for (const [session, state] of states) {
     await database.saveState(session, upgraded);
     states.set(session, upgraded);
   }
+}
+async function seoState(namespace: string) {
+  if (!states.has(namespace)) {
+    const state = stateFor(namespace);
+    states.set(namespace, state);
+    await database.saveState(namespace, state);
+  }
+  return states.get(namespace)!;
 }
 const attachments = new Attachments(
   database,
@@ -284,6 +298,57 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     send(400, { error: "Invalid demo session" });
     return;
   }
+  if (req.method === "GET" && url.pathname === "/api/local-seo/users") {
+    if (user?.role !== "admin") {
+      send(403, { error: "Acceso administrativo requerido." });
+      return;
+    }
+    send(200, accounts.seoUsers(session));
+    return;
+  }
+  if (req.method === "GET" && url.pathname === "/api/catalog") {
+    await catalogRoutes("GET", undefined, database, user, send);
+    return;
+  }
+  const isEstimateRoute = [
+    "/api/contractor/estimates",
+    "/api/owner/estimate",
+  ].includes(url.pathname);
+  const estimateRoute = async (method: "GET" | "POST", body?: unknown) =>
+    contractorEstimateRoutes(
+      url.pathname,
+      method,
+      body,
+      database,
+      accounts.user(session, token),
+      session,
+      stateFor(session),
+      send,
+      async (next) => {
+        await database.saveState(session, next);
+        states.set(session, next);
+        publish(session, next);
+      },
+      url.searchParams.get("project") || "",
+    );
+  if (isEstimateRoute && req.method === "GET" && (await estimateRoute("GET")))
+    return;
+  if (
+    req.method === "GET" &&
+    url.pathname.startsWith("/api/local-seo/") &&
+    (await localSeoRoutes(
+      url.pathname,
+      "GET",
+      url.searchParams,
+      undefined,
+      database,
+      user,
+      session,
+      await seoState(session),
+      send,
+    ))
+  )
+    return;
   if (
     req.method === "GET" &&
     (await pilotRoutes(
@@ -373,6 +438,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
     send(200, {
       google: googleConfiguration(),
+      serpApi: { configured: serpApiConfigured() },
       email: {
         mode: accounts.email.local ? "local" : "smtp",
         configured: !!process.env.SMTP_HOST && !!process.env.SMTP_FROM,
@@ -427,7 +493,18 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       send(404, { error: "Buzón local no disponible." });
       return;
     }
-    send(200, { messages: await accounts.email.localInbox(session, user.id) });
+    const invited = url.searchParams.get("user");
+    if (
+      invited &&
+      (user.role !== "admin" ||
+        !accounts.seoUsers(session).some((account) => account.id === invited))
+    ) {
+      send(403, { error: "Invitación no disponible." });
+      return;
+    }
+    send(200, {
+      messages: await accounts.email.localInbox(session, invited || user.id),
+    });
     return;
   }
   if (req.method === "GET" && url.pathname === "/api/demo/events") {
@@ -480,17 +557,148 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       send(401, { error: "Tu sesión ha finalizado." });
       return;
     }
-    let body = "";
+    const chunks: Buffer[] = [];
+    let bodyLength = 0;
     for await (const chunk of req) {
-      body += chunk;
+      const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      bodyLength += bytes.length;
       if (
-        body.length > (url.pathname === "/api/files" ? 8_000_000 : 2_000_000)
+        bodyLength > (url.pathname === "/api/files" ? 8_000_000 : 2_000_000)
       ) {
         send(413, { error: "Payload too large" });
         return;
       }
+      chunks.push(bytes);
     }
+    const bytes = Buffer.concat(chunks, bodyLength);
+    if (url.pathname === "/api/stripe/webhook") {
+      const status = await stripeWebhook(
+        database,
+        bytes,
+        req.headers["stripe-signature"],
+      );
+      send(status, { received: status === 200 });
+      return;
+    }
+    const body = bytes.toString("utf8");
     const data = body ? JSON.parse(body) : {};
+    if (url.pathname === "/api/catalog") {
+      await catalogRoutes("POST", data, database, user, send);
+      return;
+    }
+    if (
+      ["/api/local-seo/serp-lookup", "/api/local-seo/serp-scan"].includes(
+        url.pathname,
+      )
+    ) {
+      const state = await seoState(session);
+      // These operations insert observations only and may wait on the provider.
+      releaseMutation();
+      await localSeoRoutes(
+        url.pathname,
+        "POST",
+        url.searchParams,
+        data,
+        database,
+        user,
+        session,
+        state,
+        send,
+      );
+      return;
+    }
+    if (isEstimateRoute && (await estimateRoute("POST", data))) return;
+    if (url.pathname === "/api/local-seo/event") {
+      const input = z
+        .object({
+          id: z.string().uuid(),
+          professionalId: z.string().max(100),
+          kind: z.enum(["profile_view", "website_click"]),
+        })
+        .parse(data);
+      const person = stateFor(session).professionals.find(
+        (person) =>
+          person.id === input.professionalId &&
+          person.publication === "published",
+      );
+      if (!person) {
+        send(404, { error: "Perfil no disponible." });
+        return;
+      }
+      if (
+        !rateLimit.allow(
+          `seo-events:${session}:${req.socket.remoteAddress}:${person.id}:${input.kind}`,
+          120,
+        )
+      ) {
+        send(429, { error: "Demasiados eventos." });
+        return;
+      }
+      await database.sql.query(
+        "INSERT INTO local_seo_event(namespace,id,professional_id,kind,created_at) VALUES($1,$2,$3,$4,now()) ON CONFLICT DO NOTHING",
+        [session, input.id, person.id, input.kind],
+      );
+      send(200, { ok: true });
+      return;
+    }
+    if (url.pathname === "/api/local-seo/users") {
+      if (user?.role !== "admin") {
+        send(403, { error: "Acceso administrativo requerido." });
+        return;
+      }
+      const input = z
+        .object({
+          id: z.string().uuid().optional(),
+          name: z.string().trim().min(2).max(200),
+          email: z.email(),
+          seoAccess: z.object({
+            professionalIds: z.array(z.string()).max(2000),
+            manageDirectories: z.boolean(),
+            exportReports: z.boolean(),
+          }),
+        })
+        .parse(data);
+      const current = stateFor(session);
+      if (
+        !input.id &&
+        process.env.NODE_ENV === "production" &&
+        (!process.env.SMTP_HOST || !process.env.SMTP_FROM)
+      ) {
+        send(503, {
+          error: "Configura el correo SMTP antes de invitar al equipo SEO.",
+        });
+        return;
+      }
+      if (
+        input.seoAccess.professionalIds.some(
+          (id) => !current.professionals.some((p) => p.id === id),
+        )
+      ) {
+        send(400, { error: "Hay contratistas inexistentes en la asignación." });
+        return;
+      }
+      try {
+        send(200, await accounts.saveSeoUser(session, input, user.id));
+      } catch (error) {
+        send(400, { error: (error as Error).message });
+      }
+      return;
+    }
+    if (
+      url.pathname.startsWith("/api/local-seo/") &&
+      (await localSeoRoutes(
+        url.pathname,
+        "POST",
+        url.searchParams,
+        data,
+        database,
+        user,
+        session,
+        await seoState(session),
+        send,
+      ))
+    )
+      return;
     if (
       await attachments.route(
         url.pathname,
@@ -630,6 +838,17 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return;
     }
     if (url.pathname === "/api/auth/register") {
+      if (
+        process.env.HOME_CONNECT_REGISTRATION_ENABLED === "false" ||
+        (process.env.NODE_ENV === "production" &&
+          (!process.env.SMTP_HOST || !process.env.SMTP_FROM))
+      ) {
+        send(503, {
+          error:
+            "El registro estará disponible cuando se configure el envío de correo. Las cuentas existentes pueden iniciar sesión.",
+        });
+        return;
+      }
       const input = z
         .object({
           name: z.string().trim().min(2).max(100),
@@ -744,7 +963,11 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
         send(409, { error: "La cuenta de este profesional está cerrada." });
         return;
       }
-      fields[action.type].parse(data);
+      const validated = fields[action.type].parse(data);
+      if (action.type === "proposal") {
+        // A budget can be linked only by the authenticated estimate workflow.
+        action.value = (validated as { value: unknown }).value;
+      }
       if (!user) {
         send(401, { error: "Inicia sesión para realizar esta acción." });
         return;
@@ -840,7 +1063,7 @@ const server = createServer((req, res) => {
     } else res.end();
   });
 });
-server.listen(port, "127.0.0.1", () =>
+server.listen(port, process.env.SERVINEXO_API_HOST || "127.0.0.1", () =>
   console.log(`Servinexo demo API: http://127.0.0.1:${port}`),
 );
 function stop() {

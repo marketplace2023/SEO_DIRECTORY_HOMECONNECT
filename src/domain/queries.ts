@@ -1,4 +1,8 @@
-import { services } from "@/data/catalog";
+import {
+  services,
+  serviceInCategory,
+  serviceInSubcategory,
+} from "@/data/catalog";
 import {
   normalize,
   type DemoState,
@@ -103,13 +107,17 @@ export function findProfessionals(
       isUsProfessional(person) &&
       matchesInitial(person.name, filters.initials) &&
       (!filters.usArea || matchesUsArea(person, filters.usArea)) &&
-      (!filters.categoryId || person.categoryId === filters.categoryId) &&
+      (!filters.categoryId ||
+        person.categoryId === filters.categoryId ||
+        offered.some((service) =>
+          serviceInCategory(service, filters.categoryId!),
+        )) &&
       (!filters.region || person.region === filters.region) &&
       (!filters.serviceId || person.serviceIds.includes(filters.serviceId)) &&
       (!filters.bounds || !!displayedLocation(person, filters.bounds)) &&
       (!filters.subcategoryId ||
-        offered.some(
-          (service) => service.subcategoryId === filters.subcategoryId,
+        offered.some((service) =>
+          serviceInSubcategory(service, filters.subcategoryId!),
         )) &&
       (!filters.country || person.country === filters.country) &&
       normalize([person.city, ...person.coverage].join(" ")).includes(

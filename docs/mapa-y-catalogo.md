@@ -4,6 +4,16 @@ Implementación del 18 de noviembre de 2026. Mantiene servicios del hogar como e
 
 ## Catálogo explicado
 
+Desde el 19 de noviembre de 2026, el menú Servicios y las categorías de la portada llevan a páginas dedicadas:
+
+- `/#/categories`: índice de las 48 categorías, con descripción breve, imagen y enlaces a sus 96 subcategorías. La búsqueda acepta nombres de categorías, subcategorías y servicios.
+- `/#/categories/siding`: página exclusiva de una categoría, con su explicación, imagen, límites y subcategorías; no incluye la navegación lateral del catálogo general.
+- `/#/categories/siding/siding-installation`: detalle de una subcategoría con los servicios que le corresponden y un enlace al directorio filtrado.
+
+Las páginas permiten regresar a su categoría o al índice, conservan el idioma y pueden abrirse directamente o recargarse. Un identificador inexistente o una subcategoría de otra categoría muestra la página no disponible. Se reutilizan las imágenes del catálogo. El catálogo anterior en `/#/catalog` sigue disponible.
+
+Los textos breves de las tarjetas del índice se mantienen separados de las explicaciones de detalle. `src/data/category-guides.ts` contiene conceptos propios para las 48 categorías, casos en los que se necesita cada oficio y definiciones para sus 96 subcategorías, en español e inglés. Las descripciones no se generan concatenando nombres de servicios. La página muestra «¿En qué consiste?» y «¿Cuándo necesitas un profesional?», con los límites del catálogo en un bloque aparte. En climatización se explican temperatura, humedad, renovación y distribución del aire, el significado de HVAC y la diferencia entre equipos/ventilación y diagnóstico/puesta a punto.
+
 Hay **48 categorías, 96 áreas o subcategorías y 240 servicios**. Se mantienen los identificadores de las 32 categorías originales y de sus primeros 96 servicios; solicitudes, propuestas y perfiles anteriores conservan sus referencias. Las agrupaciones ahora tienen nombres propios del oficio. Inspección, diseño y limpieza tienen modalidades separadas; una inspección ya no se etiqueta como mantenimiento por estar en la tercera posición de una lista.
 
 Se añaden contratistas generales, limpieza del hogar, retirada de enseres, mudanzas, inspección de viviendas, diseño de interiores, domótica, redes domésticas, riego, excavación, demolición selectiva, restauración por daños, chimeneas, gabinetes, encimeras y vidrios/espejos.
@@ -17,9 +27,13 @@ Cada categoría presenta:
 - Disponibilidad de perfiles publicados en Georgia, separada de la existencia de la categoría.
 - Acceso al mapa filtrado y a sus servicios.
 
-La portada utiliza las fotografías de categorías y ofrece un selector de categoría para explorar sus subcategorías con imagen y servicios. Administración → Catálogo permite buscar categorías o subcategorías, ver las miniaturas, seleccionar una categoría y consultar su fotografía, sus dos subcategorías con imagen y los servicios asociados. Las fichas de servicios muestran la explicación de su área. Las páginas locales HTML por ciudad y especialidad reutilizan el contenido aprobado del catálogo y sus fotografías, sin depender de ejecutar React. Las páginas SEO siguen requiriendo publicación, oferta y las condiciones de indexación ya documentadas.
+La portada utiliza las fotografías de categorías y ofrece un selector de categoría para explorar sus subcategorías con imagen y servicios. Administración → Catálogo permite buscar categorías o subcategorías, ver las miniaturas, seleccionar una categoría y consultar su fotografía, sus dos subcategorías con imagen y los servicios asociados.
 
-El catálogo canónico continúa siendo código versionado: `src/data/catalog.ts` y `src/data/category-content.ts`. El arranque guarda esa versión en `product_category` y `product_template`. No se incorpora un editor administrativo que compita con esa fuente. Revisar, versionar y volver a desplegar los cambios editoriales es el flujo vigente.
+Las páginas de categoría agrupan las tarjetas de servicio por subcategoría. Las subcategorías explican cuándo conviene acudir a esa área. Cada ficha en `/#/services/{id}` muestra su alcance, qué preparar al cotizar, qué acordar por separado, entregables, proceso de contratación y servicios relacionados. La solicitud abre con el servicio seleccionado. Los alcances bilingües se editan en `src/data/service-scopes.ts` y los casos de uso en `src/data/category-context.ts`.
+
+Las páginas locales HTML por ciudad y especialidad reutilizan el contenido aprobado del catálogo y sus fotografías, sin depender de ejecutar React. Las páginas SEO siguen requiriendo publicación, oferta y las condiciones de indexación ya documentadas.
+
+Administración → Catálogo permite crear y editar categorías, subcategorías y servicios con textos en español e inglés. Las altas y ajustes se guardan en `product_category` y `product_template` y se aplican sobre el catálogo incluido en el repositorio. Un servicio conserva su subcategoría principal y puede aparecer en otras subcategorías relacionadas sin duplicar su ficha. La cotización usa la clasificación principal del servicio.
 
 Las 144 fotografías originales están en `public/CATEGORY_PICS`: `{id-categoria}.webp` y `{id-subcategoria}.webp`. Esos archivos se conservan intactos. Se reprodujeron franjas blancas al decodificarlos en Chrome incluso en una página vacía, con bytes idénticos al original y sin estilos; por eso la interfaz utiliza versiones JPEG sRGB en `public/CATEGORY_PICS/compatible/{id}.jpg`.
 

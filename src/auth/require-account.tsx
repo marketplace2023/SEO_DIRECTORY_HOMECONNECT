@@ -10,24 +10,26 @@ export function RequireAccount({
   children: ReactNode;
 }) {
   const { user, checking } = useAuth();
+  const authorized =
+    user?.role === role || (role === "admin" && user?.role === "seo");
   const requested = window.location.hash.slice(1) || "/";
   useEffect(() => {
     if (
       !checking &&
-      (!user || user.role !== role) &&
+      !authorized &&
       !/^\/(login|register)(\?|$)/.test(requested) &&
       window.location.hash.slice(1) === requested
     ) {
       window.location.replace("#/login?next=" + encodeURIComponent(requested));
     }
-  }, [checking, user, role, requested]);
+  }, [checking, user, role, requested, authorized]);
   if (checking)
     return (
       <p className="account-loading" role="status">
         Comprobando sesión…
       </p>
     );
-  if (!user || user.role !== role)
+  if (!user || !authorized)
     return (
       <p className="account-loading" role="status">
         Abriendo inicio de sesión…

@@ -39,7 +39,7 @@ export function MapSurface({
         }
       >
         <CoverageMap
-          key={scope?.serviceId ?? scope?.categoryId}
+          key={scope?.serviceId ?? scope?.subcategoryId ?? scope?.categoryId}
           language={language}
           compact={compact}
           scope={scope}

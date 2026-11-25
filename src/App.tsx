@@ -11,12 +11,16 @@ import { SiteFooter } from "@/components/site-footer";
 import { StoreProvider, useStore } from "@/domain/store";
 import { roleNames, type Language, type Role } from "@/domain/types";
 import { rolePortal, workspaceHref } from "@/lib/portals";
+import {
+  categories,
+  serviceName,
+  subcategories,
+  services,
+} from "@/data/catalog";
 import { navigate, useRoute } from "@/lib/navigation";
 import {
-  CatalogPage,
   DirectoryPage,
   ProfilePage,
-  ServicePage,
   Missing,
 } from "@/components/ecosystem/public-pages";
 import { RequestPage } from "@/components/ecosystem/request-page";
@@ -46,6 +50,21 @@ import {
 const HomePage = lazy(() =>
   import("@/components/home-page").then((module) => ({
     default: module.HomePage,
+  })),
+);
+const CatalogPage = lazy(() =>
+  import("@/components/ecosystem/catalog-page").then((module) => ({
+    default: module.CatalogPage,
+  })),
+);
+const CategoryPages = lazy(() =>
+  import("@/components/ecosystem/category-pages").then((module) => ({
+    default: module.CategoryPages,
+  })),
+);
+const ServicePage = lazy(() =>
+  import("@/components/ecosystem/service-page").then((module) => ({
+    default: module.ServicePage,
   })),
 );
 const AreaExplorer = lazy(() =>
@@ -138,7 +157,18 @@ function Ecosystem() {
       route.path === "/"
         ? "HOME CONNECT — Grandes ideas. Las manos correctas."
         : `HOME CONNECT · ${route.path.startsWith("/workspace") ? t("Mi espacio", "My workspace") : route.path.startsWith("/catalog") ? t("Catálogo", "Catalog") : t("Conecta con profesionales", "Connect with professionals")}`;
-  }, [language, route.path]);
+    if (parts[0] === "categories") {
+      const category = categories.find((category) => category.id === parts[1]);
+      const area = subcategories.find(
+        (area) => area.id === parts[2] && area.categoryId === category?.id,
+      );
+      document.title = `${area?.name[language] || category?.name[language] || t("Categorías y subcategorías", "Categories and subcategories")} · HOME CONNECT`;
+    }
+    if (parts[0] === "services" && parts.length === 2) {
+      const title = serviceName(parts[1], language);
+      if (title !== parts[1]) document.title = `${title} · HOME CONNECT`;
+    }
+  }, [language, route.path, categories, subcategories, services]);
   const search = {
     language,
     query,
@@ -161,9 +191,7 @@ function Ecosystem() {
         <HomePage
           search={search}
           professionals={people}
-          onCategory={(id) =>
-            navigate("/catalog", new URLSearchParams({ category: id }))
-          }
+          onCategory={(id) => navigate(`/categories/${id}`)}
           onProfile={(id) => navigate(`/professionals/${id}`)}
           onExplore={() => navigate("/professionals")}
           onQuote={() => navigate("/quote")}
@@ -171,6 +199,10 @@ function Ecosystem() {
       );
     if (route.path === "/catalog")
       return <CatalogPage route={route} language={language} />;
+    if (parts[0] === "categories")
+      return (
+        <CategoryPages key={route.path} route={route} language={language} />
+      );
     if (route.path === "/professionals")
       return <DirectoryPage route={route} language={language} />;
     if (parts[0] === "professionals" && parts.length === 2)
@@ -311,7 +343,11 @@ function Ecosystem() {
               content()
             ) : (
               <div className="inner-page site-container">
-                <div className="page-breadcrumb">
+                <div
+                  className={
+                    parts[0] === "categories" ? "hidden" : "page-breadcrumb"
+                  }
+                >
                   <button onClick={() => navigate("/")}>
                     <PiArrowLeft />
                     {t("Inicio", "Home")}
